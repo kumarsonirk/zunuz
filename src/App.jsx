@@ -461,7 +461,7 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#020203] text-[#F5F2EB] font-sans selection:bg-amber-400 selection:text-black overflow-x-hidden relative">
+    <div className="h-[100dvh] w-full bg-[#020203] text-[#F5F2EB] font-sans selection:bg-amber-400 selection:text-black overflow-x-hidden relative">
       
       {/* 1. INITIAL PASSIVE CIRCULAR LOADER SCREEN */}
       {loading && !isSlidIn && (
@@ -502,6 +502,7 @@ export default function App() {
                 {progress}%
               </span>
             </div>
+            
           </div>
         </div>
       )}
@@ -529,7 +530,7 @@ export default function App() {
       {/* 3. PREMIUM MOBILE LOOKBOOK MAIN APP VIEW (SEAMLESSLY INTEGRATED UNDER REVEAL TRANSITION) */}
       {isSlidIn && (
         <div 
-          className="relative z-10 min-h-screen flex flex-col justify-between max-w-lg mx-auto bg-[#020203]/90 shadow-2xl border-x border-zinc-900/80 pb-safe-bottom will-change-[opacity,transform]"
+          className="relative z-10 h-[100dvh] w-full flex flex-col justify-between max-w-lg mx-auto bg-[#020203]/90 shadow-2xl border-x border-zinc-900/80 pb-safe-bottom will-change-[opacity,transform]"
           style={{
             opacity: revealPlatform ? 1 : 0,
             transform: revealPlatform ? 'translate3d(0, 0, 0) scale(1)' : 'translate3d(0, 100px, 0) scale(0.96)',
@@ -573,7 +574,7 @@ export default function App() {
                   setSelectedProject(item);
                   synth.playConfirm();
                 }}
-                className="group relative flex-1 min-h-[220px] md:min-h-[250px] w-full overflow-hidden cursor-pointer flex flex-col items-center justify-center transition-all duration-700 bg-zinc-950"
+                className="group relative flex-1 min-h-0 w-full overflow-hidden cursor-pointer flex flex-col items-center justify-center transition-all duration-700 bg-zinc-950"
               >
                 {/* Hardware-Accelerated background closeup lookbook photo */}
                 <div className="absolute inset-0 z-0 scale-100 group-hover:scale-105 group-active:scale-102 transition-transform duration-[1200ms] ease-out select-none">
@@ -701,12 +702,7 @@ export default function App() {
           height: 0 !important;
         }
 
-        body {
-          overflow: hidden !important; /* Prevent native window scrollbar */
-          position: fixed;
-          width: 100%;
-          height: 100%;
-        }
+        /* Removed body position: fixed and overflow: hidden to allow native mobile pull-to-refresh */
 
         @keyframes center-fade-in {
           0% {
