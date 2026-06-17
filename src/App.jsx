@@ -619,7 +619,7 @@ export default function App() {
 
           {/* Premium Footer with Sync indicators */}
           <footer className="px-6 py-5 border-t border-zinc-900/50 bg-[#020203] flex justify-center items-center text-center text-[10px] font-medium text-zinc-500 tracking-wider">
-            <span>© Zunuz | 2026</span>
+            <span>© copyright Zunuz | 2026</span>
           </footer>
 
         </div>
