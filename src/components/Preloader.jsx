@@ -23,7 +23,7 @@ export default function Preloader({ percentage, muted, onMuteToggle }) {
         setDisplayText(text);
         setOpacity(1);
         prevTextRef.current = text;
-      }, 250);
+      }, 300);
       return () => clearTimeout(timeout);
     }
   }, [text]);
@@ -48,9 +48,10 @@ export default function Preloader({ percentage, muted, onMuteToggle }) {
             />
           </svg>
           <div 
-            className="text-[3.8vw] md:text-[18px] font-light text-[#F5F2EB] leading-normal tracking-[0.2em] text-center px-4 transition-opacity duration-250 ease-in-out" 
+            className="text-[3.8vw] md:text-[18px] font-light text-[#F5F2EB] leading-normal tracking-[0.2em] text-center px-4" 
             style={{ 
               opacity: opacity, 
+              transition: 'opacity 300ms ease-in-out',
               fontFamily: "'Space Grotesk', sans-serif",
               maxWidth: '240px',
               textShadow: '0 0 12px rgba(245, 242, 235, 0.2)'

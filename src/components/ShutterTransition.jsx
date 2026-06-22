@@ -49,7 +49,7 @@ export default function ShutterTransition({
                 className={`w-[60vw] max-w-[320px] h-auto object-contain drop-shadow-[0_20px_45px_rgba(0,0,0,0.98)] transition-all duration-[750ms] cubic-bezier(0.16, 1, 0.3, 1) will-change-transform ${showZunuzText ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-16 scale-95"}`}
               />
               <p
-                className={`text-[9px] md:text-xs font-mono tracking-[0.45em] text-[#F5F2EB]/60 mt-5 uppercase transition-opacity duration-1000 delay-300 ${showZunuzText ? "opacity-100" : "opacity-0"}`}
+                className={`text-[12px] md:text-sm font-mono tracking-[0.45em] text-[#F5F2EB]/60 mt-5 uppercase transition-opacity duration-1000 delay-300 ${showZunuzText ? "opacity-100" : "opacity-0"}`}
               >
                 You Love it! Buy it!
               </p>
