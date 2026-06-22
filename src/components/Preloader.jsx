@@ -1,9 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function Preloader({ percentage, muted, onMuteToggle }) {
   const r = 48;
   const c = 2 * Math.PI * r;
   const strokeOffset = c - (percentage / 100) * c;
+
+  let text = 'EASY TO EXPLORE';
+  if (percentage > 25 && percentage <= 50) {
+    text = 'EASY TO SHOP';
+  } else if (percentage > 50) {
+    text = 'EASY TO WEAR';
+  }
+
+  const prevTextRef = useRef(text);
+  const [displayText, setDisplayText] = useState(text);
+  const [opacity, setOpacity] = useState(1);
+
+  useEffect(() => {
+    if (text !== prevTextRef.current) {
+      setOpacity(0);
+      const timeout = setTimeout(() => {
+        setDisplayText(text);
+        setOpacity(1);
+        prevTextRef.current = text;
+      }, 250);
+      return () => clearTimeout(timeout);
+    }
+  }, [text]);
 
   return (
     <div className="fixed inset-0 z-[999] bg-[#020203] flex items-center justify-center select-none">
@@ -24,11 +47,20 @@ export default function Preloader({ percentage, muted, onMuteToggle }) {
               className="transition-all duration-300 ease-out"
             />
           </svg>
-          <span className="text-[16vw] md:text-[100px] font-light text-[#F5F2EB] leading-none tracking-tighter" style={{ fontFamily: "'Qrokinex', sans-serif" }}>
-            {percentage}%
-          </span>
-      </div>
+          <div 
+            className="text-[3.8vw] md:text-[18px] font-light text-[#F5F2EB] leading-normal tracking-[0.2em] text-center px-4 transition-opacity duration-250 ease-in-out" 
+            style={{ 
+              opacity: opacity, 
+              fontFamily: "'Space Grotesk', sans-serif",
+              maxWidth: '240px',
+              textShadow: '0 0 12px rgba(245, 242, 235, 0.2)'
+            }}
+          >
+            {displayText}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
