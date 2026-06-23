@@ -1,5 +1,6 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { ShoppingCart, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData';
 import zr from '../utils/audio';
 
@@ -12,7 +13,8 @@ export default function ProductDetailsPage({
   onBack,
   onSelectProduct,
   isTransitioning,
-  onMeasured
+  onMeasured,
+  cartItems = []
 }) {
   const activeTab = product.id.includes('-n')
     ? 'necklaces'
@@ -21,6 +23,29 @@ export default function ProductDetailsPage({
       : 'bracelets';
 
   const [isHearted, setIsHearted] = useState(likedProducts[product.id] || false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [openAccordion, setOpenAccordion] = useState(null);
+  const navigate = useNavigate();
+  const isInCart = cartItems.some(item => item.id === product.id);
+
+  // Reset accordion state when product changes
+  useEffect(() => {
+    setOpenAccordion(null);
+  }, [product]);
+
+  const handleAddClick = () => {
+    if (isInCart) {
+      navigate('/cart');
+      zr.playConfirm();
+      return;
+    }
+    if (isAdding) return;
+    setIsAdding(true);
+    onAddToCart(product);
+    setTimeout(() => {
+      setIsAdding(false);
+    }, 2000);
+  };
 
   // Sync like/heart state when product changes
   useEffect(() => {
@@ -135,22 +160,28 @@ export default function ProductDetailsPage({
   // Derive canonicalIndex from currentIndex
   const canonicalIndex = (currentIndex - 1 + 3) % 3;
 
-  // Get other items in the current active tab of the category for "Complete Your Look"
   const currentCollection = category ? productData[category.id] : null;
-  // Get other items (filter out current product)
-  const allTabProducts = currentCollection ? currentCollection[activeTab] || [] : [];
-  const lookProducts = allTabProducts.filter(p => p.id !== product.id);
 
-  // If lookProducts is empty, fallback to other categories in the same collection
-  const fallbackProducts = [];
-  if (lookProducts.length === 0 && currentCollection) {
-    Object.keys(currentCollection).forEach(k => {
-      if (k !== 'title' && k !== activeTab) {
-        currentCollection[k].forEach(p => fallbackProducts.push({ ...p, activeTab: k }));
-      }
-    });
-  }
-  const sliderProducts = lookProducts.length > 0 ? lookProducts : fallbackProducts;
+  // Get all items in the collection, filter out current product, and shuffle randomly
+  const sliderProducts = React.useMemo(() => {
+    const list = [];
+    if (currentCollection) {
+      ['necklaces', 'earrings', 'bracelets'].forEach(tab => {
+        const items = currentCollection[tab] || [];
+        items.forEach(p => {
+          if (p.id !== product.id) {
+            list.push({ ...p, activeTab: tab });
+          }
+        });
+      });
+    }
+    // Shuffle the list randomly (Fisher-Yates shuffle)
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+  }, [currentCollection, product.id]);
 
   const handleLikeClick = (e) => {
     e.stopPropagation();
@@ -158,65 +189,17 @@ export default function ProductDetailsPage({
     setIsHearted(!isHearted);
   };
   return (
-    <div className="flex-1 flex flex-col bg-[#121315] text-[#F5F2EB] select-none overflow-hidden relative">
-      {/* Category Tab Selector Bar (Fixed at top) */}
-      <div className="flex w-full border-b border-zinc-900 bg-[#121315] flex-shrink-0" style={{ borderBottom: '1px solid rgba(24, 24, 27, 0.6)' }}>
-        {[
-          { id: "necklaces", label: "Necklaces" },
-          { id: "earrings", label: "Earrings" },
-          { id: "bracelets", label: "Bracelets" }
-        ].map(tab => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                zr.playConfirm();
-                onBack(tab.id); // Go back and switch tab
-              }}
-              className={`flex-1 text-center py-4 text-sm font-grift tracking-wider relative transition-colors duration-300 ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`}
-            >
-              <span className={isActive ? "text-white font-medium" : "text-[#71717A] font-normal"} style={{ color: isActive ? '#ffffff' : '#71717a', fontFamily: "'Grift', sans-serif" }}>
-                {tab.label}
-              </span>
-              {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white transition-all" style={{ height: '2px', backgroundColor: '#ffffff' }} />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
+    <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] select-none overflow-hidden relative">
       {/* Scrollable Middle Container */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto scrollbar-none pb-6">
-
-      {/* Title Header with Back Arrow */}
-      <div className="px-6 pt-5 pb-1 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              zr.playSplitOpen();
-              onBack(activeTab);
-            }}
-            className="text-zinc-400 hover:text-white transition-colors p-1"
-            aria-label="Go Back"
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            <ArrowLeft size={22} />
-          </button>
-          <h2 className="text-[28px] font-grift font-light text-[#F5F2EB] tracking-wide" style={{ color: '#f5f2eb', fontFamily: "'Grift', sans-serif" }}>
-            {currentCollection?.title || "Collection"}
-          </h2>
-        </div>
-      </div>
 
       {/* Product Image Carousel Area */}
       <div
         ref={cardRef}
-        className="relative mx-6 my-4 overflow-hidden bg-white flex-shrink-0 rounded-[32px] border border-zinc-200 shadow-2xl"
+        className="relative mx-0 mt-0 mb-4 overflow-hidden bg-white flex-shrink-0"
         style={{
-          width: 'calc(100% - 48px)',
-          height: '260px',
+          width: '100%',
+          height: '380px',
           opacity: isTransitioning ? 0 : 1,
           backgroundColor: '#ffffff'
         }}
@@ -308,12 +291,17 @@ export default function ProductDetailsPage({
       {/* Details content below image that slides up dynamically */}
       <div className="animate-details-content-slide-up flex flex-col">
         {/* Title & Price Row */}
-        <div className="px-6 py-5 flex justify-between items-start">
-          <h1 className="text-[26px] font-medium font-grift tracking-wide text-[#F5F2EB] leading-tight" style={{ fontFamily: "'Grift', sans-serif" }}>
-            {product.name}
-          </h1>
-          <div className="text-[26px] font-medium font-grift text-[#F5F2EB] whitespace-nowrap" style={{ fontFamily: "'Grift', sans-serif" }}>
-            {product.price}
+        <div className="px-6 py-5 flex flex-col">
+          <div className="text-xs font-grift tracking-widest text-[#F5F2EB]/60 uppercase mb-1.5" style={{ fontFamily: "'Grift', sans-serif" }}>
+            {currentCollection?.title || "Core Collection"}
+          </div>
+          <div className="flex justify-between items-start gap-4">
+            <h1 className="text-[26px] font-medium font-grift tracking-wide text-[#F5F2EB] leading-tight" style={{ fontFamily: "'Grift', sans-serif" }}>
+              {product.name}
+            </h1>
+            <div className="text-[26px] font-medium font-grift text-[#F5F2EB] whitespace-nowrap" style={{ fontFamily: "'Grift', sans-serif" }}>
+              {product.price}
+            </div>
           </div>
         </div>
 
@@ -322,16 +310,32 @@ export default function ProductDetailsPage({
           <AccordionItem
             title="Description"
             content="Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle. Ideal for elevating daily ensembles or making a statement at special occasions."
+            isOpen={openAccordion === 'Description'}
+            onToggle={() => {
+              setOpenAccordion(openAccordion === 'Description' ? null : 'Description');
+              zr.playTick();
+            }}
           />
           <AccordionItem
             title="Materials"
             content="Made from premium 18K yellow gold plated sterling silver (925). Nickel-free and hypoallergenic for sensitive skin."
+            isOpen={openAccordion === 'Materials'}
+            onToggle={() => {
+              setOpenAccordion(openAccordion === 'Materials' ? null : 'Materials');
+              zr.playTick();
+            }}
           />
           <AccordionItem
             title="Returns"
             content="We offer complimentary 30-day returns and exchanges. Items must be in their original condition and packaging."
+            isOpen={openAccordion === 'Returns'}
+            onToggle={() => {
+              setOpenAccordion(openAccordion === 'Returns' ? null : 'Returns');
+              zr.playTick();
+            }}
           />
         </div>
+
 
         {/* "Complete Your Look" slider section */}
         {sliderProducts.length > 0 && (
@@ -339,7 +343,7 @@ export default function ProductDetailsPage({
             <h3 className="px-6 text-[18px] font-grift font-light text-[#F5F2EB] tracking-wide" style={{ fontFamily: "'Grift', sans-serif" }}>
               Complete Your Look
             </h3>
-            <div className="flex gap-4 overflow-x-auto px-6 pb-2 scrollbar-none scroll-smooth">
+            <div className="flex gap-4 overflow-x-auto px-6 pt-2 pb-2 scrollbar-none scroll-smooth">
               {sliderProducts.map(lookProd => (
                 <div
                   key={lookProd.id}
@@ -372,7 +376,7 @@ export default function ProductDetailsPage({
     </div>
 
     {/* Bottom Sticky Action Buttons (Fixed at bottom, non-scrollable) */}
-    <div className="px-6 py-5 flex border-t border-zinc-900/60 bg-[#121315] flex-shrink-0" style={{ backgroundColor: '#121315', borderTop: '1px solid rgba(24, 24, 27, 0.6)', gap: '18px' }}>
+    <div className="px-6 py-5 flex border-t border-zinc-900/60 bg-[#1F2024] flex-shrink-0" style={{ backgroundColor: '#1F2024', borderTop: '1px solid rgba(24, 24, 27, 0.6)', gap: '18px' }}>
         <button
           onClick={() => {
             zr.playConfirm();
@@ -384,11 +388,11 @@ export default function ProductDetailsPage({
           Buy Now
         </button>
         <button
-          onClick={onAddToCart}
-          className="flex-1 flex items-center justify-center rounded-[20px] font-medium text-base cursor-pointer btn-add-to-cart"
+          onClick={handleAddClick}
+          className={`flex-1 flex items-center justify-center rounded-[20px] font-medium text-base cursor-pointer btn-add-to-cart ${isAdding ? 'is-adding' : ''}`}
           style={{ height: '58px', borderRadius: '20px', border: 'none', gap: '12px' }}
         >
-          Add To Cart <ShoppingCart size={18} strokeWidth={2} />
+          {isAdding ? 'Added!' : isInCart ? 'Go to Cart' : 'Add To Cart'} <ShoppingCart size={18} strokeWidth={2} />
         </button>
       </div>
     </div>
@@ -396,15 +400,11 @@ export default function ProductDetailsPage({
 }
 
 // Inner Helper Accordion component
-function AccordionItem({ title, content }) {
-  const [isOpen, setIsOpen] = useState(false);
+function AccordionItem({ title, content, isOpen, onToggle }) {
   return (
     <div className="border-b border-zinc-900/60" style={{ borderBottom: '1px solid rgba(24, 24, 27, 0.4)' }}>
       <button
-        onClick={() => {
-          setIsOpen(!isOpen);
-          zr.playTick();
-        }}
+        onClick={onToggle}
         className="w-full flex justify-between items-center py-4 text-left font-grift text-base tracking-wide"
         style={{ fontFamily: "'Grift', sans-serif", border: 'none', background: 'none' }}
       >
@@ -418,7 +418,7 @@ function AccordionItem({ title, content }) {
           opacity: isOpen ? 1 : 0,
         }}
       >
-        <p className="pb-4 text-xs text-zinc-400 font-sans leading-relaxed">
+        <p className="pb-4 text-sm text-zinc-400 leading-relaxed font-sans" style={{ color: '#a1a1aa' }}>
           {content}
         </p>
       </div>

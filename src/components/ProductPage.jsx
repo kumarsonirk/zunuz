@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingCart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData';
 import zr from '../utils/audio';
 
@@ -55,9 +56,11 @@ export default function ProductPage({
   onAddToCart,
   onSelectProduct,
   activeTab,
-  setActiveTab
+  setActiveTab,
+  cartItems = []
 }) {
   const [activeProductIndex, setActiveProductIndex] = useState(0);
+  const [isAdding, setIsAdding] = useState(false);
   const [pos, setPos] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef(0);
@@ -79,6 +82,23 @@ export default function ProductPage({
   const currentCollection = selectedCategory ? productData[selectedCategory.id] : null;
   const productsList = currentCollection ? currentCollection[activeTab] || [] : [];
   const n = productsList.length;
+  const activeProduct = productsList[activeProductIndex];
+  const navigate = useNavigate();
+  const isInCart = activeProduct ? cartItems.some(item => item.id === activeProduct.id) : false;
+
+  const handleAddClick = () => {
+    if (activeProduct && isInCart) {
+      navigate('/cart');
+      zr.playConfirm();
+      return;
+    }
+    if (isAdding || !activeProduct) return;
+    setIsAdding(true);
+    onAddToCart(activeProduct);
+    setTimeout(() => {
+      setIsAdding(false);
+    }, 3000);
+  };
 
   const getWrappedIndex = (index, total) => {
     if (total <= 0) return 0;
@@ -245,7 +265,7 @@ export default function ProductPage({
   return (
     <>
       {/* Category Tab Selector Bar */}
-      <div className="flex w-full border-b border-zinc-900 sticky top-[72px] z-40 select-none bg-[#121315]" style={{ backgroundColor: '#121315', borderBottom: '1px solid rgba(24, 24, 27, 0.6)' }}>
+      <div className="flex w-full border-b border-zinc-900 sticky top-[72px] z-40 select-none bg-[#1F2024]" style={{ backgroundColor: '#1F2024', borderBottom: '1px solid rgba(24, 24, 27, 0.6)' }}>
         {[
           { id: "necklaces", label: "Necklaces" },
           { id: "earrings", label: "Earrings" },
@@ -261,11 +281,11 @@ export default function ProductPage({
               }}
               className={`flex-1 text-center py-4 text-md font-grift tracking-wider relative transition-colors duration-300 ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`}
             >
-              <span className={isActive ? "text-white font-medium" : "text-[#71717A] font-normal"} style={{ color: isActive ? '#ffffff' : '#71717a', fontFamily: "'Grift', sans-serif" }}>
+              <span className={isActive ? "text-white font-medium" : "text-[#71717A] font-normal"} style={{ color: isActive ? '#f5f5f7' : '#71717a', fontFamily: "'Grift', sans-serif" }}>
                 {tab.label}
               </span>
               {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white transition-all" style={{ height: '2px', backgroundColor: '#ffffff' }} />
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#f5f5f7] transition-all" style={{ height: '2px', backgroundColor: '#f5f5f7' }} />
               )}
             </button>
           );
@@ -280,15 +300,53 @@ export default function ProductPage({
       </div>
 
       {/* Product Card Stack Area */}
-      <div className="flex-1 flex flex-col justify-center items-center px-4 py-4 relative overflow-hidden select-none">
+      <div className="flex-1 flex flex-col justify-center items-center px-4 py-2 relative overflow-hidden select-none" style={{ minHeight: 0 }}>
         {n === 0 ? (
           <div className="text-zinc-500 text-xs tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>No items in this category yet.</div>
         ) : (
-          <div 
+          <div
             key={activeTab}
-            className="relative w-full max-w-[390px] flex items-center justify-center animate-card-fade-in" 
-            style={{ width: '100%', maxWidth: '390px', aspectRatio: '10/14.5' }}
+            className="relative w-full max-w-[390px] animate-card-fade-in"
+            style={{ width: '100%', maxWidth: '390px', height: 'min(calc((100vw - 32px) * 1.45), calc(100dvh - 320px), 520px)' }}
           >
+            {/* Fake Stacked Card Layers behind the active card */}
+            {n > 1 && (
+              <>
+                {/* Layer 2 (Bottom-most) */}
+                <div 
+                  className="absolute border shadow-sm pointer-events-none transition-all duration-300"
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e4e4e7',
+                    borderBottomLeftRadius: '32px',
+                    borderBottomRightRadius: '32px',
+                    left: '16px',
+                    right: '16px',
+                    bottom: '-16px',
+                    height: '60px',
+                    zIndex: 800,
+                    opacity: 0.4
+                  }}
+                />
+                {/* Layer 1 (Middle) */}
+                <div 
+                  className="absolute border shadow-md pointer-events-none transition-all duration-300"
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e4e4e7',
+                    borderBottomLeftRadius: '32px',
+                    borderBottomRightRadius: '32px',
+                    left: '8px',
+                    right: '8px',
+                    bottom: '-8px',
+                    height: '60px',
+                    zIndex: 810,
+                    opacity: 0.75
+                  }}
+                />
+              </>
+            )}
+
             {productsList.map((product, idx) => {
               const isLiked = likedProducts[product.id] || false;
               
@@ -446,28 +504,6 @@ export default function ProductPage({
                         </span>
                       </button>
                     </div>
-
-                    {/* Pagination Slider Dots */}
-                    <div className="flex gap-2 mt-4 justify-center pointer-events-auto">
-                      {productsList.map((_, dotIdx) => (
-                        <button
-                          key={dotIdx}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDotClick(dotIdx);
-                          }}
-                          className="h-1.5 w-1.5 rounded-full transition-all duration-300"
-                          style={{
-                            height: '6px',
-                            width: '6px',
-                            borderRadius: '50%',
-                            backgroundColor: dotIdx === activeProductIndex ? '#27272a' : '#e4e4e7',
-                            border: 'none',
-                            cursor: 'pointer'
-                          }}
-                        />
-                      ))}
-                    </div>
                   </div>
                 </div>
               );
@@ -482,7 +518,7 @@ export default function ProductPage({
       </div>
 
       {/* Bottom Sticky Action Buttons */}
-      <div className="px-6 pt-3 pb-6 flex select-none border-t border-zinc-900/60 bg-[#121315]" style={{ backgroundColor: '#121315', borderTop: '1px solid rgba(24, 24, 27, 0.6)', gap: '18px' }}>
+      <div className="px-6 pt-3 pb-6 flex select-none border-t border-zinc-900/60 bg-[#1F2024]" style={{ backgroundColor: '#1F2024', borderTop: '1px solid rgba(24, 24, 27, 0.6)', gap: '18px' }}>
         <button
           onClick={() => {
             zr.playConfirm();
@@ -494,11 +530,11 @@ export default function ProductPage({
           Buy Now
         </button>
         <button
-          onClick={onAddToCart}
-          className="flex-1 flex items-center justify-center rounded-[10px] font-medium text-base cursor-pointer btn-add-to-cart"
+          onClick={handleAddClick}
+          className={`flex-1 flex items-center justify-center rounded-[10px] font-medium text-base cursor-pointer btn-add-to-cart ${isAdding ? 'is-adding' : ''}`}
           style={{ height: '58px', borderRadius: '10px', border: 'none', gap: '12px' }}
         >
-          Add To Cart <ShoppingCart size={18} strokeWidth={2} />
+          {isAdding ? 'Added!' : isInCart ? 'Go to Cart' : 'Add To Cart'} <ShoppingCart size={18} strokeWidth={2} />
         </button>
       </div>
     </>

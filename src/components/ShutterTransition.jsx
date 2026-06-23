@@ -10,13 +10,13 @@ export default function ShutterTransition({
 }) {
   return (
     <div
-      className="fixed inset-0 z-[998] overflow-hidden pointer-events-auto bg-[#020203] border-b border-[#F5F2EB]/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] will-change-transform"
+      className="fixed inset-0 z-[998] overflow-hidden pointer-events-auto bg-[#1F2024] border-b border-[#F5F2EB]/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] will-change-transform"
       style={{
         transform: shutterSlideUp ? "translate3d(0, -100%, 0)" : "translate3d(0, 0, 0)",
         transition: "transform 1100ms cubic-bezier(0.76, 0, 0.24, 1)"
       }}
     >
-      <div className="absolute inset-0 flex flex-col justify-center items-center p-6 bg-[#020203]">
+      <div className="absolute inset-0 flex flex-col justify-center items-center p-6 bg-[#1F2024]">
         <div className="relative flex items-center justify-center w-full h-full">
           {/* Shutter Card Frame */}
           <div className="relative w-[75vw] max-w-[300px] h-[55vh] max-h-[460px] border border-zinc-800/60 rounded bg-zinc-950 overflow-hidden shadow-[0_0_90px_rgba(0,0,0,0.95)] z-10 animate-fade-in">
@@ -37,7 +37,7 @@ export default function ShutterTransition({
               );
             })}
             {/* Shutter Curtain Flash Overlay */}
-            <div className="absolute inset-0 bg-[#020203] opacity-0 pointer-events-none shutter-flash-trigger" />
+            <div className="absolute inset-0 bg-[#1F2024] opacity-0 pointer-events-none shutter-flash-trigger" />
           </div>
 
           {/* Shutter Text Overlay */}

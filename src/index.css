@@ -1,1 +1,382 @@
 @import "tailwindcss";
+
+@theme {
+  /* Zunuz Custom Theme Configuration for Tailwind v4 */
+  
+  /* Brand colors */
+  --color-bg-dark: #1F2024;
+  --color-card-light: #ffffff;
+  --color-accent-coral: #FC4B4E;
+  --color-text-light: #F5F2EB;
+  --color-text-dark: #1F2024;
+
+  /* Premium Fonts */
+  --font-cormorant: "Cormorant Garamond", serif;
+  --font-syncopate: "Syncopate", sans-serif;
+  --font-space: "Space Grotesk", sans-serif;
+}
+
+@keyframes fade-slide-up {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 15px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@font-face {
+  font-family: 'Qrokinex';
+  src: url('/font/Qrokinex.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Grift';
+  src: url('/font/Grift-Light.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Default base font */
+html, body, #root, .font-qrokinex {
+  font-family: 'Qrokinex', sans-serif;
+}
+
+.font-grift, .font-grift * {
+  font-family: 'Grift', sans-serif !important;
+}
+
+.font-serif-custom, .font-serif-custom * {
+  font-family: 'Cormorant Garamond', Georgia, serif !important;
+}
+
+.font-sans-custom, .font-sans-custom * {
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+.category-subtitle {
+  font-family: 'Grift', sans-serif !important;
+}
+
+/* Global scrollbar hiding rules to fix frame & remove sidebar from all views */
+html, body, #root, * {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE, Edge */
+}
+
+::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@keyframes center-fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeInPlatform {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shutter-curtain-flash {
+  0% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+.shutter-flash-trigger {
+  animation: shutter-curtain-flash 0.12s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-fade-in-platform {
+  animation: fadeInPlatform 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-spin-slow {
+  animation: spin 6s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Custom Button Animations & Transitions */
+.btn-buy-now {
+  position: relative !important;
+  overflow: hidden !important;
+  background: linear-gradient(135deg, #FC4B4E 0%, #ff6b6d 50%, #FC4B4E 100%) !important;
+  background-size: 200% auto !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(252, 75, 78, 0.15) !important;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-position 0.4s ease, letter-spacing 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@media (hover: hover) {
+  .btn-buy-now:hover {
+    background-position: right center !important;
+    transform: translateY(-2px) scale(1.03) !important;
+    box-shadow: 0 10px 25px rgba(252, 75, 78, 0.4) !important;
+    letter-spacing: 0.05em !important;
+  }
+}
+
+.btn-buy-now::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -60% !important;
+  width: 30% !important;
+  height: 100% !important;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  ) !important;
+  transform: skewX(-25deg) !important;
+  transition: none !important;
+  pointer-events: none !important;
+}
+
+@media (hover: hover) {
+  .btn-buy-now:hover::after {
+    left: 160% !important;
+    transition: left 0.7s ease-in-out !important;
+  }
+}
+
+.btn-buy-now:active {
+  transform: translateY(1px) scale(0.96) !important;
+  transition: transform 0.075s ease-out !important;
+  box-shadow: 0 4px 10px rgba(252, 75, 78, 0.2) !important;
+}
+
+.btn-add-to-cart {
+  position: relative !important;
+  overflow: hidden !important;
+  background-color: #F4F4F5 !important;
+  color: #000000 !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  z-index: 1;
+}
+
+.btn-add-to-cart::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: #18181b !important;
+  transform: scaleX(0) !important;
+  transform-origin: right !important;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  z-index: -1 !important;
+}
+
+@media (hover: hover) {
+  .btn-add-to-cart:hover::before {
+    transform: scaleX(1) !important;
+    transform-origin: left !important;
+  }
+  
+  .btn-add-to-cart:hover {
+    color: #ffffff !important;
+    border-color: #18181b !important;
+    transform: translateY(-2px) scale(1.03) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25) !important;
+  }
+  
+  .btn-add-to-cart:hover svg {
+    animation: cart-bounce 0.6s ease-in-out infinite alternate !important;
+  }
+}
+
+@keyframes cart-bounce {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    transform: translateY(-3px) scale(1.1);
+  }
+}
+
+.btn-add-to-cart:active {
+  transform: translateY(1px) scale(0.96) !important;
+  transition: transform 0.075s ease-out !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-add-to-cart.is-adding::before {
+  transform: scaleX(1) !important;
+  transform-origin: left !important;
+}
+.btn-add-to-cart.is-adding {
+  color: #ffffff !important;
+  border-color: #000000 !important;
+  background-color: #000000 !important;
+  pointer-events: none;
+}
+.btn-add-to-cart.is-adding svg {
+  animation: cart-bounce 0.4s ease-in-out infinite alternate !important;
+}
+
+/* Nav Header items hover animations */
+.btn-nav-item {
+  color: #f5f2eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s !important;
+}
+.btn-nav-item:hover {
+  transform: scale(1.15) !important;
+  opacity: 1 !important;
+}
+.btn-nav-item:active {
+  transform: scale(0.95) !important;
+}
+
+.btn-nav-search:hover svg {
+  transform: rotate(15deg) !important;
+  transition: transform 0.3s ease !important;
+}
+
+.btn-nav-bag:hover svg {
+  animation: bag-swing 0.5s ease-in-out infinite alternate !important;
+}
+@keyframes bag-swing {
+  0% { transform: rotate(-8deg); }
+  100% { transform: rotate(8deg); }
+}
+
+.btn-nav-user:hover svg {
+  animation: user-bounce 0.5s ease-in-out infinite alternate !important;
+}
+@keyframes user-bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2.5px); }
+}
+
+/* Tab Category Buttons hover */
+.tab-btn-inactive {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.tab-btn-inactive:hover span {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3) !important;
+}
+.tab-btn-inactive::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  width: 0 !important;
+  height: 2px !important;
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transform: translateX(-50%) !important;
+}
+.tab-btn-inactive:hover::after {
+  width: 40% !important;
+}
+
+/* Heart Button hover heartbeat */
+.btn-heart {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.btn-heart:hover svg {
+  animation: heartbeat 0.8s infinite cubic-bezier(0.215, 0.610, 0.355, 1) !important;
+}
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  14% { transform: scale(1.22); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.22); }
+  70% { transform: scale(1); }
+}
+
+/* Details page slide up transitions */
+@keyframes details-content-slide-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 40px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.animate-details-content-slide-up {
+  animation: details-content-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Product page card stack entrance animation */
+@keyframes card-fade-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.animate-card-fade-in {
+  opacity: 0;
+  animation: card-fade-in 0.55s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.main-header {
+  background-color: #1F2024;
+  border-bottom: 1px solid rgba(24, 24, 27, 0.6);
+}
+
+.morph-transition-overlay {
+  transition: top 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              left 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              width 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              height 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              padding 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-radius 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.morph-image-transition {
+  left: 50%;
+  transition: top 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              width 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              height 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.morph-fade-transition {
+  transition: opacity 0.3s ease-out !important;
+}
+
+.main-layout-content-transition {
+  transition: transform 1200ms cubic-bezier(0.16, 1, 0.3, 1), opacity 1000ms ease-out !important;
+}
+
+
+

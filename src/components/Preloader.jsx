@@ -29,7 +29,7 @@ export default function Preloader({ percentage, muted, onMuteToggle }) {
   }, [text]);
 
   return (
-    <div className="fixed inset-0 z-[999] bg-[#020203] flex items-center justify-center select-none">
+    <div className="fixed inset-0 z-[999] bg-[#1F2024] flex items-center justify-center select-none">
       <div className="relative flex items-center justify-center scale-95 md:scale-100">
         <div className="w-[72vw] h-[72vw] max-w-[320px] max-h-[320px] flex items-center justify-center relative">
           <svg className="absolute inset-0 w-full h-full -rotate-90 transform" viewBox="0 0 100 100">

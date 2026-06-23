@@ -4,12 +4,12 @@ import { wp } from '../data/productData';
 export default function CategorySelection({ onSelectCategory }) {
   return (
     <>
-      <section className="flex-1 flex flex-col w-full bg-black divide-y divide-zinc-950 overflow-hidden">
+      <section className="flex-1 flex flex-col w-full bg-[#1F2024] divide-y divide-zinc-800 overflow-hidden">
         {wp.map((D) => (
           <div
             key={D.id}
             onClick={() => onSelectCategory(D)}
-            className="group relative flex-1 min-h-0 w-full overflow-hidden cursor-pointer flex flex-col items-center justify-center transition-all duration-700 bg-zinc-950"
+            className="group relative flex-1 min-h-0 w-full overflow-hidden cursor-pointer flex flex-col items-center justify-center transition-all duration-700 bg-[#1F2024]"
           >
             {/* Background Image of Card */}
             <div className="absolute inset-0 z-0 scale-100 group-hover:scale-105 group-active:scale-102 transition-transform duration-[1200ms] ease-out select-none">
@@ -32,9 +32,9 @@ export default function CategorySelection({ onSelectCategory }) {
       </section>
 
       {/* Home Footer */}
-      <footer className="px-6 py-5 border-t border-zinc-900/50 bg-[#020203] flex justify-center items-center text-center text-[10px] font-medium text-zinc-500 tracking-wider">
+      {/* <footer className="px-6 py-5 border-t border-zinc-900/50 bg-[#1F2024] flex justify-center items-center text-center text-[10px] font-medium text-zinc-500 tracking-wider">
         <span style={{ fontFamily: "'Grift', sans-serif" }}>© Zunuz | 2026</span>
-      </footer>
+      </footer> */}
     </>
   );
 }

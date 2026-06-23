@@ -9,7 +9,7 @@ export default function ParticleBackground({ canvasRef }) {
     const height = canvas.clientHeight;
     
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2("#020203", 0.025);
+    scene.fog = new THREE.FogExp2("#1F2024", 0.025);
     
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
     camera.position.z = 20;
