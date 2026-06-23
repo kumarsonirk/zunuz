@@ -14,7 +14,8 @@ export default function ProductDetailsPage({
   onSelectProduct,
   isTransitioning,
   onMeasured,
-  cartItems = []
+  cartItems = [],
+  onBuyNow
 }) {
   const activeTab = product.id.includes('-n')
     ? 'necklaces'
@@ -379,8 +380,7 @@ export default function ProductDetailsPage({
     <div className="px-6 py-5 flex border-t border-zinc-900/60 bg-[#1F2024] flex-shrink-0" style={{ backgroundColor: '#1F2024', borderTop: '1px solid rgba(24, 24, 27, 0.6)', gap: '18px' }}>
         <button
           onClick={() => {
-            zr.playConfirm();
-            alert("Order placed successfully! Thank you for buying.");
+            onBuyNow(product);
           }}
           className="flex-1 flex items-center justify-center rounded-[20px] font-medium text-base cursor-pointer btn-buy-now"
           style={{ height: '58px', borderRadius: '20px', border: 'none' }}

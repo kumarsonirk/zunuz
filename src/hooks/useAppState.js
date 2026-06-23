@@ -71,6 +71,15 @@ export function useAppState() {
   const [showCartToast, setShowCartToast] = useState(false);
   const isFirstMount = useRef(true);
 
+  // Buy Now Bill Summary Drawer States
+  const [showBillSummaryDrawer, setShowBillSummaryDrawer] = useState(false);
+  const [billSummaryProduct, setBillSummaryProduct] = useState(null);
+  const [deliveryInfo, setDeliveryInfo] = useState({
+    username: "Rahul Kumar Soni",
+    address: "H.No. 45, Sector 4, Rohini, New Delhi - 110085",
+    phone: "+91 98765 43210"
+  });
+
   useEffect(() => {
     if (showCartToast) {
       const timer = setTimeout(() => {
@@ -157,30 +166,22 @@ export function useAppState() {
     let timer;
     const countUp = (currentVal) => {
       if (currentVal >= 100) {
-        timer = setTimeout(() => {
-          triggerShutterReveal();
-        }, 900);
+        triggerShutterReveal();
         return;
       }
       let increment = 1, delay = 50;
       if (currentVal < 25) {
-        increment = Math.floor(Math.random() * 3) + 2;
+        increment = Math.floor(Math.random() * 2) + 1; // 1 or 2
         if (currentVal + increment >= 25) increment = 25 - currentVal;
-        delay = 80;
-      } else if (currentVal === 25) {
-        increment = 1;
-        delay = 900; // Pause briefly at 25%
+        delay = 60;
       } else if (currentVal < 50) {
-        increment = Math.floor(Math.random() * 4) + 2;
+        increment = Math.floor(Math.random() * 2) + 1; // 1 or 2
         if (currentVal + increment >= 50) increment = 50 - currentVal;
         delay = 70;
-      } else if (currentVal === 50) {
-        increment = 1;
-        delay = 900; // Pause briefly at 50%
       } else {
-        increment = Math.floor(Math.random() * 6) + 4;
+        increment = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
         if (currentVal + increment >= 100) increment = 100 - currentVal;
-        delay = 45;
+        delay = 55;
       }
       const nextVal = currentVal + increment;
       timer = setTimeout(() => {
@@ -409,6 +410,24 @@ export function useAppState() {
     handleRemoveCartItem,
     handleSelectProduct,
     handleBackToProductPage,
-    handleSelectCategory
+    handleSelectCategory,
+    // Buy Now Drawer Exports
+    showBillSummaryDrawer,
+    setShowBillSummaryDrawer,
+    billSummaryProduct,
+    setBillSummaryProduct,
+    deliveryInfo,
+    setDeliveryInfo,
+    handleBuyNow: (product) => {
+      zr.playConfirm();
+      setBillSummaryProduct(product);
+      setShowBillSummaryDrawer(true);
+    },
+    handleChangeDelivery: () => {
+      const newName = prompt("Enter Name:", deliveryInfo.username) || deliveryInfo.username;
+      const newAddress = prompt("Enter Address:", deliveryInfo.address) || deliveryInfo.address;
+      const newPhone = prompt("Enter Phone Number:", deliveryInfo.phone) || deliveryInfo.phone;
+      setDeliveryInfo({ username: newName, address: newAddress, phone: newPhone });
+    }
   };
 }

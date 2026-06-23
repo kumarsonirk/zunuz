@@ -34,6 +34,7 @@ export default function App() {
                 activeTab={state.activeTab}
                 setActiveTab={state.setActiveTab}
                 cartItems={state.cartItems}
+                onBuyNow={state.handleBuyNow}
               />
             ) : (
               <Navigate to="/" replace />
@@ -55,6 +56,7 @@ export default function App() {
                 isTransitioning={state.transitionState === 'animating_in' || state.transitionState === 'animating_out'}
                 onMeasured={state.setTargetCardRect}
                 cartItems={state.cartItems}
+                onBuyNow={state.handleBuyNow}
               />
             ) : (
               <Navigate to="/products" replace />

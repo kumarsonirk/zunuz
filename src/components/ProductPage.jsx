@@ -57,7 +57,8 @@ export default function ProductPage({
   onSelectProduct,
   activeTab,
   setActiveTab,
-  cartItems = []
+  cartItems = [],
+  onBuyNow
 }) {
   const [activeProductIndex, setActiveProductIndex] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
@@ -521,8 +522,7 @@ export default function ProductPage({
       <div className="px-6 pt-3 pb-6 flex select-none border-t border-zinc-900/60 bg-[#1F2024]" style={{ backgroundColor: '#1F2024', borderTop: '1px solid rgba(24, 24, 27, 0.6)', gap: '18px' }}>
         <button
           onClick={() => {
-            zr.playConfirm();
-            alert("Order placed successfully! Thank you for buying.");
+            if (activeProduct) onBuyNow(activeProduct);
           }}
           className="flex-1 flex items-center justify-center rounded-[10px] font-medium text-base cursor-pointer btn-buy-now"
           style={{ height: '58px', borderRadius: '10px', border: 'none' }}

@@ -7,6 +7,7 @@ import ParticleBackground from './ParticleBackground';
 import Header from './Header';
 import CartToast from './CartToast';
 import CardMorphOverlay from './CardMorphOverlay';
+import BillSummaryDrawer from './BillSummaryDrawer';
 
 export default function MainLayout({ children, state }) {
   const navigate = useNavigate();
@@ -71,6 +72,15 @@ export default function MainLayout({ children, state }) {
               state.setShowCartToast(false);
               zr.playConfirm();
             }}
+          />
+
+          {/* Global Bill Summary Drawer */}
+          <BillSummaryDrawer
+            isOpen={state.showBillSummaryDrawer}
+            onClose={() => state.setShowBillSummaryDrawer(false)}
+            product={state.billSummaryProduct}
+            deliveryInfo={state.deliveryInfo}
+            onChangeDelivery={state.handleChangeDelivery}
           />
         </div>
       )}

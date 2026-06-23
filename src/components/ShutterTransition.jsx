@@ -19,7 +19,7 @@ export default function ShutterTransition({
       <div className="absolute inset-0 flex flex-col justify-center items-center p-6 bg-[#1F2024]">
         <div className="relative flex items-center justify-center w-full h-full">
           {/* Shutter Card Frame */}
-          <div className="relative w-[75vw] max-w-[300px] h-[55vh] max-h-[460px] border border-zinc-800/60 rounded bg-zinc-950 overflow-hidden shadow-[0_0_90px_rgba(0,0,0,0.95)] z-10 animate-fade-in">
+          <div className="relative w-[75vw] max-w-[300px] h-[55vh] max-h-[460px] border border-zinc-800/60 rounded bg-zinc-950 overflow-hidden z-10 animate-fade-in">
             {Br.map((src, index) => {
               const isActive = index === shutterActiveIndex;
               return (

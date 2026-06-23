@@ -46,6 +46,10 @@
 /* Default base font */
 html, body, #root, .font-qrokinex {
   font-family: 'Qrokinex', sans-serif;
+  overflow: hidden !important;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
 }
 
 .font-grift, .font-grift * {

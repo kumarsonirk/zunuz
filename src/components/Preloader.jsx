@@ -5,28 +5,42 @@ export default function Preloader({ percentage, muted, onMuteToggle }) {
   const c = 2 * Math.PI * r;
   const strokeOffset = c - (percentage / 100) * c;
 
-  let text = 'EASY TO EXPLORE';
+  let suffix = 'EXPLORE';
   if (percentage > 25 && percentage <= 50) {
-    text = 'EASY TO SHOP';
+    suffix = 'SHOP';
   } else if (percentage > 50) {
-    text = 'EASY TO WEAR';
+    suffix = 'WEAR';
   }
 
-  const prevTextRef = useRef(text);
-  const [displayText, setDisplayText] = useState(text);
+  const prevSuffixRef = useRef(suffix);
+  const [displaySuffix, setDisplaySuffix] = useState(suffix);
   const [opacity, setOpacity] = useState(1);
+  const [translateY, setTranslateY] = useState(0);
 
   useEffect(() => {
-    if (text !== prevTextRef.current) {
+    if (suffix !== prevSuffixRef.current) {
+      // 1. Fade out and slide up out of view
       setOpacity(0);
+      setTranslateY(-6);
+
       const timeout = setTimeout(() => {
-        setDisplayText(text);
-        setOpacity(1);
-        prevTextRef.current = text;
-      }, 300);
+        // 2. Set new text and position it below center
+        setDisplaySuffix(suffix);
+        setTranslateY(6);
+
+        // 3. Slide up to center and fade back in
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setOpacity(1);
+            setTranslateY(0);
+          });
+        });
+        prevSuffixRef.current = suffix;
+      }, 250);
+
       return () => clearTimeout(timeout);
     }
-  }, [text]);
+  }, [suffix]);
 
   return (
     <div className="fixed inset-0 z-[999] bg-[#1F2024] flex items-center justify-center select-none">
@@ -48,20 +62,31 @@ export default function Preloader({ percentage, muted, onMuteToggle }) {
             />
           </svg>
           <div 
-            className="text-[3.8vw] md:text-[18px] font-light text-[#F5F2EB] leading-normal tracking-[0.2em] text-center px-4" 
+            className="absolute inset-0 flex items-center justify-center text-[3.8vw] md:text-[18px] font-light text-[#F5F2EB] leading-normal tracking-[0.2em] px-2" 
             style={{ 
-              opacity: opacity, 
-              transition: 'opacity 300ms ease-in-out',
               fontFamily: "'Space Grotesk', sans-serif",
-              maxWidth: '240px',
               textShadow: '0 0 12px rgba(245, 242, 235, 0.2)'
             }}
           >
-            {displayText}
+            {/* Left aligned anchor for prefix */}
+            <div className="w-1/2 text-right pr-1.5 whitespace-nowrap">
+              <span>EASY TO</span>
+            </div>
+            {/* Right aligned anchor for dynamic changing suffix */}
+            <div className="w-1/2 text-left pl-1.5 whitespace-nowrap overflow-visible">
+              <span 
+                className="font-medium tracking-[0.2em] inline-block transition-all duration-[250ms] ease-out transform"
+                style={{ 
+                  opacity: opacity,
+                  transform: `translate3d(0, ${translateY}px, 0)`
+                }}
+              >
+                {displaySuffix}
+              </span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
