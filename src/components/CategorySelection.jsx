@@ -18,10 +18,10 @@ export default function CategorySelection({ onSelectCategory }) {
             </div>
             {/* Text Content */}
             <div className="relative z-10 text-center px-4 flex flex-col items-center select-none transition-opacity duration-500 group-hover:opacity-80">
-              <h3 className="text-[6.5vw] sm:text-3xl leading-none text-white tracking-widest drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)] transition-colors font-qrokinex font-bold" style={{ fontFamily: "'Qrokinex', sans-serif", fontWeight: 700 }}>
+              <h3 className="text-[6.5vw] sm:text-3xl leading-none text-white tracking-widest drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)] transition-colors font-qrokinex font-bold" style={{ fontFamily: "'Qrokinex', 'Syncopate', sans-serif", fontWeight: 700 }}>
                 {D.title}
               </h3>
-              <p className="category-subtitle text-[10px] sm:text-xs tracking-widest text-[#F5F2EB]/80 mt-2.5 max-w-xs transition-colors duration-500" style={{ fontFamily: "'Grift', sans-serif" }}>
+              <p className="category-subtitle text-[10px] sm:text-xs tracking-widest text-[#F5F2EB]/80 mt-2.5 max-w-xs transition-colors duration-500" style={{ fontFamily: "'Grift', 'Space Grotesk', sans-serif" }}>
                 {D.subtitle}
               </p>
             </div>

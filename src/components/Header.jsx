@@ -5,7 +5,7 @@ export default function Header({ cartItems, onLogoClick, onCartClick }) {
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <header className="sticky top-0 z-50 flex justify-between items-center px-6 py-5 border-b border-zinc-900/60 backdrop-blur-lg bg-[#1F2024]/80 main-header">
+    <header className="sticky top-0 z-50 flex justify-between items-center px-6 py-5 backdrop-blur-lg bg-[#1F2024]/80 main-header">
       <img 
         src="/logo_white.png"
         alt="Zunuz Logo"

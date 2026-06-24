@@ -264,9 +264,9 @@ export default function ProductPage({
   const t = pos - activeProductIndex;
 
   return (
-    <>
+    <div className="flex-1 flex flex-col overflow-hidden relative bg-[#1F2024]">
       {/* Category Tab Selector Bar */}
-      <div className="flex w-full border-b border-zinc-900 sticky top-[72px] z-40 select-none bg-[#1F2024]" style={{ backgroundColor: '#1F2024', borderBottom: '1px solid rgba(24, 24, 27, 0.6)' }}>
+      <div className="flex w-full border-b border-zinc-900 sticky top-0 z-40 select-none bg-[#1F2024]" style={{ backgroundColor: '#1F2024', borderBottom: '1px solid rgba(24, 24, 27, 0.6)' }}>
         {[
           { id: "necklaces", label: "Necklaces" },
           { id: "earrings", label: "Earrings" },
@@ -301,14 +301,14 @@ export default function ProductPage({
       </div>
 
       {/* Product Card Stack Area */}
-      <div className="flex-1 flex flex-col justify-center items-center px-4 py-2 relative overflow-hidden select-none" style={{ minHeight: 0 }}>
+      <div className="flex-1 flex flex-col justify-center items-center px-4 pt-6 pb-2 relative overflow-hidden select-none" style={{ minHeight: 0 }}>
         {n === 0 ? (
           <div className="text-zinc-500 text-xs tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>No items in this category yet.</div>
         ) : (
           <div
             key={activeTab}
             className="relative w-full max-w-[390px] animate-card-fade-in"
-            style={{ width: '100%', maxWidth: '390px', height: 'min(calc((100vw - 32px) * 1.45), calc(100dvh - 320px), 520px)' }}
+            style={{ width: '100%', maxWidth: '390px', height: 'min(calc((100vw - 32px) * 1.45), calc(100dvh - 365px), 500px)' }}
           >
             {/* Fake Stacked Card Layers behind the active card */}
             {n > 1 && (
@@ -537,6 +537,6 @@ export default function ProductPage({
           {isAdding ? 'Added!' : isInCart ? 'Go to Cart' : 'Add To Cart'} <ShoppingCart size={18} strokeWidth={2} />
         </button>
       </div>
-    </>
+    </div>
   );
 }

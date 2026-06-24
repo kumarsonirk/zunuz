@@ -42,7 +42,7 @@ export default function MainLayout({ children, state }) {
       {/* 4. Main Portfolio Layout */}
       {state.showMainBackground && (
         <div
-          className="relative z-10 h-[100dvh] w-full flex flex-col justify-between max-w-lg mx-auto shadow-2xl border-x border-zinc-900/80 pb-safe-bottom will-change-[opacity,transform] bg-[#1F2024] main-layout-content-transition"
+          className="relative z-10 h-[100dvh] w-full flex flex-col justify-between max-w-lg mx-auto shadow-2xl border-x border-zinc-900/80 pb-safe-bottom will-change-[opacity,transform] bg-[#1F2024] main-layout-content-transition overflow-hidden"
           style={{
             opacity: state.showMainContent ? 1 : 0,
             transform: state.showMainContent ? "translate3d(0, 0, 0) scale(1)" : "translate3d(0, 100px, 0) scale(0.96)"
