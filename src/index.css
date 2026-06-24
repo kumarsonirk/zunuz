@@ -46,10 +46,20 @@
 /* Default base font */
 html, body, #root {
   font-family: 'Grift', 'Space Grotesk', sans-serif;
-  overflow: hidden !important;
   height: 100dvh;
   margin: 0;
   padding: 0;
+}
+
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+}
+
+#root {
+  overflow: hidden;
+  height: 100%;
 }
 
 .font-qrokinex {

@@ -121,18 +121,18 @@ export default function CartPage({
                   <div>
                     <h4 
                       onClick={() => onSelectProduct(item)}
-                      className="text-[16px] font-medium font-grift text-[#F5F2EB] truncate tracking-wide cursor-pointer"
+                      className="text-[20px] font-medium font-grift text-[#F5F2EB] truncate tracking-wide cursor-pointer"
                       style={{ fontFamily: "'Grift', sans-serif" }}
                     >
                       {item.name}
                     </h4>
-                    <p className="text-[14px] font-light text-zinc-400 mt-1 font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>
+                    <p className="text-[18px] font-light text-zinc-300 mt-1 font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>
                       {item.price}
                     </p>
                   </div>
 
                   {/* Quantity selector pill */}
-                  <div className="flex items-center w-[90px] h-[34px] rounded-lg bg-zinc-800/60 border border-zinc-700/40 overflow-hidden select-none">
+                  <div className="flex items-center w-[100px] h-[34px] rounded-lg bg-zinc-800/60 border border-zinc-700/40 overflow-hidden select-none">
                     <button 
                       onClick={() => onUpdateQuantity(item.id, -1)}
                       className="bg-gray-800 flex-1 h-full flex items-center justify-center text-zinc-400 hover:text-white font-medium hover:bg-zinc-700/30 transition-colors"
@@ -174,7 +174,7 @@ export default function CartPage({
         {recommendedPicks.length > 0 && (
           <div className="py-6 flex flex-col gap-4 select-none">
             <h3 className="px-6 text-[18px] font-grift font-light text-[#F5F2EB] tracking-wide" style={{ fontFamily: "'Grift', sans-serif" }}>
-              Pair It With These Picks
+              {cartItems.length === 0 ? "Complete your style" : "Pair It With These Picks"}
             </h3>
             <div className="flex gap-4 overflow-x-auto px-6 pt-2 pb-2 scrollbar-none scroll-smooth">
               {recommendedPicks.map(pick => (
@@ -194,16 +194,16 @@ export default function CartPage({
                       draggable="false"
                       style={{ backgroundColor: '#ffffff' }}
                     />
-                    <h4 className="text-[10px] font-grift text-zinc-900 truncate" style={{ fontFamily: "'Grift', sans-serif" }}>
+                    <h4 className="text-[14px] font-grift text-zinc-900 truncate" style={{ fontFamily: "'Grift', sans-serif" }}>
                       {pick.name}
                     </h4>
-                    <div className="text-[11px] font-grift text-zinc-900 mt-0.5" style={{ fontFamily: "'Grift', sans-serif" }}>
+                    <div className="text-[13px] font-grift text-zinc-900 mt-0.5" style={{ fontFamily: "'Grift', sans-serif" }}>
                       {pick.price}
                     </div>
                   </div>
                   <button
                     onClick={() => onAddToCart(pick)}
-                    className="w-full h-[32px] bg-[#FC4B4E] hover:bg-[#ff6b6d] text-white text-[10px] font-bold rounded-[6px] tracking-wide cursor-pointer transition-colors mt-2"
+                    className="w-full h-[32px] bg-[#FC4B4E] hover:bg-[#ff6b6d] text-white text-[12px] font-bold rounded-[6px] tracking-wide cursor-pointer transition-colors mt-2"
                     style={{ border: 'none', fontFamily: "'Grift', sans-serif" }}
                   >
                     ADD

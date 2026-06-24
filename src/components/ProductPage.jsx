@@ -515,11 +515,11 @@ export default function ProductPage({
 
       {/* Swipe/Tap helper hint */}
       <div className="text-[9px] font-grift tracking-wider text-zinc-500 text-center pt-3 pb-2 select-none uppercase" style={{ color: '#71717a', fontFamily: "'Grift', sans-serif" }}>
-        Swipe cards horizontally or tap for details product
+        Swipe cards horizontally or tap for product details
       </div>
 
       {/* Bottom Sticky Action Buttons */}
-      <div className="px-6 pt-3 pb-6 flex select-none border-t border-zinc-900/60 bg-[#1F2024]" style={{ backgroundColor: '#1F2024', borderTop: '1px solid rgba(24, 24, 27, 0.6)', gap: '18px' }}>
+      <div className="px-6 pt-3 pb-6 flex select-none bg-[#1F2024]" style={{ backgroundColor: '#1F2024', gap: '18px' }}>
         <button
           onClick={() => {
             if (activeProduct) onBuyNow(activeProduct);
