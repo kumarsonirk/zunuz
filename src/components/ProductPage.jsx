@@ -301,7 +301,7 @@ export default function ProductPage({
       </div>
 
       {/* Product Card Stack Area */}
-      <div className="flex-1 flex flex-col justify-center items-center px-4 pt-6 pb-2 relative overflow-hidden select-none" style={{ minHeight: 0 }}>
+      <div className="flex-1 flex flex-col justify-center items-center px-4 pb-2 relative overflow-hidden select-none" style={{ minHeight: 0 }}>
         {n === 0 ? (
           <div className="text-zinc-500 text-xs tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>No items in this category yet.</div>
         ) : (

@@ -64,7 +64,7 @@ export default function Preloader({ percentage, muted, onMuteToggle }) {
           <div 
             className="absolute inset-0 flex items-center justify-center text-[3.8vw] md:text-[18px] font-light text-[#F5F2EB] leading-normal tracking-[0.2em] px-2" 
             style={{ 
-              fontFamily: "'Space Grotesk', sans-serif",
+              fontFamily: "'Grift', 'Space Grotesk', sans-serif",
               textShadow: '0 0 12px rgba(245, 242, 235, 0.2)'
             }}
           >
