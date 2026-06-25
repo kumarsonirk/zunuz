@@ -38,7 +38,7 @@ function CardImage({ src, alt, style }) {
       alt={alt}
       decoding="sync"
       onLoad={() => setLoaded(true)}
-      className="absolute left-0 w-full object-contain pointer-events-none"
+      className="absolute object-contain pointer-events-none"
       draggable="false"
       style={{
         ...style,
@@ -213,11 +213,29 @@ export default function ProductPage({
       const activeProduct = productsList[activeProductIndex];
       if (activeProduct) {
         const rect = e.currentTarget.getBoundingClientRect();
+        const imgEl = e.currentTarget.querySelector('img');
+        let imgWidth = rect.width;
+        let imgHeight = rect.width;
+        let imgTop = rect.top + (rect.height - imgHeight) / 2;
+        let imgLeft = rect.left;
+
+        if (imgEl) {
+          const imgRect = imgEl.getBoundingClientRect();
+          imgWidth = imgRect.width;
+          imgHeight = imgRect.height;
+          imgTop = imgRect.top;
+          imgLeft = imgRect.left;
+        }
+
         onSelectProduct(activeProduct, {
           top: rect.top,
           left: rect.left,
           width: rect.width,
           height: rect.height,
+          imgWidth,
+          imgHeight,
+          imgTop,
+          imgLeft,
           activeTab
         });
       }
@@ -280,7 +298,7 @@ export default function ProductPage({
                 setActiveTab(tab.id);
                 zr.playConfirm();
               }}
-              className={`flex-1 text-center py-4 text-md font-grift tracking-wider relative transition-colors duration-300 ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`}
+              className={`flex-1 text-center py-3 text-md font-grift tracking-wider relative transition-colors duration-300 ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`}
             >
               <span className={isActive ? "text-white font-medium" : "text-[#71717A] font-normal"} style={{ color: isActive ? '#f5f5f7' : '#71717a', fontFamily: "'Grift', sans-serif" }}>
                 {tab.label}
@@ -293,8 +311,7 @@ export default function ProductPage({
         })}
       </div>
 
-      {/* Active Collection Heading */}
-      <div className="px-8 pt-6 pb-2 flex justify-between items-end select-none">
+      <div className="px-6 pt-3 pb-1 flex justify-between items-end select-none">
         <h2 className="text-[24px] font-grift font-light text-[#F5F2EB] tracking-wide leading-tight" style={{ color: '#f5f2eb', fontFamily: "'Grift', sans-serif" }}>
           {currentCollection?.title}
         </h2>
@@ -308,7 +325,7 @@ export default function ProductPage({
           <div
             key={activeTab}
             className="relative w-full max-w-[390px] animate-card-fade-in"
-            style={{ width: '100%', maxWidth: '390px', height: 'min(calc((100vw - 32px) * 1.45), calc(100dvh - 365px), 500px)' }}
+            style={{ width: '100%', maxWidth: '390px', height: 'min(calc((100vw - 32px) * 1.45), calc(100% - 16px), 500px)' }}
           >
             {/* Fake Stacked Card Layers behind the active card */}
             {n > 1 && (
@@ -444,8 +461,10 @@ export default function ProductPage({
                     src={product.image}
                     alt={product.name}
                     style={{ 
-                      width: '100%', 
+                      width: 'auto', 
                       height: 'auto', 
+                      maxWidth: 'calc(100% - 48px)',
+                      maxHeight: 'calc(100% - 140px)',
                       aspectRatio: '1/1',
                       top: '50%',
                       left: '50%',
@@ -457,7 +476,7 @@ export default function ProductPage({
 
                   {/* Card Top Title & Counter (Overlayed on top of image) */}
                   <div className="text-center w-full mt-1 z-10 relative">
-                    <h3 className="text-[24px] font-medium text-zinc-900 tracking-wide font-grift" style={{ color: '#18181b', fontFamily: "'Grift', sans-serif" }}>
+                    <h3 className="text-[20px] sm:text-[24px] font-medium text-zinc-900 tracking-wide font-grift" style={{ color: '#18181b', fontFamily: "'Grift', sans-serif" }}>
                       {product.name}
                     </h3>
                     <p className="text-[10px] text-zinc-400 font-grift mt-1 tracking-widest uppercase" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif" }}>
@@ -474,10 +493,9 @@ export default function ProductPage({
 
                       {/* Centered Price */}
                       <div 
-                        className="text-[28px] font-medium text-zinc-900 font-grift" 
+                        className="text-[24px] sm:text-[28px] font-medium text-zinc-900 font-grift" 
                         style={{ 
                           color: '#18181b', 
-                          fontSize: '28px', 
                           fontFamily: "'Grift', sans-serif"
                         }}
                       >
@@ -514,12 +532,12 @@ export default function ProductPage({
       </div>
 
       {/* Swipe/Tap helper hint */}
-      <div className="text-[9px] font-grift tracking-wider text-zinc-500 text-center pt-3 pb-2 select-none uppercase" style={{ color: '#71717a', fontFamily: "'Grift', sans-serif" }}>
+      <div className="text-[9px] font-grift tracking-wider text-zinc-500 text-center pt-1.5 pb-1 select-none uppercase" style={{ color: '#71717a', fontFamily: "'Grift', sans-serif" }}>
         Swipe cards horizontally or tap for product details
       </div>
 
       {/* Bottom Sticky Action Buttons */}
-      <div className="px-6 pt-3 pb-6 flex select-none bg-[#1F2024]" style={{ backgroundColor: '#1F2024', gap: '18px' }}>
+      <div className="px-6 pt-2 pb-4 flex select-none bg-[#1F2024]" style={{ backgroundColor: '#1F2024', gap: '18px' }}>
         <button
           onClick={() => {
             if (activeProduct) onBuyNow(activeProduct);

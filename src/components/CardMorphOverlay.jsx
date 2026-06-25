@@ -38,8 +38,8 @@ export default function CardMorphOverlay({
         alt={selectedProduct.name}
         className="absolute object-contain pointer-events-none bg-white aspect-square morph-image-transition"
         style={{
-          width: isMorphing ? `calc(${finalHeight}px - 48px)` : `${clickedCardRect.width}px`,
-          height: isMorphing ? `calc(${finalHeight}px - 48px)` : `${clickedCardRect.width}px`,
+          width: isMorphing ? `calc(${finalHeight}px - 48px)` : `${clickedCardRect.imgWidth || clickedCardRect.width}px`,
+          height: isMorphing ? `calc(${finalHeight}px - 48px)` : `${clickedCardRect.imgHeight || clickedCardRect.width}px`,
           top: isMorphing ? '24px' : '50%',
           transform: isMorphing ? 'translate3d(-50%, 0, 0)' : 'translate3d(-50%, -50%, 0)'
         }}
