@@ -84,7 +84,10 @@ export default function CartPage({
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] select-none overflow-hidden relative">
       {/* Scrollable Middle Container */}
-      <div className="flex-1 overflow-y-auto scrollbar-none pb-[120px]">
+      <div 
+        className="flex-1 overflow-y-auto scrollbar-none"
+        style={{ paddingBottom: cartItems.length > 0 ? '120px' : '24px' }}
+      >
         {/* Header Row */}
         <div className="px-6 pt-2 pb-2 flex items-center gap-3">
           <h2 className="text-[20px] font-grift font-light text-[#F5F2EB] tracking-wide" style={{ color: '#f5f2eb', fontFamily: "'Grift', sans-serif" }}>
@@ -216,79 +219,81 @@ export default function CartPage({
       </div>
 
       {/* Bill Summary expandable Drawer & Sticky Checkout Bar */}
-      <div className="absolute bottom-0 left-0 right-0 z-40 bg-[#1F2024] border-t border-zinc-900/60 shadow-[0_-15px_40px_-10px_rgba(0,0,0,0.85)] flex flex-col">
-        {/* Bill Summary header row */}
-        <div 
-          onClick={toggleBillSummary}
-          className="px-6 py-4.5 flex justify-between items-center cursor-pointer hover:bg-zinc-800/20 transition-colors select-none"
-        >
-          <span className="text-[18px] font-grift tracking-wider text-[#F5F2EB]" style={{ fontFamily: "'Grift', sans-serif" }}>
-            Bill Summary
-          </span>
-          <span className="text-zinc-400">
-            {billSummaryExpanded ? <ChevronDown size={22} /> : <ChevronUp size={22} />}
-          </span>
-        </div>
+      {cartItems.length > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 z-40 bg-[#1F2024] border-t border-zinc-900/60 shadow-[0_-15px_40px_-10px_rgba(0,0,0,0.85)] flex flex-col">
+          {/* Bill Summary header row */}
+          <div 
+            onClick={toggleBillSummary}
+            className="px-6 py-4.5 flex justify-between items-center cursor-pointer hover:bg-zinc-800/20 transition-colors select-none"
+          >
+            <span className="text-[18px] font-grift tracking-wider text-[#F5F2EB]" style={{ fontFamily: "'Grift', sans-serif" }}>
+              Bill Summary
+            </span>
+            <span className="text-zinc-400">
+              {billSummaryExpanded ? <ChevronDown size={22} /> : <ChevronUp size={22} />}
+            </span>
+          </div>
 
-        {/* Collapsible content area */}
-        <div 
-          className="overflow-hidden transition-all duration-300"
-          style={{
-            maxHeight: billSummaryExpanded ? '300px' : '0px',
-            opacity: billSummaryExpanded ? 1 : 0
-          }}
-        >
-          <div className="px-6 pb-5 flex flex-col gap-4 text-xs text-zinc-400 border-b border-zinc-900/40">
-            {/* Delivery Details Section */}
-            <div className="flex justify-between items-start border-b border-zinc-800/40 pb-3">
-              <div>
-                <span className="text-[14px] uppercase tracking-wider text-zinc-400 font-semibold block mb-1">Deliver to:</span>
-                <div className="text-[#F5F2EB] font-medium text-[14px]">{deliveryInfo.username}</div>
-                <div className="text-zinc-400 text-[13px] mt-0.5">{deliveryInfo.address}</div>
-                <div className="text-zinc-400 text-[13px] mt-0.5">Phone: {deliveryInfo.phone}</div>
+          {/* Collapsible content area */}
+          <div 
+            className="overflow-hidden transition-all duration-300"
+            style={{
+              maxHeight: billSummaryExpanded ? '300px' : '0px',
+              opacity: billSummaryExpanded ? 1 : 0
+            }}
+          >
+            <div className="px-6 pb-5 flex flex-col gap-4 text-xs text-zinc-400 border-b border-zinc-900/40">
+              {/* Delivery Details Section */}
+              <div className="flex justify-between items-start border-b border-zinc-800/40 pb-3">
+                <div>
+                  <span className="text-[14px] uppercase tracking-wider text-zinc-400 font-semibold block mb-1">Deliver to:</span>
+                  <div className="text-[#F5F2EB] font-medium text-[14px]">{deliveryInfo.username}</div>
+                  <div className="text-zinc-400 text-[13px] mt-0.5">{deliveryInfo.address}</div>
+                  <div className="text-zinc-400 text-[13px] mt-0.5">Phone: {deliveryInfo.phone}</div>
+                </div>
+                <button 
+                  onClick={handleChangeDelivery} 
+                  className="text-[#FC4B4E] hover:text-[#ff6b6d] text-[12px] font-bold cursor-pointer transition-colors"
+                  style={{ background: 'none', border: 'none' }}
+                >
+                  Change
+                </button>
               </div>
-              <button 
-                onClick={handleChangeDelivery} 
-                className="text-[#FC4B4E] hover:text-[#ff6b6d] text-[12px] font-bold cursor-pointer transition-colors"
-                style={{ background: 'none', border: 'none' }}
-              >
-                Change
-              </button>
-            </div>
 
-            {/* Price Details Section */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[13px] uppercase tracking-wider text-zinc-300 font-semibold block mb-1">Price Details</span>
-              <div className="flex text-[13px] justify-between">
-                <span>Items Total</span>
-                <span className="text-[#F5F2EB] font-mono">Rs {totalPrice}/-</span>
-              </div>
-              <div className="flex text-[13px] justify-between">
-                <span>Delivery Fee</span>
-                <span className="text-emerald-400 font-mono">Free</span>
-              </div>
-              <div className="flex justify-between pt-1 border-t border-zinc-800/40 text-[16px] font-bold text-[#F5F2EB]">
-                <span>Grand Total</span>
-                <span className="font-mono">Rs {totalPrice}/-</span>
+              {/* Price Details Section */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[13px] uppercase tracking-wider text-zinc-300 font-semibold block mb-1">Price Details</span>
+                <div className="flex text-[13px] justify-between">
+                  <span>Items Total</span>
+                  <span className="text-[#F5F2EB] font-mono">Rs {totalPrice}/-</span>
+                </div>
+                <div className="flex text-[13px] justify-between">
+                  <span>Delivery Fee</span>
+                  <span className="text-emerald-400 font-mono">Free</span>
+                </div>
+                <div className="flex justify-between pt-1 border-t border-zinc-800/40 text-[16px] font-bold text-[#F5F2EB]">
+                  <span>Grand Total</span>
+                  <span className="font-mono">Rs {totalPrice}/-</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Checkout Sticky Bar */}
-        <div 
-          onClick={handleCheckoutClick}
-          className="px-6 py-5.5 flex justify-between items-center bg-[#FC4B4E] hover:bg-[#ff6b6d] active:opacity-90 cursor-pointer select-none transition-colors"
-          style={{ height: '62px' }}
-        >
-          <span className="text-base font-bold text-white tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>
-            Checkout
-          </span>
-          <span className="text-base font-bold text-white tracking-widest font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>
-            Rs {totalPrice}/-
-          </span>
+          {/* Checkout Sticky Bar */}
+          <div 
+            onClick={handleCheckoutClick}
+            className="px-6 py-5.5 flex justify-between items-center bg-[#FC4B4E] hover:bg-[#ff6b6d] active:opacity-90 cursor-pointer select-none transition-colors"
+            style={{ height: '62px' }}
+          >
+            <span className="text-base font-bold text-white tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>
+              Checkout
+            </span>
+            <span className="text-base font-bold text-white tracking-widest font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>
+              Rs {totalPrice}/-
+            </span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

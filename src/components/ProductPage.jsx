@@ -298,7 +298,7 @@ export default function ProductPage({
                 setActiveTab(tab.id);
                 zr.playConfirm();
               }}
-              className={`flex-1 text-center py-3 text-md font-grift tracking-wider relative transition-colors duration-300 ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`}
+              className={`flex-1 text-center py-4 text-md font-grift tracking-wider relative transition-colors duration-300 ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`}
             >
               <span className={isActive ? "text-white font-medium" : "text-[#71717A] font-normal"} style={{ color: isActive ? '#f5f5f7' : '#71717a', fontFamily: "'Grift', sans-serif" }}>
                 {tab.label}
@@ -318,7 +318,7 @@ export default function ProductPage({
       </div>
 
       {/* Product Card Stack Area */}
-      <div className="flex-1 flex flex-col justify-center items-center px-4 pb-2 relative overflow-hidden select-none" style={{ minHeight: 0 }}>
+      <div className="flex-1 flex flex-col justify-center items-center px-6 pb-2 relative overflow-hidden select-none" style={{ minHeight: 0 }}>
         {n === 0 ? (
           <div className="text-zinc-500 text-xs tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>No items in this category yet.</div>
         ) : (
