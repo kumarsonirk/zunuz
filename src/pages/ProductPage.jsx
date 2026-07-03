@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { productData } from '../data/productData';
+import { productData } from '../data/productData'; // fallback when API not loaded
 import zr from '../utils/audio';
 
 function CardImage({ src, alt, style }) {
@@ -51,6 +51,7 @@ function CardImage({ src, alt, style }) {
 
 export default function ProductPage({
   selectedCategory,
+  productMap,
   likedProducts,
   onLikeToggle,
   onAddToCart,
@@ -58,7 +59,8 @@ export default function ProductPage({
   activeTab,
   setActiveTab,
   cartItems = [],
-  onBuyNow
+  onBuyNow,
+  subcategories = []
 }) {
   const [activeProductIndex, setActiveProductIndex] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
@@ -80,7 +82,8 @@ export default function ProductPage({
     }
   }, [selectedCategory, activeTab]);
 
-  const currentCollection = selectedCategory ? productData[selectedCategory.id] : null;
+  const activeData = productMap || productData;
+  const currentCollection = selectedCategory ? activeData[selectedCategory.id] : null;
   const productsList = currentCollection ? currentCollection[activeTab] || [] : [];
   const n = productsList.length;
   const activeProduct = productsList[activeProductIndex];
@@ -137,7 +140,7 @@ export default function ProductPage({
 
   const handlePointerDown = (e) => {
     if (n <= 1) return;
-    
+
     // Ignore pointer down if triggered on buttons or links
     if (e.target.closest('button') || e.target.closest('a')) {
       return;
@@ -285,11 +288,14 @@ export default function ProductPage({
     <div className="flex-1 flex flex-col overflow-hidden relative bg-[#1F2024]">
       {/* Category Tab Selector Bar */}
       <div className="flex w-full border-b border-zinc-900 sticky top-0 z-40 select-none bg-[#1F2024]" style={{ backgroundColor: '#1F2024', borderBottom: '1px solid rgba(24, 24, 27, 0.6)' }}>
-        {[
-          { id: "necklaces", label: "Necklaces" },
-          { id: "earrings", label: "Earrings" },
-          { id: "bracelets", label: "Bracelets" }
-        ].map(tab => {
+        {(subcategories.length > 0
+          ? subcategories.map(s => ({ id: s.slug, label: s.name }))
+          : [
+              { id: "necklaces", label: "Necklaces" },
+              { id: "earrings", label: "Earrings" },
+              { id: "bracelets", label: "Bracelets" }
+            ]
+        ).map(tab => {
           const isActive = activeTab === tab.id;
           return (
             <button
@@ -331,10 +337,10 @@ export default function ProductPage({
             {n > 1 && (
               <>
                 {/* Layer 2 (Bottom-most) */}
-                <div 
+                <div
                   className="absolute border shadow-sm pointer-events-none transition-all duration-300"
                   style={{
-                    backgroundColor: '#ffffff',
+                    backgroundColor: '#f8ebda',
                     border: '1px solid #e4e4e7',
                     borderBottomLeftRadius: '32px',
                     borderBottomRightRadius: '32px',
@@ -347,10 +353,10 @@ export default function ProductPage({
                   }}
                 />
                 {/* Layer 1 (Middle) */}
-                <div 
+                <div
                   className="absolute border shadow-md pointer-events-none transition-all duration-300"
                   style={{
-                    backgroundColor: '#ffffff',
+                    backgroundColor: '#f8ebda',
                     border: '1px solid #e4e4e7',
                     borderBottomLeftRadius: '32px',
                     borderBottomRightRadius: '32px',
@@ -367,7 +373,7 @@ export default function ProductPage({
 
             {productsList.map((product, idx) => {
               const isLiked = likedProducts[product.id] || false;
-              
+
               // Calculate index pointers relative to active card
               const nextIdx = (activeProductIndex + 1) % n;
               const prevIdx = (activeProductIndex - 1 + n) % n;
@@ -391,7 +397,7 @@ export default function ProductPage({
                 const tx = -clampedT * (300 + 16);
                 const rot = -clampedT * 30; // 30 degrees tilt at full swipe
                 transform = `translate3d(${tx}px, 0, 0) rotate(${rot}deg) scale(1)`;
-                opacity = 1; 
+                opacity = 1;
                 zIndex = 1005;
                 blur = 0;
               } else if (idx === nextIdx && clampedT > 0) {
@@ -400,7 +406,7 @@ export default function ProductPage({
                 const ty = (1 - clampedT) * 18;
                 transform = `translate3d(0, ${ty}px, 0) scale(${scale})`;
                 // Fades in extremely quickly at the very beginning of the swipe
-                opacity = Math.min(1, clampedT * 8); 
+                opacity = Math.min(1, clampedT * 8);
                 zIndex = 1000;
                 blur = 1.0 * (1 - clampedT);
               } else if (idx === prevIdx && clampedT < 0) {
@@ -410,7 +416,7 @@ export default function ProductPage({
                 const ty = (1 - absT) * 18;
                 transform = `translate3d(0, ${ty}px, 0) scale(${scale})`;
                 // Fades in extremely quickly at the very beginning of the swipe
-                opacity = Math.min(1, absT * 8); 
+                opacity = Math.min(1, absT * 8);
                 zIndex = 1000;
                 blur = 1.0 * (1 - absT);
               } else {
@@ -431,8 +437,8 @@ export default function ProductPage({
 
               // Determine if this card is currently in active transition
               const isTransitioning = idx === activeProductIndex || (idx === nextIdx && clampedT > 0) || (idx === prevIdx && clampedT < 0);
-              const transition = isDragging || !isTransitioning 
-                ? 'none' 
+              const transition = isDragging || !isTransitioning
+                ? 'none'
                 : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s, filter 0.4s';
 
               return (
@@ -444,7 +450,7 @@ export default function ProductPage({
                   onPointerCancel={handlePointerUp}
                   className="absolute inset-0 p-6 shadow-2xl flex flex-col justify-between items-center cursor-grab active:cursor-grabbing select-none rounded-[32px] border border-zinc-200"
                   style={{
-                    backgroundColor: '#ffffff',
+                    backgroundColor: '#f8ebda',
                     borderRadius: '32px',
                     border: '1px solid #e4e4e7',
                     transform,
@@ -460,17 +466,15 @@ export default function ProductPage({
                   <CardImage
                     src={product.image}
                     alt={product.name}
-                    style={{ 
-                      width: 'auto', 
-                      height: 'auto', 
+                    style={{
+                      width: 'auto',
+                      height: 'auto',
                       maxWidth: 'calc(100% - 48px)',
                       maxHeight: 'calc(100% - 140px)',
-                      aspectRatio: '1/1',
                       top: '50%',
                       left: '50%',
                       transform: 'translate3d(-50%, -50%, 0) scale(1)',
                       transformOrigin: 'center center',
-                      backgroundColor: '#ffffff'
                     }}
                   />
 
@@ -482,6 +486,14 @@ export default function ProductPage({
                     <p className="text-[10px] text-zinc-400 font-grift mt-1 tracking-widest uppercase" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif" }}>
                       {idx + 1} Of {n}
                     </p>
+                    {product.stock != null && product.stock <= 5 && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '6px', background: product.stock === 0 ? 'rgba(113,113,122,0.12)' : product.stock <= 2 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${product.stock === 0 ? 'rgba(113,113,122,0.3)' : product.stock <= 2 ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`, borderRadius: '20px', padding: '3px 10px' }}>
+                        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: product.stock === 0 ? '#71717A' : product.stock <= 2 ? '#EF4444' : '#F59E0B', display: 'inline-block', flexShrink: 0 }} />
+                        <span style={{ fontSize: '10px', fontWeight: 600, color: product.stock === 0 ? '#71717A' : product.stock <= 2 ? '#EF4444' : '#F59E0B', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
+                          {product.stock === 0 ? 'Out of Stock' : product.stock === 1 ? 'Last piece!' : `Only ${product.stock} left!`}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Bottom Row: Price, Heart Likes & Dots */}
@@ -492,10 +504,10 @@ export default function ProductPage({
                       <div className="w-[36px]" />
 
                       {/* Centered Price */}
-                      <div 
-                        className="text-[24px] sm:text-[28px] font-medium text-zinc-900 font-grift" 
-                        style={{ 
-                          color: '#18181b', 
+                      <div
+                        className="text-[24px] sm:text-[28px] font-medium text-zinc-900 font-grift"
+                        style={{
+                          color: '#18181b',
                           fontFamily: "'Grift', sans-serif"
                         }}
                       >
@@ -509,8 +521,8 @@ export default function ProductPage({
                       >
                         <svg
                           className={`w-6.5 h-6.5 transition-all duration-300 ${
-                            isLiked 
-                              ? "scale-110" 
+                            isLiked
+                              ? "scale-110"
                               : ""
                           }`}
                           viewBox="0 0 24 24"
@@ -540,12 +552,13 @@ export default function ProductPage({
       <div className="px-6 pt-2 pb-4 flex select-none bg-[#1F2024]" style={{ backgroundColor: '#1F2024', gap: '18px' }}>
         <button
           onClick={() => {
-            if (activeProduct) onBuyNow(activeProduct);
+            if (activeProduct && activeProduct.stock !== 0) onBuyNow(activeProduct);
           }}
-          className="flex-1 flex items-center justify-center rounded-[10px] font-medium text-base cursor-pointer btn-buy-now"
-          style={{ height: '58px', borderRadius: '10px', border: 'none' }}
+          disabled={!activeProduct || activeProduct.stock === 0}
+          className="flex-1 flex items-center justify-center rounded-[10px] font-medium text-base btn-buy-now"
+          style={{ height: '58px', borderRadius: '10px', border: 'none', cursor: activeProduct?.stock === 0 ? 'not-allowed' : 'pointer', opacity: activeProduct?.stock === 0 ? 0.45 : 1 }}
         >
-          Buy Now
+          {activeProduct?.stock === 0 ? 'Out of Stock' : 'Buy Now'}
         </button>
         <button
           onClick={handleAddClick}

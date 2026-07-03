@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, User, Search } from 'lucide-react';
 
 export default function Header({ cartItems, onLogoClick, onCartClick }) {
+  const navigate = useNavigate();
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
@@ -31,7 +33,7 @@ export default function Header({ cartItems, onLogoClick, onCartClick }) {
           )}
         </button>
         {/* Account Profile Icon */}
-        <button className="btn-nav-item btn-nav-user" aria-label="User Account">
+        <button onClick={() => navigate('/account')} className="btn-nav-item btn-nav-user" aria-label="User Account">
           <User size={20} strokeWidth={1.5} />
         </button>
       </div>

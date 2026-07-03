@@ -79,8 +79,6 @@ export default function MainLayout({ children, state }) {
             isOpen={state.showBillSummaryDrawer}
             onClose={() => state.setShowBillSummaryDrawer(false)}
             product={state.billSummaryProduct}
-            deliveryInfo={state.deliveryInfo}
-            onChangeDelivery={state.handleChangeDelivery}
           />
         </div>
       )}

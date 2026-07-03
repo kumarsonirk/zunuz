@@ -1,5 +1,5 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { ShoppingCart, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, RotateCcw, Truck, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData';
 import zr from '../utils/audio';
@@ -7,6 +7,7 @@ import zr from '../utils/audio';
 export default function ProductDetailsPage({
   product,
   category,
+  productMap,
   likedProducts,
   onLikeToggle,
   onAddToCart,
@@ -17,17 +18,47 @@ export default function ProductDetailsPage({
   cartItems = [],
   onBuyNow
 }) {
-  const activeTab = product.id.includes('-n')
-    ? 'necklaces'
-    : product.id.includes('-e')
-      ? 'earrings'
-      : 'bracelets';
+  const findActiveTab = () => {
+    const activeMap = productMap || productData;
+    const collection = category ? activeMap[category.id] : null;
+    if (collection) {
+      for (const sub of Object.keys(collection).filter(k => Array.isArray(collection[k]))) {
+        if (collection[sub].some(p => p.id === product.id)) return sub;
+      }
+    }
+    // Fallback heuristic for legacy mock IDs (e.g. "c-n1") when no match is found above
+    return product.id.includes('-n')
+      ? 'necklaces'
+      : product.id.includes('-e')
+        ? 'earrings'
+        : 'bracelets';
+  };
+  const activeTab = findActiveTab();
 
   const [isHearted, setIsHearted] = useState(likedProducts[product.id] || false);
   const [isAdding, setIsAdding] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
   const navigate = useNavigate();
   const isInCart = cartItems.some(item => item.id === product.id);
+
+  // Cart items don't carry stock/description/materials — look up the full record
+  // from productMap as a fallback when navigating here from the cart.
+  const fullProduct = React.useMemo(() => {
+    if (!productMap) return null;
+    for (const cat of Object.values(productMap)) {
+      for (const sub of Object.keys(cat).filter(k => Array.isArray(cat[k]))) {
+        const found = (cat[sub] || []).find(p => p.id === product.id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }, [product.id, productMap]);
+
+  const effectiveStock = product.stock != null ? product.stock : (fullProduct?.stock ?? null);
+  const effectiveDescription = product.description || fullProduct?.description
+    || "Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle. Ideal for elevating daily ensembles or making a statement at special occasions.";
+  const effectiveMaterials = product.materials || fullProduct?.materials
+    || "Made from premium 18K yellow gold plated sterling silver (925). Nickel-free and hypoallergenic for sensitive skin.";
 
   // Reset accordion state when product changes
   useEffect(() => {
@@ -91,10 +122,30 @@ export default function ProductDetailsPage({
 
   const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
 
-  // Reset carousel index back to 1 when product changes
+  const autoplayRef = useRef(null);
+
+  const stopAutoplay = () => {
+    if (autoplayRef.current) clearInterval(autoplayRef.current);
+  };
+
+  const startAutoplay = () => {
+    stopAutoplay();
+    autoplayRef.current = setInterval(() => {
+      // Enable transition in one render, then advance in the next frame so
+      // the browser sees two separate paints and animates correctly.
+      setIsTransitionEnabled(true);
+      requestAnimationFrame(() => {
+        setCurrentIndex(currentIndexRef.current + 1);
+      });
+    }, 2000);
+  };
+
+  // Reset carousel + restart autoplay when product changes; clear on unmount
   useEffect(() => {
     setIsTransitionEnabled(false);
     setCurrentIndex(1);
+    startAutoplay();
+    return () => stopAutoplay();
   }, [product]);
 
   // Simple touch swipe implementation for product image carousel
@@ -104,6 +155,8 @@ export default function ProductDetailsPage({
   const [isSwiping, setIsSwiping] = useState(false);
 
   const handleTouchStart = (e) => {
+    stopAutoplay();
+
     // Snap boundary index if we are currently at or beyond a cloned index
     if (currentIndexRef.current >= 4) {
       setIsTransitionEnabled(false);
@@ -129,7 +182,7 @@ export default function ProductDetailsPage({
     if (!isSwiping) return;
     setIsSwiping(false);
     const threshold = 60;
-    
+
     let targetIndex = currentIndexRef.current;
     if (touchDeltaX.current < -threshold) {
       targetIndex = currentIndexRef.current + 1;
@@ -138,14 +191,15 @@ export default function ProductDetailsPage({
       targetIndex = currentIndexRef.current - 1;
       zr.playTick();
     }
-    
+
     // Clamp targetIndex strictly within [0, 4] for absolute safety
     targetIndex = Math.max(0, Math.min(4, targetIndex));
-    
+
     setIsTransitionEnabled(true);
     setCurrentIndex(targetIndex);
     setSwipeOffset(0);
     touchDeltaX.current = 0;
+    startAutoplay();
   };
 
   const handleTransitionEnd = () => {
@@ -161,7 +215,9 @@ export default function ProductDetailsPage({
   // Derive canonicalIndex from currentIndex
   const canonicalIndex = (currentIndex - 1 + 3) % 3;
 
-  const currentCollection = category ? productData[category.id] : null;
+  // Use productMap (API data) when available, fall back to static productData
+  const activeDataMap = productMap || productData;
+  const currentCollection = category ? activeDataMap[category.id] : null;
 
   // Get all items in the collection, filter out current product, and shuffle randomly
   const sliderProducts = React.useMemo(() => {
@@ -197,12 +253,12 @@ export default function ProductDetailsPage({
       {/* Product Image Carousel Area */}
       <div
         ref={cardRef}
-        className="relative mx-0 mt-0 mb-4 overflow-hidden bg-white flex-shrink-0"
+        className="relative mx-0 mt-0 mb-4 overflow-hidden shrink-0"
         style={{
           width: '100%',
           height: '380px',
           opacity: isTransitioning ? 0 : 1,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#f8ebda'
         }}
       >
         <div
@@ -213,7 +269,7 @@ export default function ProductDetailsPage({
           className="flex h-full cursor-grab active:cursor-grabbing"
           style={{
             transform: `translate3d(calc(${-currentIndex * 20}% + ${swipeOffset}px), 0, 0)`,
-            transition: isTransitionEnabled && !isSwiping ? 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
+            transition: isTransitionEnabled && !isSwiping ? 'transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
             width: '500%',
             touchAction: 'pan-y'
           }}
@@ -232,11 +288,11 @@ export default function ProductDetailsPage({
                   className="w-full h-full object-contain pointer-events-none"
                   draggable="false"
                   style={{
-                    transform: visualIndex === 1 
-                      ? 'scale(1.15)' 
+                    transform: visualIndex === 1
+                      ? 'scale(1.15)'
                       : 'scale(1)',
                     transformOrigin: 'center center',
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#f8ebda'
                   }}
                 />
               </div>
@@ -304,13 +360,22 @@ export default function ProductDetailsPage({
               {product.price}
             </div>
           </div>
+
+          {effectiveStock != null && effectiveStock <= 5 && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '8px', background: effectiveStock === 0 ? 'rgba(113,113,122,0.1)' : effectiveStock <= 2 ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)', border: `1px solid ${effectiveStock === 0 ? 'rgba(113,113,122,0.25)' : effectiveStock <= 2 ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`, borderRadius: '20px', padding: '5px 12px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: effectiveStock === 0 ? '#71717A' : effectiveStock <= 2 ? '#EF4444' : '#F59E0B', display: 'inline-block', flexShrink: 0 }} />
+              <span style={{ fontSize: '12px', fontWeight: 600, color: effectiveStock === 0 ? '#71717A' : effectiveStock <= 2 ? '#EF4444' : '#F59E0B', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
+                {effectiveStock === 0 ? 'Out of Stock' : effectiveStock === 1 ? 'Last piece! Order now' : `Only ${effectiveStock} left in stock`}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Expandable Accordions */}
         <div className="px-6 border-t border-zinc-900/60" style={{ borderTop: '1px solid rgba(24, 24, 27, 0.4)' }}>
           <AccordionItem
             title="Description"
-            content="Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle. Ideal for elevating daily ensembles or making a statement at special occasions."
+            content={effectiveDescription}
             isOpen={openAccordion === 'Description'}
             onToggle={() => {
               setOpenAccordion(openAccordion === 'Description' ? null : 'Description');
@@ -319,22 +384,35 @@ export default function ProductDetailsPage({
           />
           <AccordionItem
             title="Materials"
-            content="Made from premium 18K yellow gold plated sterling silver (925). Nickel-free and hypoallergenic for sensitive skin."
+            content={effectiveMaterials}
             isOpen={openAccordion === 'Materials'}
             onToggle={() => {
               setOpenAccordion(openAccordion === 'Materials' ? null : 'Materials');
               zr.playTick();
             }}
           />
-          <AccordionItem
-            title="Returns"
-            content="We offer complimentary 30-day returns and exchanges. Items must be in their original condition and packaging."
-            isOpen={openAccordion === 'Returns'}
-            onToggle={() => {
-              setOpenAccordion(openAccordion === 'Returns' ? null : 'Returns');
-              zr.playTick();
-            }}
-          />
+        </div>
+
+        {/* Returns & Delivery capsule links */}
+        <div className="px-6 pt-4 pb-1 flex gap-3">
+          <button
+            onClick={() => { zr.playTick(); navigate('/customer-care/returns-replacements'); }}
+            className="flex-1 flex items-center gap-2 rounded-full capsule-link-btn capsule-returns"
+            style={{ padding: '10px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', cursor: 'pointer' }}
+          >
+            <RotateCcw size={14} strokeWidth={1.5} style={{ color: '#A1A1AA', flexShrink: 0 }} />
+            <span style={{ fontSize: '12px', color: '#F5F2EB', fontFamily: "'Grift', sans-serif", flex: 1, textAlign: 'left' }}>Returns</span>
+            <ChevronRight size={14} strokeWidth={1.5} style={{ color: '#71717A', flexShrink: 0 }} />
+          </button>
+          <button
+            onClick={() => { zr.playTick(); navigate('/customer-care/shipping-policy'); }}
+            className="flex-1 flex items-center gap-2 rounded-full capsule-link-btn capsule-delivery"
+            style={{ padding: '10px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', cursor: 'pointer' }}
+          >
+            <Truck size={14} strokeWidth={1.5} style={{ color: '#A1A1AA', flexShrink: 0 }} />
+            <span style={{ fontSize: '12px', color: '#F5F2EB', fontFamily: "'Grift', sans-serif", flex: 1, textAlign: 'left' }}>Delivery</span>
+            <ChevronRight size={14} strokeWidth={1.5} style={{ color: '#71717A', flexShrink: 0 }} />
+          </button>
         </div>
 
 
@@ -360,7 +438,7 @@ export default function ProductDetailsPage({
                     alt={lookProd.name}
                     className="w-full aspect-square object-contain rounded-t-[10px] mb-2 pointer-events-none"
                     draggable="false"
-                    style={{ backgroundColor: '#ffffff' }}
+                    style={{ backgroundColor: '#f8ebda' }}
                   />
                   <h4 className="text-[10px] font-grift text-zinc-900 truncate" style={{ fontFamily: "'Grift', sans-serif" }}>
                     {lookProd.name}
@@ -379,13 +457,12 @@ export default function ProductDetailsPage({
     {/* Bottom Sticky Action Buttons (Fixed at bottom, non-scrollable) */}
     <div className="px-6 py-5 flex border-t border-zinc-900/60 bg-[#1F2024] flex-shrink-0" style={{ backgroundColor: '#1F2024', borderTop: '1px solid rgba(24, 24, 27, 0.6)', gap: '18px' }}>
         <button
-          onClick={() => {
-            onBuyNow(product);
-          }}
-          className="flex-1 flex items-center justify-center rounded-[20px] font-medium text-base cursor-pointer btn-buy-now"
-          style={{ height: '58px', borderRadius: '20px', border: 'none' }}
+          onClick={() => { if (effectiveStock !== 0) onBuyNow(product); }}
+          disabled={effectiveStock === 0}
+          className="flex-1 flex items-center justify-center rounded-[20px] font-medium text-base btn-buy-now"
+          style={{ height: '58px', borderRadius: '20px', border: 'none', cursor: effectiveStock === 0 ? 'not-allowed' : 'pointer', opacity: effectiveStock === 0 ? 0.45 : 1 }}
         >
-          Buy Now
+          {effectiveStock === 0 ? 'Out of Stock' : 'Buy Now'}
         </button>
         <button
           onClick={handleAddClick}

@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+}
+
+model Customer {
+  id           Int       @id @default(autoincrement())
+  name         String?
+  email        String?   @unique
+  passwordHash String?
+  phone        String    @unique
+  createdAt    DateTime  @default(now())
+  addresses    Address[]
+  orders       Order[]
+}
+
+model OtpRequest {
+  id        Int      @id @default(autoincrement())
+  phone     String
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+model Address {
+  id         Int      @id @default(autoincrement())
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label      String   @default("Home")
+  street     String
+  city       String
+  state      String
+  pincode    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  orders     Order[]
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String
+  slug     String    @unique
+  subtitle String
+  image    String
+  order    Int       @default(0)
+  products Product[]
+}
+
+model Subcategory {
+  id       Int       @id @default(autoincrement())
+  name     String
+  slug     String    @unique
+  order    Int       @default(0)
+  products Product[]
+}
+
+model Product {
+  id            Int         @id @default(autoincrement())
+  name          String
+  price         Int
+  stock         Int         @default(0)
+  image         String
+  images        String      @default("[]")
+  likes         Int         @default(0)
+  isActive      Boolean     @default(true)
+  description   String?     @db.Text
+  materials     String?     @db.Text
+  category      Category    @relation(fields: [categoryId], references: [id])
+  categoryId    Int
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id])
+  subcategoryId Int
+  createdAt     DateTime    @default(now())
+  orderItems    OrderItem[]
+}
+
+model Order {
+  id                Int           @id @default(autoincrement())
+  customerId        Int
+  customer          Customer      @relation(fields: [customerId], references: [id])
+  addressId         Int
+  address           Address       @relation(fields: [addressId], references: [id])
+  total             Int
+  status            OrderStatus   @default(PENDING)
+  paymentMethod     PaymentMethod @default(COD)
+  paymentStatus     PaymentStatus @default(PENDING)
+  razorpayOrderId   String?       @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  items             OrderItem[]
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  COD
+  RAZORPAY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Int
+}

@@ -396,5 +396,99 @@ html, body, #root, * {
   transition: transform 1200ms cubic-bezier(0.16, 1, 0.3, 1), opacity 1000ms ease-out !important;
 }
 
+/* Returns/Delivery capsule links on the product details page */
+.capsule-link-btn {
+  position: relative !important;
+  overflow: hidden !important;
+  z-index: 1;
+  transition: border-color 0.3s ease !important;
+}
+.capsule-link-btn::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: #FC4B4E !important;
+  transform: scaleX(0) !important;
+  transform-origin: left !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  z-index: -1 !important;
+}
+.capsule-link-btn span,
+.capsule-link-btn svg {
+  transition: color 0.3s ease !important;
+}
+@media (hover: hover) {
+  .capsule-link-btn:hover {
+    border-color: #FC4B4E !important;
+  }
+  .capsule-link-btn:hover::before {
+    transform: scaleX(1) !important;
+  }
+  .capsule-link-btn:hover span,
+  .capsule-link-btn:hover svg {
+    color: #ffffff !important;
+  }
+  .capsule-returns:hover svg:first-child {
+    animation: capsule-spin 0.5s ease-in-out !important;
+  }
+  .capsule-delivery:hover svg:first-child {
+    animation: capsule-drive 0.6s ease-in-out infinite !important;
+  }
+}
+@keyframes capsule-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+@keyframes capsule-drive {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+.capsule-link-btn:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.1s ease-out !important;
+}
+
+/* ── Admin Dashboard Theme (light/dark) ──
+   Scoped via [data-theme] on the AdminLayout root. Defaults below are the
+   dark theme (unscoped, so pages outside the themed root — e.g. admin login —
+   keep the original always-dark look). */
+:root {
+  --admin-bg: #0D0E10;
+  --admin-surface: #16181E;
+  --admin-sidebar: #111318;
+  --admin-surface-2: #1A1C23;
+  --admin-text: #F5F2EB;
+  --admin-text-muted: #A1A1AA;
+  --admin-text-dim: #71717A;
+  --admin-text-faint: #3F3F46;
+  --admin-hover-1: rgba(255,255,255,0.02);
+  --admin-hover-2: rgba(255,255,255,0.03);
+  --admin-hover-3: rgba(255,255,255,0.04);
+  --admin-border-1: rgba(255,255,255,0.05);
+  --admin-border-2: rgba(255,255,255,0.06);
+  --admin-border-3: rgba(255,255,255,0.08);
+  --admin-border-4: rgba(255,255,255,0.1);
+  --admin-border-5: rgba(255,255,255,0.12);
+}
+
+[data-theme="light"] {
+  --admin-bg: #F0F0F3;
+  --admin-surface: #FFFFFF;
+  --admin-sidebar: #FFFFFF;
+  --admin-surface-2: #F5F5F7;
+  --admin-text: #18181B;
+  --admin-text-muted: #52525B;
+  --admin-text-dim: #71717A;
+  --admin-text-faint: #A1A1AA;
+  --admin-hover-1: rgba(0,0,0,0.02);
+  --admin-hover-2: rgba(0,0,0,0.035);
+  --admin-hover-3: rgba(0,0,0,0.05);
+  --admin-border-1: rgba(0,0,0,0.06);
+  --admin-border-2: rgba(0,0,0,0.08);
+  --admin-border-3: rgba(0,0,0,0.1);
+  --admin-border-4: rgba(0,0,0,0.12);
+  --admin-border-5: rgba(0,0,0,0.15);
+}
+
 
 

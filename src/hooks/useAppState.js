@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import zr from '../utils/audio';
-import { Br } from '../data/productData';
+import { Br, productData } from '../data/productData';
 import { findProductById, findCategoryByProductId } from '../utils/productUtils';
 
 export function useAppState() {
@@ -59,10 +59,72 @@ export function useAppState() {
   });
   
   const [likedProducts, setLikedProducts] = useState({});
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('zunuz_cart_items');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const canvasRef = useRef(null);
 
+  const [productMap, setProductMap] = useState(null);
+  const [subcategories, setSubcategories] = useState([]);
+
+  useEffect(() => {
+    const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    fetch(`${BASE}/categories`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        if (Array.isArray(data.subcategories) && data.subcategories.length > 0) {
+          setSubcategories(data.subcategories.map(s => ({ slug: s.slug, name: s.name })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    fetch(`${BASE}/products`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(products => {
+        if (!Array.isArray(products) || products.length === 0) return;
+        const map = {};
+        products.forEach(p => {
+          const catSlug = p.category?.slug;
+          const subSlug = p.subcategory?.slug;
+          if (!catSlug || !subSlug) return;
+          if (!map[catSlug]) map[catSlug] = { title: `${p.category.name} Collection` };
+          if (!map[catSlug][subSlug]) map[catSlug][subSlug] = [];
+          let imgs;
+          try { imgs = Array.isArray(p.images) ? p.images : JSON.parse(p.images || '[]'); } catch { imgs = []; }
+          if (imgs.length === 0 && p.image) imgs = [p.image];
+          map[catSlug][subSlug].push({
+            id: String(p.id),
+            name: p.name,
+            price: `Rs ${Math.round(p.price).toLocaleString('en-IN')}/-`,
+            likes: '0k',
+            stock: p.stock ?? null,
+            image: p.image || '/gold_knot_necklace.png',
+            images: imgs.length > 0 ? imgs : [p.image || '/gold_knot_necklace.png'],
+            description: p.description || null,
+            materials: p.materials || null
+          });
+        });
+        if (Object.keys(map).length > 0) setProductMap(map);
+      })
+      .catch(() => {});
+  }, []);
+
   const [activeTab, setActiveTab] = useState("necklaces");
+
+  // Keep activeTab valid once the real subcategory list loads (e.g. if "necklaces" was renamed/removed)
+  useEffect(() => {
+    if (subcategories.length > 0 && !subcategories.some(s => s.slug === activeTab)) {
+      setActiveTab(subcategories[0].slug);
+    }
+  }, [subcategories]);
   const [selectedProduct, setSelectedProduct] = useState(initialData.product);
   const [transitionState, setTransitionState] = useState(initialData.product ? 'details' : 'none'); // 'none', 'animating_in', 'details', 'animating_out'
   const [clickedCardRect, setClickedCardRect] = useState(null);
@@ -74,11 +136,6 @@ export function useAppState() {
   // Buy Now Bill Summary Drawer States
   const [showBillSummaryDrawer, setShowBillSummaryDrawer] = useState(false);
   const [billSummaryProduct, setBillSummaryProduct] = useState(null);
-  const [deliveryInfo, setDeliveryInfo] = useState({
-    username: "Rahul Kumar Soni",
-    address: "H.No. 45, Sector 4, Rohini, New Delhi - 110085",
-    phone: "+91 98765 43210"
-  });
 
   useEffect(() => {
     if (showCartToast) {
@@ -102,11 +159,17 @@ export function useAppState() {
   }, [selectedCategory]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem('zunuz_cart_items', JSON.stringify(cartItems));
+    } catch (e) {}
+  }, [cartItems]);
+
+  useEffect(() => {
     if (isFirstMount.current) {
       isFirstMount.current = false;
       return;
     }
-    setActiveTab("necklaces");
+    setActiveTab(subcategories[0]?.slug || "necklaces");
     setSelectedProduct(null);
     setTransitionState('none');
   }, [selectedCategory]);
@@ -114,15 +177,22 @@ export function useAppState() {
   // Sync URL → state on path changes (handles direct URL access, page refresh, and back/forward navigation)
   useEffect(() => {
     const path = location.pathname;
+
+    // Admin, auth, account, legal, and customer-care routes are handled by their own components
+    if (path.startsWith('/admin') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/account') || path.startsWith('/terms') || path.startsWith('/privacy') || path.startsWith('/customer-care')) {
+      return;
+    }
+
+    const activeMap = productMap || productData;
     const savedCategory = (() => {
       try { return JSON.parse(localStorage.getItem('zunuz_selected_category')); } catch { return null; }
     })();
 
     if (path.startsWith('/products/')) {
       const productId = path.slice('/products/'.length);
-      const resolvedCategory = savedCategory || (productId ? findCategoryByProductId(productId) : null);
+      const resolvedCategory = savedCategory || (productId ? findCategoryByProductId(productId, activeMap) : null);
       if (resolvedCategory && productId) {
-        const product = findProductById(productId);
+        const product = findProductById(productId, activeMap);
         if (product) {
           if (!savedCategory) {
             try { localStorage.setItem('zunuz_selected_category', JSON.stringify(resolvedCategory)); } catch (e) {}
@@ -133,9 +203,15 @@ export function useAppState() {
             setSelectedProduct(product);
             setTransitionState('details');
           }
+        } else if (selectedProduct && selectedProduct.id === productId) {
+          // selectedProduct was set directly (e.g., clicking a cart item) — trust it, don't redirect
+          setTransitionState('details');
         } else {
           navigate('/products', { replace: true });
         }
+      } else if (selectedProduct && selectedProduct.id === productId) {
+        // Same fallback: selectedProduct is already set, just show it
+        setTransitionState('details');
       } else {
         navigate(resolvedCategory ? '/products' : '/', { replace: true });
       }
@@ -328,9 +404,18 @@ export function useAppState() {
 
   const handleBackToProductPage = (targetTab) => {
     navigate('/products');
-    const productCategory = selectedProduct
-      ? (selectedProduct.id.includes('-n') ? 'necklaces' : selectedProduct.id.includes('-e') ? 'earrings' : 'bracelets')
-      : null;
+    const productCategory = (() => {
+      if (!selectedProduct) return null;
+      const activeMap = productMap || productData;
+      const collection = selectedCategory ? activeMap[selectedCategory.id] : null;
+      if (collection) {
+        for (const sub of Object.keys(collection).filter(k => Array.isArray(collection[k]))) {
+          if (collection[sub].some(p => p.id === selectedProduct.id)) return sub;
+        }
+      }
+      // Fallback heuristic for legacy mock IDs (e.g. "c-n1") when no match is found above
+      return selectedProduct.id.includes('-n') ? 'necklaces' : selectedProduct.id.includes('-e') ? 'earrings' : 'bracelets';
+    })();
 
     if (targetTab && productCategory && targetTab !== productCategory) {
       // Different category selected from navigation: bypass morph animation entirely for a clean cross-fade switch
@@ -371,6 +456,8 @@ export function useAppState() {
   };
 
   return {
+    productMap,
+    subcategories,
     showPreloader,
     preloaderPercentage,
     muted,
@@ -411,23 +498,16 @@ export function useAppState() {
     handleSelectProduct,
     handleBackToProductPage,
     handleSelectCategory,
+    handleClearCart: () => setCartItems([]),
     // Buy Now Drawer Exports
     showBillSummaryDrawer,
     setShowBillSummaryDrawer,
     billSummaryProduct,
     setBillSummaryProduct,
-    deliveryInfo,
-    setDeliveryInfo,
     handleBuyNow: (product) => {
       zr.playConfirm();
       setBillSummaryProduct(product);
       setShowBillSummaryDrawer(true);
     },
-    handleChangeDelivery: () => {
-      const newName = prompt("Enter Name:", deliveryInfo.username) || deliveryInfo.username;
-      const newAddress = prompt("Enter Address:", deliveryInfo.address) || deliveryInfo.address;
-      const newPhone = prompt("Enter Phone Number:", deliveryInfo.phone) || deliveryInfo.phone;
-      setDeliveryInfo({ username: newName, address: newAddress, phone: newPhone });
-    }
   };
 }
