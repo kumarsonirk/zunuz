@@ -8,11 +8,13 @@ datasource db {
 }
 
 model Admin {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  passwordHash String
-  name         String
-  createdAt    DateTime @default(now())
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  passwordHash   String
+  name           String
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 model Customer {
@@ -30,6 +32,7 @@ model OtpRequest {
   id        Int      @id @default(autoincrement())
   phone     String
   otp       String
+  attempts  Int      @default(0)
   expiresAt DateTime
   createdAt DateTime @default(now())
 

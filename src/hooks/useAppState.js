@@ -359,12 +359,14 @@ export function useAppState() {
     }
   };
 
+  const MAX_QUANTITY_PER_ITEM = 10;
+
   const handleUpdateCartQuantity = (productId, delta) => {
     setCartItems(prev => {
       return prev.map(item => {
         if (item.id === productId) {
           const newQty = item.quantity + delta;
-          return newQty > 0 ? { ...item, quantity: newQty } : item;
+          return newQty > 0 && newQty <= MAX_QUANTITY_PER_ITEM ? { ...item, quantity: newQty } : item;
         }
         return item;
       });

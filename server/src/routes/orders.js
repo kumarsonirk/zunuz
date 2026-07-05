@@ -3,45 +3,42 @@ const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
 const auth = require('../middleware/customerAuth');
 const razorpay = require('../lib/razorpay');
+const { validateItemsAndTotal, decrementStockAtomic } = require('../lib/stock');
 
 const prisma = new PrismaClient();
 
 const ORDER_INCLUDE = { items: { include: { product: true } }, address: true };
-
-async function validateItemsAndTotal(items) {
-  let total = 0;
-  const orderItemsData = [];
-  for (const item of items) {
-    const product = await prisma.product.findUnique({ where: { id: Number(item.productId) } });
-    if (!product || !product.isActive) throw new Error(`Product ${item.productId} not available`);
-    if (product.stock < item.quantity) throw new Error(`Insufficient stock for ${product.name}`);
-    total += product.price * item.quantity;
-    orderItemsData.push({ productId: product.id, quantity: item.quantity, price: product.price });
-  }
-  return { total, orderItemsData };
-}
-
-async function decrementStock(items) {
-  for (const item of items) {
-    await prisma.product.update({
-      where: { id: Number(item.productId) },
-      data: { stock: { decrement: item.quantity } }
-    });
-  }
-}
+const MAX_QUANTITY_PER_ITEM = 10;
 
 // POST /api/orders  (place an order — COD confirms immediately, RAZORPAY needs verify-payment)
 router.post('/', auth, async (req, res) => {
   const { addressId, items, paymentMethod = 'COD' } = req.body;
   if (!addressId || !items || items.length === 0) return res.status(400).json({ error: 'Address and items required' });
   if (!['COD', 'RAZORPAY'].includes(paymentMethod)) return res.status(400).json({ error: 'Invalid payment method' });
+  const invalidQty = items.find(i => !Number.isInteger(i.quantity) || i.quantity < 1 || i.quantity > MAX_QUANTITY_PER_ITEM);
+  if (invalidQty) return res.status(400).json({ error: `Quantity must be between 1 and ${MAX_QUANTITY_PER_ITEM} per item.` });
 
   try {
     const address = await prisma.address.findFirst({ where: { id: Number(addressId), customerId: req.customer.id } });
     if (!address) return res.status(404).json({ error: 'Address not found' });
 
-    const { total, orderItemsData } = await validateItemsAndTotal(items);
+    if (paymentMethod === 'COD') {
+      // Validate, create the order, and reserve stock atomically in one transaction —
+      // if stock runs out between the check and the reservation, everything rolls back
+      // and the order is never created (instead of being created with unavailable items).
+      const order = await prisma.$transaction(async (tx) => {
+        const { total, orderItemsData } = await validateItemsAndTotal(tx, items);
+        const created = await tx.order.create({
+          data: { customerId: req.customer.id, addressId: Number(addressId), total, paymentMethod, items: { create: orderItemsData } },
+          include: ORDER_INCLUDE
+        });
+        await decrementStockAtomic(tx, items);
+        return created;
+      });
+      return res.status(201).json(order);
+    }
 
+    const { total, orderItemsData } = await validateItemsAndTotal(prisma, items);
     const order = await prisma.order.create({
       data: {
         customerId: req.customer.id,
@@ -52,11 +49,6 @@ router.post('/', auth, async (req, res) => {
       },
       include: ORDER_INCLUDE
     });
-
-    if (paymentMethod === 'COD') {
-      await decrementStock(items);
-      return res.status(201).json(order);
-    }
 
     // RAZORPAY: create a gateway order, hold stock until payment is verified
     try {
@@ -115,17 +107,41 @@ router.post('/:id/verify-payment', auth, async (req, res) => {
       return res.status(400).json({ error: 'Payment verification failed' });
     }
 
-    await decrementStock(order.items.map(i => ({ productId: i.productId, quantity: i.quantity })));
-    const updated = await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        paymentStatus: 'PAID',
-        status: 'CONFIRMED',
-        razorpayPaymentId: razorpay_payment_id,
-        razorpaySignature: razorpay_signature,
-      },
-      include: ORDER_INCLUDE
-    });
+    const items = order.items.map(i => ({ productId: i.productId, quantity: i.quantity }));
+    let updated;
+    try {
+      updated = await prisma.$transaction(async (tx) => {
+        await decrementStockAtomic(tx, items);
+        return tx.order.update({
+          where: { id: order.id },
+          data: {
+            paymentStatus: 'PAID',
+            status: 'CONFIRMED',
+            razorpayPaymentId: razorpay_payment_id,
+            razorpaySignature: razorpay_signature,
+          },
+          include: ORDER_INCLUDE
+        });
+      });
+    } catch (stockErr) {
+      // Payment succeeded but stock ran out while it was pending (e.g. someone else
+      // bought the last unit via COD first). Money was taken — mark PAID + CANCELLED
+      // so it's visible to admin as needing a manual refund, instead of overselling.
+      updated = await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          paymentStatus: 'PAID',
+          status: 'CANCELLED',
+          razorpayPaymentId: razorpay_payment_id,
+          razorpaySignature: razorpay_signature,
+        },
+        include: ORDER_INCLUDE
+      });
+      return res.status(409).json({
+        error: "Payment succeeded, but this item just sold out. Your order has been cancelled and will be refunded — contact support if you don't see it within a few days.",
+        order: updated
+      });
+    }
     res.json(updated);
   } catch (e) {
     console.error(e);

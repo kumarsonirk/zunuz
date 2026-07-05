@@ -16,12 +16,15 @@ router.get('/me', auth, async (req, res) => {
 });
 
 // PUT /api/customers/me
+// Phone is deliberately not updatable here — it's the OTP-verified login identity,
+// and changing it without re-verifying ownership would let an account be silently
+// re-pointed to a different number.
 router.put('/me', auth, async (req, res) => {
-  const { name, phone, email } = req.body;
+  const { name, email } = req.body;
   try {
     const customer = await prisma.customer.update({
       where: { id: req.customer.id },
-      data: { name, phone, email: email || null },
+      data: { name, email: email || null },
       select: { id: true, name: true, email: true, phone: true }
     });
     res.json(customer);

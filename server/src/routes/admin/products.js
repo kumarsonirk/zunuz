@@ -59,7 +59,12 @@ router.put('/:id', auth, async (req, res) => {
 
 router.delete('/:id', auth, async (req, res) => {
   try {
-    await prisma.product.delete({ where: { id: Number(req.params.id) } });
+    const id = Number(req.params.id);
+    const orderItemCount = await prisma.orderItem.count({ where: { productId: id } });
+    if (orderItemCount > 0) {
+      return res.status(409).json({ error: `Cannot delete: this product appears in ${orderItemCount} past order(s). Set it to "Inactive" instead to hide it from the store while keeping order history intact.` });
+    }
+    await prisma.product.delete({ where: { id } });
     res.json({ message: 'Product deleted' });
   } catch { res.status(500).json({ error: 'Server error' }); }
 });

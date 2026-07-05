@@ -19,9 +19,11 @@ const upload = multer({
   storage,
   limits: { fileSize: 8 * 1024 * 1024 }, // 8 MB
   fileFilter: (req, file, cb) => {
-    const allowedMime = /^image\/(jpeg|jpg|png|gif|webp|svg\+xml)$/;
+    // SVG deliberately excluded — it's an XML format that can embed <script>
+    // tags, making it a stored-XSS vector when served back from /uploads.
+    const allowedMime = /^image\/(jpeg|jpg|png|gif|webp)$/;
     if (allowedMime.test(file.mimetype)) cb(null, true);
-    else cb(new Error('Only image files are allowed'));
+    else cb(new Error('Only image files are allowed (JPG, PNG, GIF, WEBP)'));
   }
 });
 

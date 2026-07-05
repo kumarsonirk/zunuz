@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
+const { decrementStockAtomic } = require('../lib/stock');
 
 const prisma = new PrismaClient();
 
@@ -25,13 +26,23 @@ router.post('/razorpay', async (req, res) => {
         const order = await prisma.order.findUnique({ where: { razorpayOrderId: rpOrderId }, include: { items: true } });
         if (order && order.paymentStatus !== 'PAID') {
           // Backstop for when the frontend never called verify-payment (tab closed after paying)
-          for (const item of order.items) {
-            await prisma.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.quantity } } });
+          const items = order.items.map(i => ({ productId: i.productId, quantity: i.quantity }));
+          try {
+            await prisma.$transaction(async (tx) => {
+              await decrementStockAtomic(tx, items);
+              await tx.order.update({
+                where: { id: order.id },
+                data: { paymentStatus: 'PAID', status: 'CONFIRMED', razorpayPaymentId: rpPaymentId }
+              });
+            });
+          } catch {
+            // Stock ran out while payment was pending — same handling as verify-payment:
+            // money was taken, so mark PAID + CANCELLED for admin to manually refund.
+            await prisma.order.update({
+              where: { id: order.id },
+              data: { paymentStatus: 'PAID', status: 'CANCELLED', razorpayPaymentId: rpPaymentId }
+            });
           }
-          await prisma.order.update({
-            where: { id: order.id },
-            data: { paymentStatus: 'PAID', status: 'CONFIRMED', razorpayPaymentId: rpPaymentId }
-          });
         }
       }
     } else if (event.event === 'payment.failed') {
