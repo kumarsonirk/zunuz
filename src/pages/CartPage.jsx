@@ -22,15 +22,24 @@ export default function CartPage({
 }) {
   const { customer } = useAuth();
 
-  const getItemStock = (itemId) => {
+  const getLiveProduct = (itemId) => {
     if (!productMap) return null;
     for (const cat of Object.values(productMap)) {
       for (const sub of Object.keys(cat).filter(k => Array.isArray(cat[k]))) {
         const found = (cat[sub] || []).find(p => p.id === itemId);
-        if (found) return found.stock;
+        if (found) return found;
       }
     }
     return null;
+  };
+  const getItemStock = (itemId) => getLiveProduct(itemId)?.stock ?? null;
+  // Cart items snapshot price at add-to-cart time, so it can go stale if the
+  // price changes later — always prefer the live productMap value when available.
+  const getItemPrice = (item) => {
+    const live = getLiveProduct(item.id);
+    if (!live) return { price: item.price, priceNumeric: item.priceNumeric };
+    const priceNumeric = parseInt(String(live.price).replace(/[^\d]/g, ''), 10) || item.priceNumeric;
+    return { price: live.price, priceNumeric };
   };
   const [billSummaryExpanded, setBillSummaryExpanded] = useState(false);
   const [showAuthSheet, setShowAuthSheet] = useState(false);
@@ -80,8 +89,8 @@ export default function CartPage({
   const hasOutOfStock = useMemo(() => availableItems.length < cartItems.length, [availableItems, cartItems]);
 
   const totalPrice = useMemo(() => {
-    return availableItems.reduce((acc, item) => acc + (item.priceNumeric * item.quantity), 0);
-  }, [availableItems]);
+    return availableItems.reduce((acc, item) => acc + (getItemPrice(item).priceNumeric * item.quantity), 0);
+  }, [availableItems, productMap]);
 
   useEffect(() => {
     if (showSuccess && placedOrder) {
@@ -130,6 +139,7 @@ export default function CartPage({
             cartItems.map((item) => {
               const itemStock = getItemStock(item.id);
               const isOOS = itemStock !== null && itemStock === 0;
+              const livePrice = getItemPrice(item);
               return (
               <div key={item.id} className="px-6 py-5 flex items-center justify-between bg-[#1F2024] relative" style={{ opacity: isOOS ? 0.45 : 1, transition: 'opacity 0.2s' }}>
                 {/* Out of Stock label overlay */}
@@ -166,7 +176,7 @@ export default function CartPage({
                       {item.name}
                     </h4>
                     <p className="text-[18px] font-light text-zinc-300 mt-1 font-grift" style={{ fontFamily: "'Grift', sans-serif", textDecoration: isOOS ? 'line-through' : 'none' }}>
-                      {item.price}
+                      {livePrice.price}
                     </p>
                   </div>
 
@@ -287,6 +297,7 @@ export default function CartPage({
                 {cartItems.map(item => {
                   const itemStock = getItemStock(item.id);
                   const isOOS = itemStock !== null && itemStock === 0;
+                  const livePrice = getItemPrice(item);
                   return (
                     <div key={item.id} className="flex items-center gap-3" style={{ opacity: isOOS ? 0.45 : 1 }}>
                       <div className="bg-white rounded-[8px] flex items-center justify-center border border-zinc-200 shadow-sm flex-shrink-0 overflow-hidden" style={{ width: '54px', height: '68px' }}>
@@ -298,7 +309,7 @@ export default function CartPage({
                         {isOOS && <div className="text-zinc-600 text-[10px] mt-0.5">Out of Stock</div>}
                       </div>
                       <div className="text-[13px] font-mono flex-shrink-0" style={{ color: isOOS ? '#52525b' : '#F5F2EB', textDecoration: isOOS ? 'line-through' : 'none' }}>
-                        Rs {item.priceNumeric * item.quantity}/-
+                        Rs {livePrice.priceNumeric * item.quantity}/-
                       </div>
                     </div>
                   );

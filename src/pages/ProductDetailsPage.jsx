@@ -55,6 +55,9 @@ export default function ProductDetailsPage({
   }, [product.id, productMap]);
 
   const effectiveStock = product.stock != null ? product.stock : (fullProduct?.stock ?? null);
+  // Cart items snapshot price at add-to-cart time, so it can go stale if the
+  // price changes later — always prefer the live productMap value when available.
+  const effectivePrice = fullProduct?.price || product.price;
   const effectiveDescription = product.description || fullProduct?.description
     || "Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle. Ideal for elevating daily ensembles or making a statement at special occasions.";
   const effectiveMaterials = product.materials || fullProduct?.materials
@@ -73,7 +76,7 @@ export default function ProductDetailsPage({
     }
     if (isAdding) return;
     setIsAdding(true);
-    onAddToCart(product);
+    onAddToCart({ ...product, price: effectivePrice, stock: effectiveStock });
     setTimeout(() => {
       setIsAdding(false);
     }, 2000);
@@ -357,7 +360,7 @@ export default function ProductDetailsPage({
               {product.name}
             </h1>
             <div className="text-[26px] font-medium font-grift text-[#F5F2EB] whitespace-nowrap" style={{ fontFamily: "'Grift', sans-serif" }}>
-              {product.price}
+              {effectivePrice}
             </div>
           </div>
 
@@ -457,7 +460,7 @@ export default function ProductDetailsPage({
     {/* Bottom Sticky Action Buttons (Fixed at bottom, non-scrollable) */}
     <div className="px-6 py-5 flex border-t border-zinc-900/60 bg-[#1F2024] flex-shrink-0" style={{ backgroundColor: '#1F2024', borderTop: '1px solid rgba(24, 24, 27, 0.6)', gap: '18px' }}>
         <button
-          onClick={() => { if (effectiveStock !== 0) onBuyNow(product); }}
+          onClick={() => { if (effectiveStock !== 0) onBuyNow({ ...product, price: effectivePrice, stock: effectiveStock }); }}
           disabled={effectiveStock === 0}
           className="flex-1 flex items-center justify-center rounded-[20px] font-medium text-base btn-buy-now"
           style={{ height: '58px', borderRadius: '20px', border: 'none', cursor: effectiveStock === 0 ? 'not-allowed' : 'pointer', opacity: effectiveStock === 0 ? 0.45 : 1 }}
