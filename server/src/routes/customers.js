@@ -44,13 +44,20 @@ router.get('/addresses', auth, async (req, res) => {
 
 // POST /api/customers/addresses
 router.post('/addresses', auth, async (req, res) => {
-  const { label, street, city, state, pincode, isDefault } = req.body;
+  const { label, name, phone, email, houseNo, street, landmark, city, state, pincode, isDefault } = req.body;
+  if (!name || !phone || !houseNo || !street || !city || !state || !pincode) {
+    return res.status(400).json({ error: 'Name, phone, house no., street, city, state, and pincode are required.' });
+  }
   try {
     if (isDefault) {
       await prisma.address.updateMany({ where: { customerId: req.customer.id }, data: { isDefault: false } });
     }
     const address = await prisma.address.create({
-      data: { customerId: req.customer.id, label: label || 'Home', street, city, state, pincode, isDefault: isDefault || false }
+      data: {
+        customerId: req.customer.id, label: label || 'Home',
+        name, phone, email: email || null, houseNo, street, landmark: landmark || null,
+        city, state, pincode, isDefault: isDefault || false
+      }
     });
     res.status(201).json(address);
   } catch { res.status(500).json({ error: 'Server error' }); }
@@ -58,7 +65,10 @@ router.post('/addresses', auth, async (req, res) => {
 
 // PUT /api/customers/addresses/:id
 router.put('/addresses/:id', auth, async (req, res) => {
-  const { label, street, city, state, pincode, isDefault } = req.body;
+  const { label, name, phone, email, houseNo, street, landmark, city, state, pincode, isDefault } = req.body;
+  if (!name || !phone || !houseNo || !street || !city || !state || !pincode) {
+    return res.status(400).json({ error: 'Name, phone, house no., street, city, state, and pincode are required.' });
+  }
   try {
     const existing = await prisma.address.findFirst({ where: { id: Number(req.params.id), customerId: req.customer.id } });
     if (!existing) return res.status(404).json({ error: 'Address not found' });
@@ -67,7 +77,10 @@ router.put('/addresses/:id', auth, async (req, res) => {
     }
     const address = await prisma.address.update({
       where: { id: Number(req.params.id) },
-      data: { label, street, city, state, pincode, isDefault: isDefault || false }
+      data: {
+        label, name, phone, email: email || null, houseNo, street, landmark: landmark || null,
+        city, state, pincode, isDefault: isDefault || false
+      }
     });
     res.json(address);
   } catch { res.status(500).json({ error: 'Server error' }); }

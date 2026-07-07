@@ -134,11 +134,12 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
               <p className="text-zinc-500 text-[13px]">No address selected. Tap Change to add one.</p>
             ) : (
               <div className="text-[13px]">
-                <div className="text-[#F5F2EB] font-semibold">{customer.name || 'Customer'}</div>
+                <div className="text-[#F5F2EB] font-semibold">{selectedAddress.name || customer.name || 'Customer'}</div>
                 <div className="text-zinc-400 mt-1 leading-relaxed text-[12px]">
-                  {selectedAddress.street}, {selectedAddress.city}, {selectedAddress.state} — {selectedAddress.pincode}
+                  {selectedAddress.houseNo ? `${selectedAddress.houseNo}, ` : ''}{selectedAddress.street}, {selectedAddress.city}, {selectedAddress.state} — {selectedAddress.pincode}
                 </div>
-                <div className="text-zinc-400 mt-0.5 text-[12px]">Phone: +91 {customer.phone}</div>
+                {selectedAddress.landmark && <div className="text-zinc-400 mt-0.5 text-[12px]">Near {selectedAddress.landmark}</div>}
+                <div className="text-zinc-400 mt-0.5 text-[12px]">Phone: +91 {selectedAddress.phone || customer.phone}</div>
               </div>
             )}
           </div>

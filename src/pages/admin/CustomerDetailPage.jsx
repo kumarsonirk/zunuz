@@ -75,7 +75,14 @@ export default function CustomerDetailPage() {
                     <span style={{ color: 'var(--admin-text-muted)', fontSize: '12px', fontWeight: 600 }}>{addr.label}</span>
                     {addr.isDefault && <span style={{ color: '#FC4B4E', fontSize: '10px', fontWeight: 600 }}>DEFAULT</span>}
                   </div>
-                  <p style={{ color: 'var(--admin-text)', fontSize: '13px', lineHeight: '1.5' }}>{addr.street}, {addr.city}, {addr.state} - {addr.pincode}</p>
+                  {addr.name && (
+                    <p style={{ color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}>
+                      {addr.name}{addr.phone && ` · +91 ${addr.phone}`}
+                    </p>
+                  )}
+                  <p style={{ color: 'var(--admin-text)', fontSize: '13px', lineHeight: '1.5' }}>
+                    {addr.houseNo ? `${addr.houseNo}, ` : ''}{addr.street}{addr.landmark ? ` (Near ${addr.landmark})` : ''}, {addr.city}, {addr.state} - {addr.pincode}
+                  </p>
                 </div>
               ))}
             </div>

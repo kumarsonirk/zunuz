@@ -126,9 +126,14 @@ export default function OrderHistoryPage() {
               {detail.address && (
                 <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px' }}>
                   <p style={{ color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '8px' }}>DELIVERY ADDRESS</p>
+                  {detail.address.name && (
+                    <p style={{ color: '#F5F2EB', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>
+                      {detail.address.name}{detail.address.phone && ` · +91 ${detail.address.phone}`}
+                    </p>
+                  )}
                   <p style={{ color: '#F5F2EB', fontSize: '13px', lineHeight: '1.6' }}>
-                    {detail.address.street}<br />
-                    {detail.address.city}, {detail.address.state} — {detail.address.pincode}
+                    {detail.address.houseNo ? `${detail.address.houseNo}, ` : ''}{detail.address.street}<br />
+                    {detail.address.landmark ? `Near ${detail.address.landmark}, ` : ''}{detail.address.city}, {detail.address.state} — {detail.address.pincode}
                   </p>
                 </div>
               )}

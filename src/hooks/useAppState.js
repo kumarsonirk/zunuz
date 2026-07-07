@@ -71,10 +71,14 @@ export function useAppState() {
 
   const [productMap, setProductMap] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
+  // Flips true once the first products fetch settles (success or failure) — lets
+  // consumers avoid rendering stale mock data before we even know if the real
+  // data is available, and avoid the URL-sync effect below acting on incomplete data.
+  const [productsLoaded, setProductsLoaded] = useState(false);
 
-  useEffect(() => {
+  const fetchCategories = () => {
     const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-    fetch(`${BASE}/categories`)
+    fetch(`${BASE}/categories`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => {
         if (Array.isArray(data.subcategories) && data.subcategories.length > 0) {
@@ -82,11 +86,11 @@ export function useAppState() {
         }
       })
       .catch(() => {});
-  }, []);
+  };
 
-  useEffect(() => {
+  const fetchProducts = () => {
     const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-    fetch(`${BASE}/products`)
+    fetch(`${BASE}/products`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(products => {
         if (!Array.isArray(products) || products.length === 0) return;
@@ -113,8 +117,34 @@ export function useAppState() {
           });
         });
         if (Object.keys(map).length > 0) setProductMap(map);
+        setProductsLoaded(true);
       })
-      .catch(() => {});
+      .catch(() => setProductsLoaded(true));
+  };
+
+  // Refresh categories/products on mount, whenever the tab regains focus/visibility
+  // (e.g. phone screen was off, or the tab was backgrounded), and periodically while
+  // active — otherwise a long-lived tab keeps showing whatever it fetched at load time,
+  // even after prices/stock/categories change in the admin dashboard.
+  useEffect(() => {
+    fetchCategories();
+    fetchProducts();
+
+    const refresh = () => {
+      if (document.visibilityState === 'visible') {
+        fetchCategories();
+        fetchProducts();
+      }
+    };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    const interval = setInterval(refresh, 60 * 1000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
+      clearInterval(interval);
+    };
   }, []);
 
   const [activeTab, setActiveTab] = useState("necklaces");
@@ -190,6 +220,12 @@ export function useAppState() {
 
     if (path.startsWith('/products/')) {
       const productId = path.slice('/products/'.length);
+      // Wait for the real product data before deciding a product "doesn't exist" —
+      // otherwise a hard refresh on a real (DB-backed) product can incorrectly
+      // redirect away just because only the offline mock fallback is available yet.
+      if (!productMap && !productsLoaded && !(selectedProduct && selectedProduct.id === productId)) {
+        return;
+      }
       const resolvedCategory = savedCategory || (productId ? findCategoryByProductId(productId, activeMap) : null);
       if (resolvedCategory && productId) {
         const product = findProductById(productId, activeMap);
@@ -234,7 +270,7 @@ export function useAppState() {
     } else {
       navigate('/', { replace: true });
     }
-  }, [location.pathname]);
+  }, [location.pathname, productsLoaded]);
 
   // Preloader Percentage Counter Loop
   useEffect(() => {
@@ -459,6 +495,7 @@ export function useAppState() {
 
   return {
     productMap,
+    productsLoaded,
     subcategories,
     showPreloader,
     preloaderPercentage,

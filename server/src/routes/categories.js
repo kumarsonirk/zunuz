@@ -4,6 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 router.get('/', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
   try {
     const [categories, subcategories] = await Promise.all([
       prisma.category.findMany({ orderBy: [{ order: 'asc' }, { id: 'asc' }] }),

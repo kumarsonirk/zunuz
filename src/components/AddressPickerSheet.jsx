@@ -110,8 +110,9 @@ export default function AddressPickerSheet({ isOpen, onClose, selectedId, onSele
                         <span style={{ fontSize: '10px', color: '#71717A' }}>Default</span>
                       )}
                     </div>
-                    <p style={{ fontSize: '13px', color: '#F5F2EB', lineHeight: 1.5 }}>{addr.street}</p>
-                    <p style={{ fontSize: '12px', color: '#71717A', marginTop: '2px' }}>{addr.city}, {addr.state} — {addr.pincode}</p>
+                    {addr.name && <p style={{ fontSize: '13px', color: '#F5F2EB', fontWeight: 600 }}>{addr.name}{addr.phone && ` · +91 ${addr.phone}`}</p>}
+                    <p style={{ fontSize: '13px', color: '#F5F2EB', lineHeight: 1.5, marginTop: '2px' }}>{addr.houseNo ? `${addr.houseNo}, ` : ''}{addr.street}</p>
+                    <p style={{ fontSize: '12px', color: '#71717A', marginTop: '2px' }}>{addr.landmark ? `Near ${addr.landmark}, ` : ''}{addr.city}, {addr.state} — {addr.pincode}</p>
                   </div>
                   {isSelected && (
                     <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#FC4B4E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

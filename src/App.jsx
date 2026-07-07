@@ -78,6 +78,7 @@ export default function App() {
                     cartItems={state.cartItems}
                     onBuyNow={state.handleBuyNow}
                     subcategories={state.subcategories}
+                    productsLoaded={state.productsLoaded}
                   />
                 : <Navigate to="/" replace />
             } />
@@ -111,6 +112,7 @@ export default function App() {
                 onClearCart={state.handleClearCart}
                 productMap={state.productMap}
                 category={state.selectedCategory}
+                productsLoaded={state.productsLoaded}
               />
             } />
 

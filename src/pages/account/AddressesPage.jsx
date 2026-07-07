@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, MapPin, Plus, Edit2, Trash2, X, Check, ChevronDown } from 'lucide-react';
 import { api } from '../../utils/api';
 
-const EMPTY = { label: 'Home', street: '', city: '', state: '', pincode: '', isDefault: false };
+const EMPTY = { label: 'Home', name: '', phone: '', email: '', houseNo: '', street: '', landmark: '', city: '', state: '', pincode: '', isDefault: false };
 
 const inp = { width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px 16px', color: '#F5F2EB', fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: "'Grift', sans-serif" };
 
@@ -67,7 +67,15 @@ export default function AddressesPage() {
   useEffect(() => { load(); }, []);
 
   const openAdd = () => { setForm(EMPTY); setEditAddr(null); setModal('add'); };
-  const openEdit = (addr) => { setEditAddr(addr); setForm({ label: addr.label, street: addr.street, city: addr.city, state: addr.state, pincode: addr.pincode, isDefault: addr.isDefault }); setModal('edit'); };
+  const openEdit = (addr) => {
+    setEditAddr(addr);
+    setForm({
+      label: addr.label, name: addr.name || '', phone: addr.phone || '', email: addr.email || '',
+      houseNo: addr.houseNo || '', street: addr.street, landmark: addr.landmark || '',
+      city: addr.city, state: addr.state, pincode: addr.pincode, isDefault: addr.isDefault
+    });
+    setModal('edit');
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -119,7 +127,9 @@ export default function AddressesPage() {
                 <button onClick={() => setDeleteId(addr.id)} style={{ background: 'rgba(239,68,68,0.08)', border: 'none', borderRadius: '7px', padding: '6px', color: '#EF4444', cursor: 'pointer', display: 'flex' }}><Trash2 size={13} /></button>
               </div>
             </div>
-            <p style={{ color: '#F5F2EB', fontSize: '13px', lineHeight: '1.6' }}>{addr.street}</p>
+            {addr.name && <p style={{ color: '#F5F2EB', fontSize: '13px', fontWeight: 600 }}>{addr.name}{addr.phone && ` · +91 ${addr.phone}`}</p>}
+            <p style={{ color: '#F5F2EB', fontSize: '13px', lineHeight: '1.6', marginTop: '4px' }}>{addr.houseNo ? `${addr.houseNo}, ` : ''}{addr.street}</p>
+            {addr.landmark && <p style={{ color: '#A1A1AA', fontSize: '12px' }}>Near {addr.landmark}</p>}
             <p style={{ color: '#A1A1AA', fontSize: '12px' }}>{addr.city}, {addr.state} — {addr.pincode}</p>
           </div>
         ))}
@@ -134,13 +144,35 @@ export default function AddressesPage() {
               <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', color: '#71717A', cursor: 'pointer' }}><X size={18} /></button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>FULL NAME</label>
+                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Recipient's name" required style={inp} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>PHONE NUMBER</label>
+                  <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="98765 43210" required style={inp} />
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>EMAIL ADDRESS <span style={{ opacity: 0.6 }}>(optional)</span></label>
+                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="you@example.com" style={inp} />
+              </div>
               <div>
                 <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>LABEL</label>
                 <LabelPicker value={form.label} onChange={l => setForm(f => ({ ...f, label: l }))} />
               </div>
               <div>
+                <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>HOUSE / FLAT NO.</label>
+                <input value={form.houseNo} onChange={e => setForm(f => ({ ...f, houseNo: e.target.value }))} placeholder="e.g. B-204" required style={inp} />
+              </div>
+              <div>
                 <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>STREET ADDRESS</label>
-                <input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder="House No., Street, Area" required style={inp} />
+                <input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder="Street, Area" required style={inp} />
+              </div>
+              <div>
+                <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>LANDMARK <span style={{ opacity: 0.6 }}>(optional)</span></label>
+                <input value={form.landmark} onChange={e => setForm(f => ({ ...f, landmark: e.target.value }))} placeholder="e.g. Near City Mall" style={inp} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>

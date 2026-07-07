@@ -36,7 +36,7 @@ const Divider = () => (
 );
 
 export default function AccountPage() {
-  const { customer, logout } = useAuth();
+  const { customer, loading, logout } = useAuth();
   const navigate = useNavigate();
 
   const initials = customer?.name
@@ -47,6 +47,19 @@ export default function AccountPage() {
     logout();
     navigate('/');
   };
+
+  // Wait for the initial /customers/me check before deciding logged-in vs logged-out —
+  // otherwise a refresh briefly renders the "not logged in" view before flipping to
+  // the real account, since `customer` starts as null until that fetch resolves.
+  if (loading) {
+    return (
+      <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 500 }}>Account</h2>
+        </div>
+      </div>
+    );
+  }
 
   if (!customer) {
     return (

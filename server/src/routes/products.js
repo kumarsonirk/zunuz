@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 // GET /api/products?category=core&subcategory=necklaces
 router.get('/', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
   const { category, subcategory } = req.query;
   try {
     const where = { isActive: true };

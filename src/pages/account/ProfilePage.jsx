@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProfilePage() {
-  const { customer, updateProfile } = useAuth();
+  const { customer, loading, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: customer?.name || '', email: customer?.email || '', phone: customer?.phone || '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Keep the edit form in sync once the /customers/me fetch resolves (it starts
+  // null on a refresh, so the form's initial state above can be stale).
+  useEffect(() => {
+    if (customer) setForm({ name: customer.name || '', email: customer.email || '', phone: customer.phone || '' });
+  }, [customer]);
 
   const inp = { width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px 16px', color: '#F5F2EB', fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: "'Grift', sans-serif" };
 

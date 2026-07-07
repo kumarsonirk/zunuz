@@ -60,7 +60,8 @@ export default function ProductPage({
   setActiveTab,
   cartItems = [],
   onBuyNow,
-  subcategories = []
+  subcategories = [],
+  productsLoaded = false
 }) {
   const [activeProductIndex, setActiveProductIndex] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
@@ -82,8 +83,13 @@ export default function ProductPage({
     }
   }, [selectedCategory, activeTab]);
 
-  const activeData = productMap || productData;
-  const currentCollection = selectedCategory ? activeData[selectedCategory.id] : null;
+  // Don't fall back to the hardcoded mock data while the real fetch is still in
+  // flight — that would flash stale names/prices/stock before the real ones load.
+  // Mock data is only used as a genuine offline/API-down fallback, once loading
+  // has actually finished without producing real data.
+  const isLoadingProducts = !productMap && !productsLoaded;
+  const activeData = productMap || (productsLoaded ? productData : null);
+  const currentCollection = (selectedCategory && activeData) ? activeData[selectedCategory.id] : null;
   const productsList = currentCollection ? currentCollection[activeTab] || [] : [];
   const n = productsList.length;
   const activeProduct = productsList[activeProductIndex];
@@ -325,7 +331,9 @@ export default function ProductPage({
 
       {/* Product Card Stack Area */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 pb-2 relative overflow-hidden select-none" style={{ minHeight: 0 }}>
-        {n === 0 ? (
+        {isLoadingProducts ? (
+          <div className="text-zinc-500 text-xs tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>Loading...</div>
+        ) : n === 0 ? (
           <div className="text-zinc-500 text-xs tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>No items in this category yet.</div>
         ) : (
           <div

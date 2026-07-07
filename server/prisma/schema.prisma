@@ -44,7 +44,12 @@ model Address {
   customerId Int
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   label      String   @default("Home")
+  name       String   @default("")
+  phone      String   @default("")
+  email      String?
+  houseNo    String   @default("")
   street     String
+  landmark   String?
   city       String
   state      String
   pincode    String

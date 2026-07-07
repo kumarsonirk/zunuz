@@ -174,9 +174,14 @@ export default function OrdersPage() {
               </div>
               <div style={{ background: 'var(--admin-surface-2)', borderRadius: '12px', padding: '16px' }}>
                 <p style={{ color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '10px' }}>DELIVERY ADDRESS</p>
+                {detailOrder.address?.name && (
+                  <p style={{ color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>
+                    {detailOrder.address.name}{detailOrder.address.phone && ` · +91 ${detailOrder.address.phone}`}
+                  </p>
+                )}
                 <p style={{ color: 'var(--admin-text)', fontSize: '13px', lineHeight: '1.6' }}>
-                  {detailOrder.address?.street}, {detailOrder.address?.city}<br />
-                  {detailOrder.address?.state} - {detailOrder.address?.pincode}
+                  {detailOrder.address?.houseNo ? `${detailOrder.address.houseNo}, ` : ''}{detailOrder.address?.street}, {detailOrder.address?.city}<br />
+                  {detailOrder.address?.landmark ? `Near ${detailOrder.address.landmark}, ` : ''}{detailOrder.address?.state} - {detailOrder.address?.pincode}
                 </p>
               </div>
               <div style={{ background: 'var(--admin-surface-2)', borderRadius: '12px', padding: '16px' }}>

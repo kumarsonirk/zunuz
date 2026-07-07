@@ -18,7 +18,8 @@ export default function CartPage({
   onSelectProduct,
   onClearCart,
   productMap,
-  category
+  category,
+  productsLoaded = false
 }) {
   const { customer } = useAuth();
 
@@ -58,11 +59,13 @@ export default function CartPage({
       .catch(() => {});
   }, [customer]);
 
-  // Compute recommended picks — use API productMap when loaded so IDs are consistent
-  const activeDataMap = productMap || productData;
-  const currentCollection = category
-    ? (activeDataMap[category.id] || null)
-    : (activeDataMap.core || Object.values(activeDataMap)[0] || null);
+  // Compute recommended picks — use API productMap when loaded so IDs are consistent.
+  // Don't fall back to mock data until we know the real fetch actually failed,
+  // otherwise this briefly recommends stale mock products before the real ones load.
+  const activeDataMap = productMap || (productsLoaded ? productData : null);
+  const currentCollection = activeDataMap
+    ? (category ? (activeDataMap[category.id] || null) : (activeDataMap.core || Object.values(activeDataMap)[0] || null))
+    : null;
   const recommendedPicks = useMemo(() => {
     const list = [];
     if (currentCollection) {
@@ -326,9 +329,10 @@ export default function CartPage({
                     <p className="text-zinc-500 text-[13px]">No address saved. Tap Change to add one.</p>
                   ) : (
                     <>
-                      <div className="text-[#F5F2EB] font-medium text-[14px]">{customer.name || 'Customer'}</div>
-                      <div className="text-zinc-400 text-[13px] mt-0.5">{selectedAddress.street}, {selectedAddress.city}, {selectedAddress.state} — {selectedAddress.pincode}</div>
-                      <div className="text-zinc-400 text-[13px] mt-0.5">Phone: +91 {customer.phone}</div>
+                      <div className="text-[#F5F2EB] font-medium text-[14px]">{selectedAddress.name || customer.name || 'Customer'}</div>
+                      <div className="text-zinc-400 text-[13px] mt-0.5">{selectedAddress.houseNo ? `${selectedAddress.houseNo}, ` : ''}{selectedAddress.street}, {selectedAddress.city}, {selectedAddress.state} — {selectedAddress.pincode}</div>
+                      {selectedAddress.landmark && <div className="text-zinc-400 text-[13px] mt-0.5">Near {selectedAddress.landmark}</div>}
+                      <div className="text-zinc-400 text-[13px] mt-0.5">Phone: +91 {selectedAddress.phone || customer.phone}</div>
                     </>
                   )}
                 </div>
