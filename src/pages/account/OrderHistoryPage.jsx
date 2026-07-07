@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, X, Package } from 'lucide-react';
+import { X, Package } from 'lucide-react';
 import { api } from '../../utils/api';
 
 const STATUS_STYLE = {
@@ -17,7 +16,6 @@ function StatusBadge({ status }) {
 }
 
 export default function OrderHistoryPage() {
-  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState(null);
@@ -29,9 +27,6 @@ export default function OrderHistoryPage() {
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <button onClick={() => navigate('/account')} style={{ background: 'none', border: 'none', color: '#F5F2EB', cursor: 'pointer', display: 'flex', padding: '4px' }}>
-          <ChevronLeft size={22} strokeWidth={1.5} />
-        </button>
         <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB' }}>My Orders</h2>
       </div>
 

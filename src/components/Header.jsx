@@ -1,28 +1,37 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, Search } from 'lucide-react';
+import { ShoppingBag, User } from 'lucide-react';
+
+const ANIMATION_DURATION_MS = 2500;
 
 export default function Header({ cartItems, onLogoClick, onCartClick }) {
   const navigate = useNavigate();
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
+  const [bagAnimating, setBagAnimating] = useState(false);
+  const [userAnimating, setUserAnimating] = useState(false);
+  const bagTimeoutRef = useRef(null);
+  const userTimeoutRef = useRef(null);
+
+  const triggerAnimation = (setter, timeoutRef) => {
+    clearTimeout(timeoutRef.current);
+    setter(true);
+    timeoutRef.current = setTimeout(() => setter(false), ANIMATION_DURATION_MS);
+  };
+
   return (
     <header className="sticky top-0 z-50 flex justify-between items-center px-6 py-4 backdrop-blur-lg bg-[#1F2024]/80 main-header">
-      <img 
+      <img
         src="/logo_white.png"
         alt="Zunuz Logo"
         onClick={onLogoClick}
-        className="h-6 w-auto object-contain cursor-pointer hover:opacity-80 transition-opacity" 
+        className="h-6 w-auto object-contain cursor-pointer hover:opacity-80 transition-opacity"
       />
       <div className="flex items-center gap-8 text-[#F5F2EB]">
-        {/* Search Icon */}
-        <button className="btn-nav-item btn-nav-search" aria-label="Search Products">
-          <Search size={20} strokeWidth={1.5} />
-        </button>
         {/* Shopping Bag Icon */}
-        <button 
-          onClick={onCartClick}
-          className="btn-nav-item btn-nav-bag relative" 
+        <button
+          onClick={() => { triggerAnimation(setBagAnimating, bagTimeoutRef); onCartClick(); }}
+          className={`btn-nav-item btn-nav-bag relative ${bagAnimating ? 'is-animating' : ''}`}
           aria-label="Shopping Bag"
         >
           <ShoppingBag size={20} strokeWidth={1.5} />
@@ -33,7 +42,11 @@ export default function Header({ cartItems, onLogoClick, onCartClick }) {
           )}
         </button>
         {/* Account Profile Icon */}
-        <button onClick={() => navigate('/account')} className="btn-nav-item btn-nav-user" aria-label="User Account">
+        <button
+          onClick={() => { triggerAnimation(setUserAnimating, userTimeoutRef); navigate('/account'); }}
+          className={`btn-nav-item btn-nav-user ${userAnimating ? 'is-animating' : ''}`}
+          aria-label="User Account"
+        >
           <User size={20} strokeWidth={1.5} />
         </button>
       </div>

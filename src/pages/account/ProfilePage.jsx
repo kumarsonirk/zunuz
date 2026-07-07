@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProfilePage() {
-  const { customer, loading, updateProfile } = useAuth();
-  const navigate = useNavigate();
+  const { customer, updateProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: customer?.name || '', email: customer?.email || '', phone: customer?.phone || '' });
   const [saving, setSaving] = useState(false);
@@ -35,9 +32,6 @@ export default function ProfilePage() {
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <button onClick={() => navigate('/account')} style={{ background: 'none', border: 'none', color: '#F5F2EB', cursor: 'pointer', display: 'flex', padding: '4px' }}>
-          <ChevronLeft size={22} strokeWidth={1.5} />
-        </button>
         <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB' }}>Edit Profile</h2>
       </div>
 

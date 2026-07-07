@@ -14,21 +14,24 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [loadingAddress, setLoadingAddress] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY');
   const { placing, orderError, setOrderError, placedOrder, showSuccess, placeOrder, reset } = usePlaceOrder(customer);
 
   useEffect(() => {
     if (!isOpen || !customer) return;
+    setLoadingAddress(true);
     api.get('/customers/addresses')
       .then(addrs => {
         if (!addrs.length) return;
         setSelectedAddress(addrs.find(a => a.isDefault) || addrs[0]);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingAddress(false));
   }, [isOpen, customer]);
 
   useEffect(() => {
-    if (!isOpen) { setSelectedAddress(null); reset(); }
+    if (!isOpen) { setSelectedAddress(null); setLoadingAddress(true); reset(); }
   }, [isOpen]);
 
   useEffect(() => {
@@ -131,6 +134,8 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
 
             {!customer ? (
               <p className="text-zinc-500 text-[13px]">Sign in to see your saved addresses.</p>
+            ) : loadingAddress ? (
+              <p className="text-zinc-500 text-[13px]">Loading address...</p>
             ) : !selectedAddress ? (
               <p className="text-zinc-500 text-[13px]">No address selected. Tap Change to add one.</p>
             ) : (

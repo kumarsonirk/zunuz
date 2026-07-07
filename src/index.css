@@ -276,21 +276,21 @@ html, body, #root, * {
   transform: scale(0.95) !important;
 }
 
-.btn-nav-search:hover svg {
-  transform: rotate(15deg) !important;
-  transition: transform 0.3s ease !important;
-}
-
-.btn-nav-bag:hover svg {
-  animation: bag-swing 0.5s ease-in-out infinite alternate !important;
+/* Triggered on click/tap via a temporary .is-animating class (added in Header.jsx),
+   not :hover — on touchscreens :hover can stay "stuck" active after a tap since
+   there's no real mouse to leave, which made these run seemingly forever. Using a
+   finite iteration-count here means the animation always completes and stops on
+   its own, matching the ~2.5s the JS timeout also clears the class after. */
+.btn-nav-bag.is-animating svg {
+  animation: bag-swing 0.5s ease-in-out 5 alternate !important;
 }
 @keyframes bag-swing {
   0% { transform: rotate(-8deg); }
   100% { transform: rotate(8deg); }
 }
 
-.btn-nav-user:hover svg {
-  animation: user-bounce 0.5s ease-in-out infinite alternate !important;
+.btn-nav-user.is-animating svg {
+  animation: user-bounce 0.5s ease-in-out 5 alternate !important;
 }
 @keyframes user-bounce {
   0% { transform: translateY(0); }

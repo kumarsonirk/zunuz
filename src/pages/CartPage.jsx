@@ -46,17 +46,20 @@ export default function CartPage({
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [loadingAddress, setLoadingAddress] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY');
   const { placing, orderError, setOrderError, placedOrder, showSuccess, setShowSuccess, placeOrder } = usePlaceOrder(customer);
 
   useEffect(() => {
-    if (!customer) return;
+    if (!customer) { setLoadingAddress(false); return; }
+    setLoadingAddress(true);
     api.get('/customers/addresses')
       .then(addrs => {
         if (!addrs.length) return;
         setSelectedAddress(addrs.find(a => a.isDefault) || addrs[0]);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingAddress(false));
   }, [customer]);
 
   // Compute recommended picks — use API productMap when loaded so IDs are consistent.
@@ -325,6 +328,8 @@ export default function CartPage({
                   <span className="text-[14px] uppercase tracking-wider text-zinc-400 font-semibold block mb-1">Deliver to:</span>
                   {!customer ? (
                     <p className="text-zinc-500 text-[13px]">Sign in to see delivery address.</p>
+                  ) : loadingAddress ? (
+                    <p className="text-zinc-500 text-[13px]">Loading address...</p>
                   ) : !selectedAddress ? (
                     <p className="text-zinc-500 text-[13px]">No address saved. Tap Change to add one.</p>
                   ) : (
