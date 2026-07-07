@@ -63,6 +63,7 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
         onClose={() => setShowAddressPicker(false)}
         selectedId={selectedAddress?.id}
         onSelect={setSelectedAddress}
+        onAddNew={onClose}
       />
 
       {/* Backdrop */}

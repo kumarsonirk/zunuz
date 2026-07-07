@@ -4,7 +4,7 @@ import { X, MapPin, Check, Plus } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function AddressPickerSheet({ isOpen, onClose, selectedId, onSelect }) {
+export default function AddressPickerSheet({ isOpen, onClose, selectedId, onSelect, onAddNew }) {
   const { customer } = useAuth();
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState([]);
@@ -26,6 +26,10 @@ export default function AddressPickerSheet({ isOpen, onClose, selectedId, onSele
 
   const handleAddNew = () => {
     onClose();
+    // Let the parent close any of its own overlays (e.g. the Buy Now checkout
+    // drawer) too — otherwise it stays open on top of the Addresses page since
+    // that drawer is mounted outside the routed page and survives navigation.
+    onAddNew?.();
     navigate('/account/addresses');
   };
 
