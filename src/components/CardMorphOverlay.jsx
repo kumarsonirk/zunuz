@@ -23,21 +23,23 @@ export default function CardMorphOverlay({
 
   return (
     <div
-      className="fixed z-50 bg-white border border-zinc-200 shadow-2xl flex flex-col justify-between items-center box-border p-6 overflow-hidden morph-transition-overlay"
+      className="fixed z-50 border border-zinc-200 shadow-2xl flex flex-col justify-between items-center box-border p-6 overflow-hidden morph-transition-overlay"
       style={{
         top: isMorphing ? `${finalTop}px` : `${clickedCardRect.top}px`,
         left: isMorphing ? `${finalLeft}px` : `${clickedCardRect.left}px`,
         width: isMorphing ? `${finalWidth}px` : `${clickedCardRect.width}px`,
         height: isMorphing ? `${finalHeight}px` : `${clickedCardRect.height}px`,
-        borderRadius: isMorphing ? '0px' : '32px'
+        borderRadius: isMorphing ? '0px' : '32px',
+        backgroundColor: '#fef5e7'
       }}
     >
       {/* Absolute Image morphing from full-bleed to centered/fitted inside the shorter card */}
       <img
         src={selectedProduct.image}
         alt={selectedProduct.name}
-        className="absolute object-contain pointer-events-none bg-white aspect-square morph-image-transition"
+        className="absolute object-contain pointer-events-none aspect-square morph-image-transition"
         style={{
+          backgroundColor: '#fef5e7',
           width: isMorphing ? `calc(${finalHeight}px - 48px)` : `${clickedCardRect.imgWidth || clickedCardRect.width}px`,
           height: isMorphing ? `calc(${finalHeight}px - 48px)` : `${clickedCardRect.imgHeight || clickedCardRect.width}px`,
           top: isMorphing ? '24px' : '50%',

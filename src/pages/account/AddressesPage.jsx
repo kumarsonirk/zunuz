@@ -140,49 +140,19 @@ export default function AddressesPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div>
-                  <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>FULL NAME</label>
-                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Recipient's name" required style={inp} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>PHONE NUMBER</label>
-                  <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="98765 43210" required style={inp} />
-                </div>
+                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Full Name" required style={inp} />
+                <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="Phone Number" required style={inp} />
               </div>
-              <div>
-                <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>EMAIL ADDRESS <span style={{ opacity: 0.6 }}>(optional)</span></label>
-                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="you@example.com" style={inp} />
-              </div>
-              <div>
-                <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>LABEL</label>
-                <LabelPicker value={form.label} onChange={l => setForm(f => ({ ...f, label: l }))} />
-              </div>
-              <div>
-                <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>HOUSE / FLAT NO.</label>
-                <input value={form.houseNo} onChange={e => setForm(f => ({ ...f, houseNo: e.target.value }))} placeholder="e.g. B-204" required style={inp} />
-              </div>
-              <div>
-                <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>STREET ADDRESS</label>
-                <input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder="Street, Area" required style={inp} />
-              </div>
-              <div>
-                <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>LANDMARK <span style={{ opacity: 0.6 }}>(optional)</span></label>
-                <input value={form.landmark} onChange={e => setForm(f => ({ ...f, landmark: e.target.value }))} placeholder="e.g. Near City Mall" style={inp} />
-              </div>
+              <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="Email Address" required style={inp} />
+              <LabelPicker value={form.label} onChange={l => setForm(f => ({ ...f, label: l }))} />
+              <input value={form.houseNo} onChange={e => setForm(f => ({ ...f, houseNo: e.target.value }))} placeholder="House / Flat No." required style={inp} />
+              <input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder="Street Address" required style={inp} />
+              <input value={form.landmark} onChange={e => setForm(f => ({ ...f, landmark: e.target.value }))} placeholder="Landmark" required style={inp} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div>
-                  <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>CITY</label>
-                  <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="New Delhi" required style={inp} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>STATE</label>
-                  <input value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} placeholder="Delhi" required style={inp} />
-                </div>
+                <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="City" required style={inp} />
+                <input value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} placeholder="State" required style={inp} />
               </div>
-              <div>
-                <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>PINCODE</label>
-                <input value={form.pincode} onChange={e => setForm(f => ({ ...f, pincode: e.target.value }))} placeholder="110001" required style={inp} />
-              </div>
+              <input value={form.pincode} onChange={e => setForm(f => ({ ...f, pincode: e.target.value }))} placeholder="Pincode" required style={inp} />
               <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#A1A1AA', fontSize: '13px' }}>
                 <div onClick={() => setForm(f => ({ ...f, isDefault: !f.isDefault }))}
                   style={{ width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${form.isDefault ? '#FC4B4E' : 'rgba(255,255,255,0.2)'}`, background: form.isDefault ? '#FC4B4E' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer' }}>

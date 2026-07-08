@@ -45,8 +45,8 @@ router.get('/addresses', auth, async (req, res) => {
 // POST /api/customers/addresses
 router.post('/addresses', auth, async (req, res) => {
   const { label, name, phone, email, houseNo, street, landmark, city, state, pincode, isDefault } = req.body;
-  if (!name || !phone || !houseNo || !street || !city || !state || !pincode) {
-    return res.status(400).json({ error: 'Name, phone, house no., street, city, state, and pincode are required.' });
+  if (!name || !phone || !email || !houseNo || !street || !landmark || !city || !state || !pincode) {
+    return res.status(400).json({ error: 'All address fields are required.' });
   }
   try {
     if (isDefault) {
@@ -55,7 +55,7 @@ router.post('/addresses', auth, async (req, res) => {
     const address = await prisma.address.create({
       data: {
         customerId: req.customer.id, label: label || 'Home',
-        name, phone, email: email || null, houseNo, street, landmark: landmark || null,
+        name, phone, email, houseNo, street, landmark,
         city, state, pincode, isDefault: isDefault || false
       }
     });
@@ -66,8 +66,8 @@ router.post('/addresses', auth, async (req, res) => {
 // PUT /api/customers/addresses/:id
 router.put('/addresses/:id', auth, async (req, res) => {
   const { label, name, phone, email, houseNo, street, landmark, city, state, pincode, isDefault } = req.body;
-  if (!name || !phone || !houseNo || !street || !city || !state || !pincode) {
-    return res.status(400).json({ error: 'Name, phone, house no., street, city, state, and pincode are required.' });
+  if (!name || !phone || !email || !houseNo || !street || !landmark || !city || !state || !pincode) {
+    return res.status(400).json({ error: 'All address fields are required.' });
   }
   try {
     const existing = await prisma.address.findFirst({ where: { id: Number(req.params.id), customerId: req.customer.id } });
@@ -78,7 +78,7 @@ router.put('/addresses/:id', auth, async (req, res) => {
     const address = await prisma.address.update({
       where: { id: Number(req.params.id) },
       data: {
-        label, name, phone, email: email || null, houseNo, street, landmark: landmark || null,
+        label, name, phone, email, houseNo, street, landmark,
         city, state, pincode, isDefault: isDefault || false
       }
     });
