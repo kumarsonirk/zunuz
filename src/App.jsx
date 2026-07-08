@@ -87,8 +87,6 @@ export default function App() {
                     product={state.selectedProduct}
                     category={state.selectedCategory}
                     productMap={state.productMap}
-                    likedProducts={state.likedProducts}
-                    onLikeToggle={state.handleLikeToggle}
                     onAddToCart={state.handleAddToCart}
                     onBack={state.handleBackToProductPage}
                     onSelectProduct={state.handleSelectProduct}

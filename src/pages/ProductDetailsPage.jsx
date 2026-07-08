@@ -1,5 +1,5 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { ShoppingCart, ArrowLeft, RotateCcw, Truck, ChevronRight } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, RotateCcw, Truck, ChevronRight, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData';
 import zr from '../utils/audio';
@@ -8,8 +8,6 @@ export default function ProductDetailsPage({
   product,
   category,
   productMap,
-  likedProducts,
-  onLikeToggle,
   onAddToCart,
   onBack,
   onSelectProduct,
@@ -35,7 +33,6 @@ export default function ProductDetailsPage({
   };
   const activeTab = findActiveTab();
 
-  const [isHearted, setIsHearted] = useState(likedProducts[product.id] || false);
   const [isAdding, setIsAdding] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
   const navigate = useNavigate();
@@ -62,6 +59,18 @@ export default function ProductDetailsPage({
     || "Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle. Ideal for elevating daily ensembles or making a statement at special occasions.";
   const effectiveMaterials = product.materials || fullProduct?.materials
     || "Made from premium 18K yellow gold plated sterling silver (925). Nickel-free and hypoallergenic for sensitive skin.";
+  const effectiveTagline = product.tagline || fullProduct?.tagline || null;
+
+  // Deterministic per-product rating (stable across renders/reloads, not a real
+  // Math.random() each time) — hashes the product id into a 4.0–5.0 range.
+  const rating = React.useMemo(() => {
+    let hash = 0;
+    const str = String(product.id);
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+    }
+    return Math.round((4.0 + (hash % 11) / 10) * 10) / 10; // 4.0–5.0, one decimal
+  }, [product.id]);
 
   // Reset accordion state when product changes
   useEffect(() => {
@@ -82,10 +91,6 @@ export default function ProductDetailsPage({
     }, 2000);
   };
 
-  // Sync like/heart state when product changes
-  useEffect(() => {
-    setIsHearted(likedProducts[product.id] || false);
-  }, [product, likedProducts]);
 
   const cardRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -243,11 +248,6 @@ export default function ProductDetailsPage({
     return list;
   }, [currentCollection, product.id]);
 
-  const handleLikeClick = (e) => {
-    e.stopPropagation();
-    onLikeToggle(product.id);
-    setIsHearted(!isHearted);
-  };
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] select-none overflow-hidden relative">
       {/* Scrollable Middle Container */}
@@ -261,7 +261,7 @@ export default function ProductDetailsPage({
           width: '100%',
           height: '380px',
           opacity: isTransitioning ? 0 : 1,
-          backgroundColor: '#f8ebda'
+          backgroundColor: '#fef5e7'
         }}
       >
         <div
@@ -295,7 +295,7 @@ export default function ProductDetailsPage({
                       ? 'scale(1.15)'
                       : 'scale(1)',
                     transformOrigin: 'center center',
-                    backgroundColor: '#f8ebda'
+                    backgroundColor: '#fef5e7'
                   }}
                 />
               </div>
@@ -326,25 +326,16 @@ export default function ProductDetailsPage({
             ))}
           </div>
 
-          {/* Floating Heart Likes button */}
-          <button
-            onClick={handleLikeClick}
-            className="flex flex-col items-center justify-center w-[36px] focus:outline-none cursor-pointer pointer-events-auto btn-heart"
-            style={{ border: 'none', background: 'none' }}
+          {/* Rating Badge */}
+          <div
+            className="pointer-events-auto"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#FC4B4E', borderRadius: '6px', padding: '3px 7px' }}
           >
-            <svg
-              className={`w-6.5 h-6.5 transition-all duration-300 ${
-                isHearted ? "scale-110" : ""
-              }`}
-              viewBox="0 0 24 24"
-              style={{ width: '24px', height: '24px', fill: isHearted ? '#ef4444' : '#ECEBE6', color: isHearted ? '#ef4444' : '#ECEBE6' }}
-            >
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-            <span className="text-[9px] text-[#A1A1AA] font-bold mt-1 font-grift" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif" }}>
-              {isHearted ? "21k" : product.likes}
+            <span style={{ color: 'white', fontSize: '12px', fontWeight: 700, fontFamily: "'Grift', sans-serif" }}>
+              {rating.toFixed(1)}
             </span>
-          </button>
+            <Star size={11} strokeWidth={0} fill="white" color="white" />
+          </div>
         </div>
       </div>
 
@@ -352,9 +343,6 @@ export default function ProductDetailsPage({
       <div className="animate-details-content-slide-up flex flex-col">
         {/* Title & Price Row */}
         <div className="px-6 py-5 flex flex-col">
-          <div className="text-xs font-grift tracking-widest text-[#F5F2EB]/60 uppercase mb-1.5" style={{ fontFamily: "'Grift', sans-serif" }}>
-            {currentCollection?.title || "Core Collection"}
-          </div>
           <div className="flex justify-between items-start gap-4">
             <h1 className="text-[26px] font-medium font-grift tracking-wide text-[#F5F2EB] leading-tight" style={{ fontFamily: "'Grift', sans-serif" }}>
               {product.name}
@@ -363,6 +351,11 @@ export default function ProductDetailsPage({
               {effectivePrice}
             </div>
           </div>
+          {effectiveTagline && (
+            <p className="text-[15px] font-grift text-zinc-400" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif" }}>
+              {effectiveTagline}
+            </p>
+          )}
 
           {effectiveStock != null && effectiveStock <= 5 && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '8px', background: effectiveStock === 0 ? 'rgba(113,113,122,0.1)' : effectiveStock <= 2 ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)', border: `1px solid ${effectiveStock === 0 ? 'rgba(113,113,122,0.25)' : effectiveStock <= 2 ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`, borderRadius: '20px', padding: '5px 12px' }}>

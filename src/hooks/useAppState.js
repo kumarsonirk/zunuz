@@ -58,7 +58,6 @@ export function useAppState() {
     }
   });
   
-  const [likedProducts, setLikedProducts] = useState({});
   const [cartItems, setCartItems] = useState(() => {
     try {
       const saved = localStorage.getItem('zunuz_cart_items');
@@ -351,19 +350,6 @@ export function useAppState() {
     flash();
   };
 
-  const handleLikeToggle = (productId) => {
-    setLikedProducts(prev => {
-      const copy = { ...prev };
-      if (copy[productId]) {
-        delete copy[productId];
-      } else {
-        copy[productId] = true;
-      }
-      return copy;
-    });
-    zr.playConfirm();
-  };
-
   const handleAddToCart = (productToAdd) => {
     const prod = (productToAdd && productToAdd.id) ? productToAdd : selectedProduct;
     if (!prod || !prod.id) return;
@@ -512,8 +498,6 @@ export function useAppState() {
     showMainContent,
     selectedCategory,
     setSelectedCategory,
-    likedProducts,
-    setLikedProducts,
     cartItems,
     setCartItems,
     canvasRef,
@@ -531,7 +515,6 @@ export function useAppState() {
     setIsMorphing,
     showCartToast,
     setShowCartToast,
-    handleLikeToggle,
     handleAddToCart,
     handleUpdateCartQuantity,
     handleRemoveCartItem,

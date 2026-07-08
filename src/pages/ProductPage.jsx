@@ -500,7 +500,7 @@ export default function ProductPage({
                         )}
                       </div>
                       <div
-                        className="text-[24px] sm:text-[28px] font-medium text-zinc-900 font-grift flex-shrink-0"
+                        className="text-[28px] sm:text-[28px] font-medium text-zinc-900 font-grift flex-shrink-0"
                         style={{
                           color: '#18181b',
                           fontFamily: "'Grift', sans-serif"
