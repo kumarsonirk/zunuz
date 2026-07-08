@@ -30,7 +30,7 @@ export const productData = {
   core: {
     title: "Core Collection",
     necklaces: [
-      { id: "c-n1", name: "Core Chain I", price: "Rs 699/-", likes: "20k", image: "/gold_knot_necklace.png", images: ["/gold_knot_necklace.png", "/gold_knot_necklace_alt1.png", "/gold_knot_necklace_alt2.png"] },
+      { id: "c-n1", name: "Glow", price: "Rs 699/-", likes: "20k", image: "/12.png", images: ["/gold_knot_necklace.png", "/gold_knot_necklace_alt1.png", "/gold_knot_necklace_alt2.png"] },
       { id: "c-n2", name: "Classic Knot Chain", price: "Rs 899/-", likes: "15k", image: "/gold_knot_necklace.png", images: ["/gold_knot_necklace.png", "/gold_knot_necklace_alt1.png", "/gold_knot_necklace_alt2.png"] },
       { id: "c-n3", name: "Minimalist Pearl Bar", price: "Rs 1,299/-", likes: "12k", image: "/gold_knot_necklace.png", images: ["/gold_knot_necklace.png", "/gold_knot_necklace_alt1.png", "/gold_knot_necklace_alt2.png"] }
     ],

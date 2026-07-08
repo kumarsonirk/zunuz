@@ -21,7 +21,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 router.post('/', auth, async (req, res) => {
-  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, description, materials } = req.body;
+  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials } = req.body;
   try {
     const product = await prisma.product.create({
       data: {
@@ -29,6 +29,7 @@ router.post('/', auth, async (req, res) => {
         images: images ? JSON.stringify(images) : '[]',
         categoryId: Number(categoryId), subcategoryId: Number(subcategoryId),
         isActive: isActive !== undefined ? isActive : true,
+        tagline: tagline || null,
         description: description || null,
         materials: materials || null
       },
@@ -39,7 +40,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 router.put('/:id', auth, async (req, res) => {
-  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, description, materials } = req.body;
+  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials } = req.body;
   try {
     const product = await prisma.product.update({
       where: { id: Number(req.params.id) },
@@ -48,6 +49,7 @@ router.put('/:id', auth, async (req, res) => {
         images: images ? JSON.stringify(images) : undefined,
         categoryId: Number(categoryId), subcategoryId: Number(subcategoryId),
         isActive,
+        tagline: tagline || null,
         description: description || null,
         materials: materials || null
       },

@@ -112,6 +112,7 @@ export function useAppState() {
             stock: p.stock ?? null,
             image: p.image || '/gold_knot_necklace.png',
             images: imgs.length > 0 ? imgs : [p.image || '/gold_knot_necklace.png'],
+            tagline: p.tagline || null,
             description: p.description || null,
             materials: p.materials || null
           });

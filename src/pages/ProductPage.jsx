@@ -52,8 +52,6 @@ function CardImage({ src, alt, style }) {
 export default function ProductPage({
   selectedCategory,
   productMap,
-  likedProducts,
-  onLikeToggle,
   onAddToCart,
   onSelectProduct,
   activeTab,
@@ -266,11 +264,6 @@ export default function ProductPage({
     }
   };
 
-  const handleLikeClick = (e, productId) => {
-    e.stopPropagation();
-    onLikeToggle(productId);
-  };
-
   const handleDotClick = (dotIdx) => {
     let d = dotIdx - activeProductIndex;
     if (n > 1) {
@@ -348,7 +341,7 @@ export default function ProductPage({
                 <div
                   className="absolute border shadow-sm pointer-events-none transition-all duration-300"
                   style={{
-                    backgroundColor: '#f8ebda',
+                    backgroundColor: '#fef5e7',
                     border: '1px solid #e4e4e7',
                     borderBottomLeftRadius: '32px',
                     borderBottomRightRadius: '32px',
@@ -364,7 +357,7 @@ export default function ProductPage({
                 <div
                   className="absolute border shadow-md pointer-events-none transition-all duration-300"
                   style={{
-                    backgroundColor: '#f8ebda',
+                    backgroundColor: '#fef5e7',
                     border: '1px solid #e4e4e7',
                     borderBottomLeftRadius: '32px',
                     borderBottomRightRadius: '32px',
@@ -380,8 +373,6 @@ export default function ProductPage({
             )}
 
             {productsList.map((product, idx) => {
-              const isLiked = likedProducts[product.id] || false;
-
               // Calculate index pointers relative to active card
               const nextIdx = (activeProductIndex + 1) % n;
               const prevIdx = (activeProductIndex - 1 + n) % n;
@@ -456,9 +447,9 @@ export default function ProductPage({
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerUp}
-                  className="absolute inset-0 p-6 shadow-2xl flex flex-col justify-between items-center cursor-grab active:cursor-grabbing select-none rounded-[32px] border border-zinc-200"
+                  className="absolute inset-0 p-1 shadow-2xl flex flex-col justify-between items-center cursor-grab active:cursor-grabbing select-none rounded-[32px] border border-zinc-200"
                   style={{
-                    backgroundColor: '#f8ebda',
+                    backgroundColor: '#fef5e7',
                     borderRadius: '32px',
                     border: '1px solid #e4e4e7',
                     transform,
@@ -470,32 +461,23 @@ export default function ProductPage({
                     overflow: 'hidden' // Clip the scaled image at card boundaries
                   }}
                 >
-                  {/* Absolute Image Centered inside the Card */}
-                  <CardImage
-                    src={product.image}
-                    alt={product.name}
-                    style={{
-                      width: 'auto',
-                      height: 'auto',
-                      maxWidth: 'calc(100% - 48px)',
-                      maxHeight: 'calc(100% - 140px)',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate3d(-50%, -50%, 0) scale(1)',
-                      transformOrigin: 'center center',
-                    }}
-                  />
-
-                  {/* Card Top Title & Counter (Overlayed on top of image) */}
-                  <div className="text-center w-full mt-1 z-10 relative">
-                    <h3 className="text-[20px] sm:text-[24px] font-medium text-zinc-900 tracking-wide font-grift" style={{ color: '#18181b', fontFamily: "'Grift', sans-serif" }}>
-                      {product.name}
-                    </h3>
-                    <p className="text-[10px] text-zinc-400 font-grift mt-1 tracking-widest uppercase" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif" }}>
-                      {idx + 1} Of {n}
-                    </p>
+                  {/* Full-width image flush against the top edge */}
+                  <div style={{ position: 'absolute', top: '-20px', left: 0, right: 0, height: '100%', overflow: 'hidden' }}>
+                    <CardImage
+                      src={product.image}
+                      alt={product.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        maxWidth: 'none',
+                        maxHeight: 'none',
+                        top: 0,
+                        left: 0,
+                        transform: 'none',
+                      }}
+                    />
                     {product.stock != null && product.stock <= 5 && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '6px', background: product.stock === 0 ? 'rgba(113,113,122,0.12)' : product.stock <= 2 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${product.stock === 0 ? 'rgba(113,113,122,0.3)' : product.stock <= 2 ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`, borderRadius: '20px', padding: '3px 10px' }}>
+                      <div style={{ position: 'absolute', top: '14px', left: '14px', zIndex: 10, display: 'inline-flex', alignItems: 'center', gap: '4px', background: product.stock === 0 ? 'rgba(113,113,122,0.12)' : product.stock <= 2 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${product.stock === 0 ? 'rgba(113,113,122,0.3)' : product.stock <= 2 ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`, borderRadius: '20px', padding: '3px 10px' }}>
                         <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: product.stock === 0 ? '#71717A' : product.stock <= 2 ? '#EF4444' : '#F59E0B', display: 'inline-block', flexShrink: 0 }} />
                         <span style={{ fontSize: '10px', fontWeight: 600, color: product.stock === 0 ? '#71717A' : product.stock <= 2 ? '#EF4444' : '#F59E0B', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
                           {product.stock === 0 ? 'Out of Stock' : product.stock === 1 ? 'Last piece!' : `Only ${product.stock} left!`}
@@ -504,16 +486,21 @@ export default function ProductPage({
                     )}
                   </div>
 
-                  {/* Bottom Row: Price, Heart Likes & Dots */}
-                  <div className="w-full relative flex flex-col items-center mt-2 z-10">
-                    {/* Price and Heart Container */}
-                    <div className="w-full flex justify-between items-end px-1 relative">
-                      {/* Empty spacer on left for perfect centering of price */}
-                      <div className="w-[36px]" />
-
-                      {/* Centered Price */}
+                  {/* Bottom Area: Title+Tagline on the left / Price on the right, counter centered below */}
+                  <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-1.5 px-6 pb-5 pt-3">
+                    <div className="flex justify-between items-end gap-3">
+                      <div style={{ textAlign: 'left', minWidth: 0 }}>
+                        <h3 className="text-[20px] sm:text-[24px] font-medium text-zinc-900 tracking-wide font-grift truncate" style={{ color: '#18181b', fontFamily: "'Grift', sans-serif" }}>
+                          {product.name}
+                        </h3>
+                        {product.tagline && (
+                          <p className="text-[12px] text-zinc-500 font-grift mt-0.5 truncate" style={{ color: '#71717a', fontFamily: "'Grift', sans-serif" }}>
+                            {product.tagline}
+                          </p>
+                        )}
+                      </div>
                       <div
-                        className="text-[24px] sm:text-[28px] font-medium text-zinc-900 font-grift"
+                        className="text-[24px] sm:text-[28px] font-medium text-zinc-900 font-grift flex-shrink-0"
                         style={{
                           color: '#18181b',
                           fontFamily: "'Grift', sans-serif"
@@ -521,28 +508,10 @@ export default function ProductPage({
                       >
                         {product.price}
                       </div>
-
-                      {/* Heart Button */}
-                      <button
-                        onClick={(e) => handleLikeClick(e, product.id)}
-                        className="flex flex-col items-center justify-center w-[36px] focus:outline-none cursor-pointer z-30 pointer-events-auto btn-heart"
-                      >
-                        <svg
-                          className={`w-6.5 h-6.5 transition-all duration-300 ${
-                            isLiked
-                              ? "scale-110"
-                              : ""
-                          }`}
-                          viewBox="0 0 24 24"
-                          style={{ width: '26px', height: '26px', fill: isLiked ? '#ef4444' : '#ECEBE6', color: isLiked ? '#ef4444' : '#ECEBE6' }}
-                        >
-                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                        </svg>
-                        <span className="text-[9px] text-[#A1A1AA] font-bold mt-1 font-grift" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif" }}>
-                          {isLiked ? "21k" : product.likes}
-                        </span>
-                      </button>
                     </div>
+                    <p className="text-[10px] text-zinc-400 font-grift text-center tracking-widest uppercase" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif" }}>
+                      {idx + 1} Of {n}
+                    </p>
                   </div>
                 </div>
               );

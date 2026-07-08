@@ -85,6 +85,7 @@ model Product {
   images        String      @default("[]")
   likes         Int         @default(0)
   isActive      Boolean     @default(true)
+  tagline       String?
   description   String?     @db.Text
   materials     String?     @db.Text
   category      Category    @relation(fields: [categoryId], references: [id])

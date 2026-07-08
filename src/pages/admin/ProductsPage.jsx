@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Package, Upload, ImagePlus } from 'lucide-react';
 import { api } from '../../utils/api';
 
-const EMPTY_FORM = { name: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, description: '', materials: '' };
+const EMPTY_FORM = { name: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, tagline: '', description: '', materials: '' };
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace('/api', '');
 
@@ -170,7 +170,7 @@ export default function ProductsPage() {
     setEditProduct(p);
     let parsedImages = [];
     try { parsedImages = JSON.parse(p.images || '[]'); } catch {}
-    setForm({ name: p.name, price: p.price, stock: p.stock, image: p.image || '', images: parsedImages, categoryId: p.categoryId, subcategoryId: p.subcategoryId, isActive: p.isActive, description: p.description || '', materials: p.materials || '' });
+    setForm({ name: p.name, price: p.price, stock: p.stock, image: p.image || '', images: parsedImages, categoryId: p.categoryId, subcategoryId: p.subcategoryId, isActive: p.isActive, tagline: p.tagline || '', description: p.description || '', materials: p.materials || '' });
     setModal('edit');
   };
 
@@ -295,6 +295,9 @@ export default function ProductsPage() {
         <Modal title={modal === 'edit' ? 'Edit Product' : 'Add Product'} onClose={() => setModal(null)}>
           <Field label="PRODUCT NAME">
             <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Core Chain I" />
+          </Field>
+          <Field label="TAGLINE">
+            <input style={inputStyle} value={form.tagline} onChange={e => setForm(f => ({ ...f, tagline: e.target.value }))} placeholder="e.g. The everyday shine." />
           </Field>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <Field label="PRICE (Rs)">

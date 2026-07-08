@@ -69,8 +69,6 @@ export default function App() {
                 ? <ProductPage
                     selectedCategory={state.selectedCategory}
                     productMap={state.productMap}
-                    likedProducts={state.likedProducts}
-                    onLikeToggle={state.handleLikeToggle}
                     onAddToCart={state.handleAddToCart}
                     onSelectProduct={state.handleSelectProduct}
                     activeTab={state.activeTab}
