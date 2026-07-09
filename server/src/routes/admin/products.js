@@ -36,7 +36,7 @@ router.post('/', auth, async (req, res) => {
       include: { category: true, subcategory: true }
     });
     res.status(201).json(product);
-  } catch (e) { res.status(500).json({ error: 'Server error' }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Server error' }); }
 });
 
 router.put('/:id', auth, async (req, res) => {
@@ -56,7 +56,7 @@ router.put('/:id', auth, async (req, res) => {
       include: { category: true, subcategory: true }
     });
     res.json(product);
-  } catch { res.status(500).json({ error: 'Server error' }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Server error' }); }
 });
 
 router.delete('/:id', auth, async (req, res) => {
