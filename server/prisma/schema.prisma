@@ -82,7 +82,7 @@ model Product {
   price         Int
   stock         Int         @default(0)
   image         String
-  images        String      @default("[]")
+  images        String      @db.Text
   likes         Int         @default(0)
   isActive      Boolean     @default(true)
   tagline       String?
