@@ -284,11 +284,11 @@ export default function ProductDetailsPage({
             else if (idx === 2) visualIndex = 1;
 
             return (
-              <div key={idx} className="w-[20%] h-full flex items-center justify-center relative p-6 flex-shrink-0">
+              <div key={idx} className="w-[20%] h-full flex items-center justify-center relative flex-shrink-0">
                 <img
                   src={imgSrc}
                   alt={`${product.name} - view ${visualIndex + 1}`}
-                  className="w-full h-full object-contain pointer-events-none"
+                  className="w-full h-full object-cover pointer-events-none"
                   draggable="false"
                   style={{
                     transform: visualIndex === 1
