@@ -16,7 +16,7 @@ app.use('/api/webhooks', express.raw({ type: 'application/json' }), require('./r
 app.use(express.json());
 
 // Serve uploaded product images
-const uploadsDir = path.join(__dirname, '../../uploads');
+const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', express.static(uploadsDir));
 
