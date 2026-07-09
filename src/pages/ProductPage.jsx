@@ -490,11 +490,11 @@ export default function ProductPage({
                   <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-1.5 px-6 pb-5 pt-3">
                     <div className="flex justify-between items-end gap-3">
                       <div style={{ textAlign: 'left', minWidth: 0 }}>
-                        <h3 className="text-[20px] sm:text-[24px] font-medium text-zinc-900 tracking-wide font-grift truncate" style={{ color: '#18181b', fontFamily: "'Grift', sans-serif" }}>
+                        <h3 className="text-[24px] sm:text-[24px] font-medium text-zinc-900 tracking-wide font-grift truncate" style={{ color: '#18181b', fontFamily: "'Grift', sans-serif" }}>
                           {product.name}
                         </h3>
                         {product.tagline && (
-                          <p className="text-[12px] text-zinc-500 font-grift mt-0.5 truncate" style={{ color: '#71717a', fontFamily: "'Grift', sans-serif" }}>
+                          <p className="text-[16px] text-zinc-500 font-grift mt-0.5 truncate" style={{ color: '#71717a', fontFamily: "'Grift', sans-serif" }}>
                             {product.tagline}
                           </p>
                         )}
