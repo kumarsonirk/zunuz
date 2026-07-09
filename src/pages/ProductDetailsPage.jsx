@@ -114,12 +114,15 @@ export default function ProductDetailsPage({
   // Setup variants for the carousel (use product.images if available, otherwise fallback)
   const carouselImages = product.images && product.images.length > 0
     ? product.images
-    : [product.image, product.image, product.image];
+    : [product.image];
+  const slideCount = carouselImages.length;
 
-  // We have exactly 3 slides. For infinite looping in both directions, we clone:
-  // Slide 2 at the beginning, and Slide 0 at the end.
-  // Rendered track: [Slide 2, Slide 0, Slide 1, Slide 2, Slide 0] (length 5)
-  const trackImages = [carouselImages[2], carouselImages[0], carouselImages[1], carouselImages[2], carouselImages[0]];
+  // For infinite looping in both directions, we clone the last slide at the
+  // beginning and the first slide at the end. Sized to however many real
+  // images this product has (slideCount), not a fixed count, so a product
+  // with 2 photos doesn't get a 3rd empty slot.
+  // Rendered track: [clone-of-last, slide 0, ...slide N-2, slide N-1, clone-of-first]
+  const trackImages = [carouselImages[slideCount - 1], ...carouselImages, carouselImages[0]];
 
   const [currentIndex, _setCurrentIndex] = useState(1); // Default to Slide 0 (canonical) at index 1
   const currentIndexRef = useRef(1);
@@ -166,12 +169,12 @@ export default function ProductDetailsPage({
     stopAutoplay();
 
     // Snap boundary index if we are currently at or beyond a cloned index
-    if (currentIndexRef.current >= 4) {
+    if (currentIndexRef.current >= slideCount + 1) {
       setIsTransitionEnabled(false);
       setCurrentIndex(1);
     } else if (currentIndexRef.current <= 0) {
       setIsTransitionEnabled(false);
-      setCurrentIndex(3);
+      setCurrentIndex(slideCount);
     }
 
     touchStartX.current = e.touches[0].clientX;
@@ -200,8 +203,8 @@ export default function ProductDetailsPage({
       zr.playTick();
     }
 
-    // Clamp targetIndex strictly within [0, 4] for absolute safety
-    targetIndex = Math.max(0, Math.min(4, targetIndex));
+    // Clamp targetIndex strictly within [0, slideCount + 1] for absolute safety
+    targetIndex = Math.max(0, Math.min(slideCount + 1, targetIndex));
 
     setIsTransitionEnabled(true);
     setCurrentIndex(targetIndex);
@@ -211,17 +214,17 @@ export default function ProductDetailsPage({
   };
 
   const handleTransitionEnd = () => {
-    if (currentIndexRef.current === 4) {
+    if (currentIndexRef.current === slideCount + 1) {
       setIsTransitionEnabled(false);
       setCurrentIndex(1); // Jump back to Slide 0 (canonical)
     } else if (currentIndexRef.current === 0) {
       setIsTransitionEnabled(false);
-      setCurrentIndex(3); // Jump forward to Slide 2 (canonical)
+      setCurrentIndex(slideCount); // Jump forward to the last canonical slide
     }
   };
 
   // Derive canonicalIndex from currentIndex
-  const canonicalIndex = (currentIndex - 1 + 3) % 3;
+  const canonicalIndex = (currentIndex - 1 + slideCount) % slideCount;
 
   // Use productMap (API data) when available, fall back to static productData
   const activeDataMap = productMap || productData;
@@ -271,20 +274,22 @@ export default function ProductDetailsPage({
           onTransitionEnd={handleTransitionEnd}
           className="flex h-full cursor-grab active:cursor-grabbing"
           style={{
-            transform: `translate3d(calc(${-currentIndex * 20}% + ${swipeOffset}px), 0, 0)`,
+            transform: `translate3d(calc(${-currentIndex * (100 / trackImages.length)}% + ${swipeOffset}px), 0, 0)`,
             transition: isTransitionEnabled && !isSwiping ? 'transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
-            width: '500%',
+            width: `${trackImages.length * 100}%`,
             touchAction: 'pan-y'
           }}
         >
           {trackImages.map((imgSrc, idx) => {
-            let visualIndex = 0;
-            if (idx === 0 || idx === 3) visualIndex = 2;
-            else if (idx === 1 || idx === 4) visualIndex = 0;
-            else if (idx === 2) visualIndex = 1;
+            // idx 0 is the cloned last slide, idx slideCount+1 is the cloned
+            // first slide; everything in between maps 1:1 to a canonical slide.
+            let visualIndex;
+            if (idx === 0) visualIndex = slideCount - 1;
+            else if (idx === slideCount + 1) visualIndex = 0;
+            else visualIndex = idx - 1;
 
             return (
-              <div key={idx} className="w-[20%] h-full flex items-center justify-center relative flex-shrink-0">
+              <div key={idx} className="h-full flex items-center justify-center relative flex-shrink-0" style={{ width: `${100 / trackImages.length}%` }}>
                 <img
                   src={imgSrc}
                   alt={`${product.name} - view ${visualIndex + 1}`}
@@ -308,23 +313,25 @@ export default function ProductDetailsPage({
           {/* Spacer to push dots center */}
           <div className="w-[36px]" />
 
-          {/* Dots Indicators */}
-          <div className="flex gap-2 pointer-events-auto">
-            {[0, 1, 2].map(dotIdx => (
-              <button
-                key={dotIdx}
-                onClick={() => {
-                  setCurrentIndex(dotIdx + 1);
-                  setIsTransitionEnabled(true);
-                  zr.playTick();
-                }}
-                className="w-[6px] h-[6px] rounded-full border-none cursor-pointer transition-colors duration-300"
-                style={{
-                  backgroundColor: dotIdx === canonicalIndex ? '#27272a' : '#e4e4e7'
-                }}
-              />
-            ))}
-          </div>
+          {/* Dots Indicators — one per actual photo, no dot for a single-image product */}
+          {slideCount > 1 && (
+            <div className="flex gap-2 pointer-events-auto">
+              {carouselImages.map((_, dotIdx) => (
+                <button
+                  key={dotIdx}
+                  onClick={() => {
+                    setCurrentIndex(dotIdx + 1);
+                    setIsTransitionEnabled(true);
+                    zr.playTick();
+                  }}
+                  className="w-[6px] h-[6px] rounded-full border-none cursor-pointer transition-colors duration-300"
+                  style={{
+                    backgroundColor: dotIdx === canonicalIndex ? '#27272a' : '#e4e4e7'
+                  }}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Rating Badge */}
           <div

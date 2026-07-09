@@ -4,6 +4,50 @@ import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData'; // fallback when API not loaded
 import zr from '../utils/audio';
 
+// Samples the average color of a photo's bottom strip (where the text scrim
+// sits) via an offscreen image, so the scrim/text can be tinted to match each
+// photo instead of always using a flat black overlay that looks muddy on
+// light backgrounds. Runs on a separate Image (not the visible <img>), so a
+// CORS hiccup here just skips the adaptive color — it never breaks the actual
+// card photo.
+function sampleBottomColor(src) {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const w = 16, h = 16;
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          const sh = Math.max(1, Math.round(img.naturalHeight * 0.35));
+          const sy = img.naturalHeight - sh;
+          ctx.drawImage(img, 0, sy, img.naturalWidth, sh, 0, 0, w, h);
+          const { data } = ctx.getImageData(0, 0, w, h);
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            r += data[i]; g += data[i + 1]; b += data[i + 2];
+            count++;
+          }
+          r = Math.round(r / count);
+          g = Math.round(g / count);
+          b = Math.round(b / count);
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          resolve({ r, g, b, luminance });
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
 function CardImage({ src, alt, style }) {
   const checkCached = (url) => {
     try {
@@ -71,6 +115,7 @@ export default function ProductPage({
   const isSwipeDirectionChecked = useRef(false);
   const isHorizontalSwipe = useRef(false);
   const animationRef = useRef(null);
+  const [cardColors, setCardColors] = useState({});
 
   // Reset tab, index, and pos when the category or tab changes
   useEffect(() => {
@@ -93,6 +138,21 @@ export default function ProductPage({
   const activeProduct = productsList[activeProductIndex];
   const navigate = useNavigate();
   const isInCart = activeProduct ? cartItems.some(item => item.id === activeProduct.id) : false;
+
+  // Sample each visible product photo's bottom color once, so the text scrim
+  // can be tinted to match it (see sampleBottomColor above) instead of using a
+  // fixed black overlay that looks like a smudge on light-background photos.
+  useEffect(() => {
+    let cancelled = false;
+    productsList.forEach((product) => {
+      if (!product?.image || cardColors[product.id]) return;
+      sampleBottomColor(product.image).then((sample) => {
+        if (cancelled || !sample) return;
+        setCardColors(prev => (prev[product.id] ? prev : { ...prev, [product.id]: sample }));
+      });
+    });
+    return () => { cancelled = true; };
+  }, [productsList, cardColors]);
 
   const handleAddClick = () => {
     if (activeProduct && isInCart) {
@@ -334,14 +394,19 @@ export default function ProductPage({
             className="relative w-full max-w-[390px] animate-card-fade-in"
             style={{ width: '100%', maxWidth: '390px', height: 'min(calc((100vw - 32px) * 1.45), calc(100% - 16px), 500px)' }}
           >
-            {/* Fake Stacked Card Layers behind the active card */}
-            {n > 1 && (
+            {/* Fake Stacked Card Layers behind the active card, tinted to the active
+                photo's sampled color (falls back to the old fixed cream until it
+                resolves) so the peeking edge doesn't clash with a dark photo up top */}
+            {n > 1 && (() => {
+              const activeSample = cardColors[activeProduct?.id];
+              const stackBg = activeSample ? `rgb(${activeSample.r}, ${activeSample.g}, ${activeSample.b})` : '#fef5e7';
+              return (
               <>
                 {/* Layer 2 (Bottom-most) */}
                 <div
                   className="absolute border shadow-sm pointer-events-none transition-all duration-300"
                   style={{
-                    backgroundColor: '#fef5e7',
+                    backgroundColor: stackBg,
                     border: '1px solid #e4e4e7',
                     borderBottomLeftRadius: '32px',
                     borderBottomRightRadius: '32px',
@@ -357,7 +422,7 @@ export default function ProductPage({
                 <div
                   className="absolute border shadow-md pointer-events-none transition-all duration-300"
                   style={{
-                    backgroundColor: '#fef5e7',
+                    backgroundColor: stackBg,
                     border: '1px solid #e4e4e7',
                     borderBottomLeftRadius: '32px',
                     borderBottomRightRadius: '32px',
@@ -370,7 +435,8 @@ export default function ProductPage({
                   }}
                 />
               </>
-            )}
+              );
+            })()}
 
             {productsList.map((product, idx) => {
               // Calculate index pointers relative to active card
@@ -436,9 +502,23 @@ export default function ProductPage({
 
               // Determine if this card is currently in active transition
               const isTransitioning = idx === activeProductIndex || (idx === nextIdx && clampedT > 0) || (idx === prevIdx && clampedT < 0);
-              const transition = isDragging || !isTransitioning
-                ? 'none'
-                : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s, filter 0.4s';
+              // Background-color/scrim tint transitions stay on regardless of drag
+              // state, so a color sample arriving mid-swipe still fades in smoothly.
+              const transition = 'background-color 0.4s ease' + (isDragging || !isTransitioning
+                ? ''
+                : ', transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s, filter 0.4s');
+
+              // Tint the scrim to match this photo's own bottom color (falls back to
+              // black/light-text, the old fixed look, until the sample resolves) so
+              // it blends into dark photos and light photos alike instead of always
+              // showing a dark smudge over light backgrounds.
+              const colorSample = cardColors[product.id];
+              const isLightPhoto = !!colorSample && colorSample.luminance > 0.55;
+              const scrimRgb = colorSample ? `${colorSample.r}, ${colorSample.g}, ${colorSample.b}` : '0, 0, 0';
+              const titleColor = isLightPhoto ? '#18181B' : '#F5F2EB';
+              const taglineColor = isLightPhoto ? 'rgba(24,24,27,0.65)' : 'rgba(245,242,235,0.75)';
+              const priceColor = isLightPhoto ? '#18181B' : '#F5F2EB';
+              const counterColor = isLightPhoto ? 'rgba(24,24,27,0.55)' : 'rgba(245,242,235,0.6)';
 
               return (
                 <div
@@ -447,11 +527,15 @@ export default function ProductPage({
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerUp}
-                  className="absolute inset-0 p-1 shadow-2xl flex flex-col justify-between items-center cursor-grab active:cursor-grabbing select-none rounded-[32px] border border-zinc-200"
+                  className="absolute inset-0 p-1 shadow-2xl flex flex-col justify-between items-center cursor-grab active:cursor-grabbing select-none rounded-[32px] border-zinc-200"
                   style={{
-                    backgroundColor: '#fef5e7',
+                    // Falls back to the old fixed cream until the photo is sampled. Any
+                    // sliver where object-fit: contain doesn't fully cover the card
+                    // (e.g. the rounded bottom edge) shows this color, so tinting it to
+                    // the photo's own tone keeps that sliver from clashing.
+                    backgroundColor: colorSample ? `rgb(${colorSample.r}, ${colorSample.g}, ${colorSample.b})` : '#fef5e7',
                     borderRadius: '32px',
-                    border: '1px solid #e4e4e7',
+                    border: '1px solid ##00000000',
                     transform,
                     opacity,
                     zIndex,
@@ -462,13 +546,13 @@ export default function ProductPage({
                   }}
                 >
                   {/* Full-width image flush against the top edge */}
-                  <div style={{ position: 'absolute', top: '-20px', left: 0, right: 0, height: '100%', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: '-20px', left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
                     <CardImage
                       src={product.image}
                       alt={product.name}
                       style={{
                         width: '100%',
-                        height: '100%',
+                        height: '105%',
                         maxWidth: 'none',
                         maxHeight: 'none',
                         top: 0,
@@ -486,30 +570,37 @@ export default function ProductPage({
                     )}
                   </div>
 
+                  {/* Scrim behind the bottom text, tinted to match this photo's own color so it stays legible over any photo, light or dark */}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 pointer-events-none"
+                    style={{ height: '30%', background: `linear-gradient(to top, rgba(${scrimRgb}, 0.72), rgba(${scrimRgb}, 0))`, transition: 'background 0.4s ease' }}
+                  />
+
                   {/* Bottom Area: Title+Tagline on the left / Price on the right, counter centered below */}
                   <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-1.5 px-6 pb-5 pt-3">
                     <div className="flex justify-between items-end gap-3">
                       <div style={{ textAlign: 'left', minWidth: 0 }}>
-                        <h3 className="text-[24px] sm:text-[24px] font-medium text-zinc-900 tracking-wide font-grift truncate" style={{ color: '#18181b', fontFamily: "'Grift', sans-serif" }}>
+                        <h3 className="text-[24px] sm:text-[24px] font-medium tracking-wide font-grift truncate" style={{ color: titleColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
                           {product.name}
                         </h3>
                         {product.tagline && (
-                          <p className="text-[16px] text-zinc-500 font-grift mt-0.5 truncate" style={{ color: '#71717a', fontFamily: "'Grift', sans-serif" }}>
+                          <p className="text-[16px] font-grift mt-0.5 truncate" style={{ color: taglineColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
                             {product.tagline}
                           </p>
                         )}
                       </div>
                       <div
-                        className="text-[28px] sm:text-[28px] font-medium text-zinc-900 font-grift flex-shrink-0"
+                        className="text-[28px] sm:text-[28px] font-medium font-grift flex-shrink-0"
                         style={{
-                          color: '#18181b',
-                          fontFamily: "'Grift', sans-serif"
+                          color: priceColor,
+                          fontFamily: "'Grift', sans-serif",
+                          transition: 'color 0.4s ease'
                         }}
                       >
                         {product.price}
                       </div>
                     </div>
-                    <p className="text-[10px] text-zinc-400 font-grift text-center tracking-widest uppercase" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif" }}>
+                    <p className="text-[10px] font-grift text-center tracking-widest uppercase" style={{ color: counterColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
                       {idx + 1} Of {n}
                     </p>
                   </div>
