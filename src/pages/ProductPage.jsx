@@ -570,10 +570,12 @@ export default function ProductPage({
                     )}
                   </div>
 
-                  {/* Scrim behind the bottom text, tinted to match this photo's own color so it stays legible over any photo, light or dark */}
+                  {/* Scrim behind the bottom text, tinted to match this photo's own color so it stays legible over any photo, light or dark.
+                      Stays invisible until the color is actually known, then fades in already-correct — avoids a black flash on light photos
+                      while we wait to find out the photo isn't dark. */}
                   <div
                     className="absolute bottom-0 left-0 right-0 pointer-events-none"
-                    style={{ height: '30%', background: `linear-gradient(to top, rgba(${scrimRgb}, 0.72), rgba(${scrimRgb}, 0))`, transition: 'background 0.4s ease' }}
+                    style={{ height: '30%', background: `linear-gradient(to top, rgba(${scrimRgb}, 0.72), rgba(${scrimRgb}, 0))`, opacity: colorSample ? 1 : 0, transition: 'background 0.4s ease, opacity 0.4s ease' }}
                   />
 
                   {/* Bottom Area: Title+Tagline on the left / Price on the right, counter centered below */}

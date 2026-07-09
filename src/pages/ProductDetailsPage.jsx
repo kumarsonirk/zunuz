@@ -262,7 +262,11 @@ export default function ProductDetailsPage({
         className="relative mx-0 mt-0 mb-4 overflow-hidden shrink-0"
         style={{
           width: '100%',
-          height: '380px',
+          // Matches the product photos' own portrait ratio (same as the listing-page
+          // card) instead of a fixed 380px, so object-cover fills the box without
+          // cropping most of the necklace away.
+          aspectRatio: '1 / 1.45',
+          maxHeight: '380px',
           opacity: isTransitioning ? 0 : 1,
           backgroundColor: '#fef5e7'
         }}
@@ -289,7 +293,7 @@ export default function ProductDetailsPage({
             else visualIndex = idx - 1;
 
             return (
-              <div key={idx} className="h-full flex items-center justify-center relative flex-shrink-0" style={{ width: `${100 / trackImages.length}%` }}>
+              <div key={idx} className="h-full flex items-center justify-center relative flex-shrink-0" style={{ width: `${100 / trackImages.length}%`, overflow: 'hidden' }}>
                 <img
                   src={imgSrc}
                   alt={`${product.name} - view ${visualIndex + 1}`}
