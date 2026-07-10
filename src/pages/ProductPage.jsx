@@ -518,7 +518,6 @@ export default function ProductPage({
               const titleColor = isLightPhoto ? '#18181B' : '#F5F2EB';
               const taglineColor = isLightPhoto ? 'rgba(24,24,27,0.65)' : 'rgba(245,242,235,0.75)';
               const priceColor = isLightPhoto ? '#18181B' : '#F5F2EB';
-              const counterColor = isLightPhoto ? 'rgba(24,24,27,0.55)' : 'rgba(245,242,235,0.6)';
 
               return (
                 <div
@@ -568,6 +567,26 @@ export default function ProductPage({
                         </span>
                       </div>
                     )}
+                    {/* Card counter, top center — its own translucent pill so it stays legible regardless of photo color */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '14px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 10,
+                        background: 'rgba(0,0,0,0.35)',
+                        borderRadius: '20px',
+                        padding: '3px 12px'
+                      }}
+                    >
+                      <span
+                        className="text-[10px] font-grift tracking-widest uppercase"
+                        style={{ color: '#F5F2EB', fontFamily: "'Grift', sans-serif" }}
+                      >
+                        {idx + 1} Of {n}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Scrim behind the bottom text, tinted to match this photo's own color so it stays legible over any photo, light or dark.
@@ -582,11 +601,11 @@ export default function ProductPage({
                   <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-1.5 px-6 pb-5 pt-3">
                     <div className="flex justify-between items-end gap-3">
                       <div style={{ textAlign: 'left', minWidth: 0 }}>
-                        <h3 className="text-[24px] sm:text-[24px] font-medium tracking-wide font-grift truncate" style={{ color: titleColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
+                        <h3 className="text-[24px] sm:text-[24px] font-medium tracking-wide font-grift truncate leading-tight" style={{ color: titleColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
                           {product.name}
                         </h3>
                         {product.tagline && (
-                          <p className="text-[16px] font-grift mt-0.5 truncate" style={{ color: taglineColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
+                          <p className="text-[16px] font-grift truncate leading-tight" style={{ color: taglineColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease', marginTop: '-2px' }}>
                             {product.tagline}
                           </p>
                         )}
@@ -602,9 +621,6 @@ export default function ProductPage({
                         {product.price}
                       </div>
                     </div>
-                    <p className="text-[10px] font-grift text-center tracking-widest uppercase" style={{ color: counterColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
-                      {idx + 1} Of {n}
-                    </p>
                   </div>
                 </div>
               );
