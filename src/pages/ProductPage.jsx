@@ -575,14 +575,14 @@ export default function ProductPage({
                         left: '50%',
                         transform: 'translateX(-50%)',
                         zIndex: 10,
-                        background: 'rgba(0,0,0,0.35)',
+                        background: '#ffffff00',
                         borderRadius: '20px',
                         padding: '3px 12px'
                       }}
                     >
                       <span
-                        className="text-[10px] font-grift tracking-widest uppercase"
-                        style={{ color: '#F5F2EB', fontFamily: "'Grift', sans-serif" }}
+                        className="text-[12px] font-grift tracking-widest uppercase"
+                        style={{ color: '#2f2f2f', fontFamily: "'Grift', sans-serif" }}
                       >
                         {idx + 1} Of {n}
                       </span>
