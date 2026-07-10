@@ -648,14 +648,14 @@ export default function ProductPage({
           }}
           disabled={!activeProduct || activeProduct.stock === 0}
           className="flex-1 flex items-center justify-center rounded-[10px] font-medium text-base btn-buy-now"
-          style={{ height: '58px', borderRadius: '10px', border: 'none', cursor: activeProduct?.stock === 0 ? 'not-allowed' : 'pointer', opacity: activeProduct?.stock === 0 ? 0.45 : 1 }}
+          style={{ height: '50px', borderRadius: '10px', border: 'none', cursor: activeProduct?.stock === 0 ? 'not-allowed' : 'pointer', opacity: activeProduct?.stock === 0 ? 0.45 : 1 }}
         >
           {activeProduct?.stock === 0 ? 'Out of Stock' : 'Buy Now'}
         </button>
         <button
           onClick={handleAddClick}
           className={`flex-1 flex items-center justify-center rounded-[10px] font-medium text-base cursor-pointer btn-add-to-cart ${isAdding ? 'is-adding' : ''}`}
-          style={{ height: '58px', borderRadius: '10px', border: 'none', gap: '12px' }}
+          style={{ height: '50px', borderRadius: '10px', border: 'none', gap: '12px' }}
         >
           {isAdding ? 'Added!' : isInCart ? 'Go to Cart' : 'Add To Cart'} <ShoppingCart size={18} strokeWidth={2} />
         </button>

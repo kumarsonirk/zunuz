@@ -474,15 +474,15 @@ export default function ProductDetailsPage({
         <button
           onClick={() => { if (effectiveStock !== 0) onBuyNow({ ...product, price: effectivePrice, stock: effectiveStock }); }}
           disabled={effectiveStock === 0}
-          className="flex-1 flex items-center justify-center rounded-[20px] font-medium text-base btn-buy-now"
-          style={{ height: '58px', borderRadius: '20px', border: 'none', cursor: effectiveStock === 0 ? 'not-allowed' : 'pointer', opacity: effectiveStock === 0 ? 0.45 : 1 }}
+          className="flex-1 flex items-center justify-center rounded-[10px] font-medium text-base btn-buy-now"
+          style={{ height: '50px', borderRadius: '10px', border: 'none', cursor: effectiveStock === 0 ? 'not-allowed' : 'pointer', opacity: effectiveStock === 0 ? 0.45 : 1 }}
         >
           {effectiveStock === 0 ? 'Out of Stock' : 'Buy Now'}
         </button>
         <button
           onClick={handleAddClick}
-          className={`flex-1 flex items-center justify-center rounded-[20px] font-medium text-base cursor-pointer btn-add-to-cart ${isAdding ? 'is-adding' : ''}`}
-          style={{ height: '58px', borderRadius: '20px', border: 'none', gap: '12px' }}
+          className={`flex-1 flex items-center justify-center rounded-[10px] font-medium text-base cursor-pointer btn-add-to-cart ${isAdding ? 'is-adding' : ''}`}
+          style={{ height: '50px', borderRadius: '10px', border: 'none', gap: '12px' }}
         >
           {isAdding ? 'Added!' : isInCart ? 'Go to Cart' : 'Add To Cart'} <ShoppingCart size={18} strokeWidth={2} />
         </button>
