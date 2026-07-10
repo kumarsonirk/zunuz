@@ -588,7 +588,7 @@ export default function ProductPage({
                     >
                       <span
                         className="text-[12px] font-grift tracking-widest uppercase"
-                        style={{ color: '#2f2f2f', fontFamily: "'Grift', sans-serif" }}
+                        style={{ color: titleColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}
                       >
                         {idx + 1} Of {n}
                       </span>
