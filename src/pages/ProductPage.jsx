@@ -394,17 +394,20 @@ export default function ProductPage({
             className="relative w-full max-w-[390px] animate-card-fade-in"
             style={{ width: '100%', maxWidth: '390px', height: 'min(calc((100vw - 32px) * 1.45), calc(100% - 16px), 500px)' }}
           >
-            {/* Fake Stacked Card Layers behind the active card, tinted to the active
-                photo's sampled color (falls back to the old fixed cream until it
-                resolves) so the peeking edge doesn't clash with a dark photo up top */}
+            {/* Fake Stacked Card Layers behind the active card, tinted to whichever
+                photo is currently front-most. Uses the continuous swipe position
+                (pos), not the committed activeProductIndex, so the strip's color
+                catches up to the photo as it visually arrives instead of lagging
+                behind for the ~250ms snap animation + transition. */}
             {n > 1 && (() => {
-              const activeSample = cardColors[activeProduct?.id];
-              const stackBg = activeSample ? `rgb(${activeSample.r}, ${activeSample.g}, ${activeSample.b})` : '#fef5e7';
+              const frontIndex = getWrappedIndex(pos, n);
+              const frontSample = cardColors[productsList[frontIndex]?.id];
+              const stackBg = frontSample ? `rgb(${frontSample.r}, ${frontSample.g}, ${frontSample.b})` : '#fef5e7';
               return (
               <>
                 {/* Layer 2 (Bottom-most) */}
                 <div
-                  className="absolute border shadow-sm pointer-events-none transition-all duration-300"
+                  className="absolute border shadow-sm pointer-events-none transition-all duration-150"
                   style={{
                     backgroundColor: stackBg,
                     border: '1px solid #e4e4e7',
@@ -420,7 +423,7 @@ export default function ProductPage({
                 />
                 {/* Layer 1 (Middle) */}
                 <div
-                  className="absolute border shadow-md pointer-events-none transition-all duration-300"
+                  className="absolute border shadow-md pointer-events-none transition-all duration-150"
                   style={{
                     backgroundColor: stackBg,
                     border: '1px solid #e4e4e7',
@@ -513,7 +516,10 @@ export default function ProductPage({
               // it blends into dark photos and light photos alike instead of always
               // showing a dark smudge over light backgrounds.
               const colorSample = cardColors[product.id];
-              const isLightPhoto = !!colorSample && colorSample.luminance > 0.55;
+              // Before the photo/sample is ready, the card is still showing its plain
+              // cream fallback background — default to dark text so it's actually
+              // readable then, instead of light cream-on-cream that looks blank.
+              const isLightPhoto = colorSample ? colorSample.luminance > 0.55 : true;
               const scrimRgb = colorSample ? `${colorSample.r}, ${colorSample.g}, ${colorSample.b}` : '0, 0, 0';
               const titleColor = isLightPhoto ? '#18181B' : '#F5F2EB';
               const taglineColor = isLightPhoto ? 'rgba(24,24,27,0.65)' : 'rgba(245,242,235,0.75)';
@@ -571,7 +577,7 @@ export default function ProductPage({
                     <div
                       style={{
                         position: 'absolute',
-                        top: '14px',
+                        top: '30px',
                         left: '50%',
                         transform: 'translateX(-50%)',
                         zIndex: 10,

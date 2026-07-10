@@ -264,7 +264,8 @@ export default function ProductDetailsPage({
           width: '100%',
           // Matches the product photos' own portrait ratio (same as the listing-page
           // card) instead of a fixed 380px, so object-cover fills the box without
-          // cropping most of the necklace away.
+          // cropping most of the necklace away. maxHeight only kicks in on very wide
+          // screens (tablets) — on phones the aspect ratio is what actually governs.
           aspectRatio: '1 / 1.45',
           maxHeight: '380px',
           opacity: isTransitioning ? 0 : 1,
@@ -292,6 +293,11 @@ export default function ProductDetailsPage({
             else if (idx === slideCount + 1) visualIndex = 0;
             else visualIndex = idx - 1;
 
+            // Only the slide that's actually on screen first should compete for
+            // bandwidth right away — everything else (other photos, loop clones)
+            // is deferred so a slow connection isn't split three ways on load.
+            const isInitialVisible = visualIndex === 0;
+
             return (
               <div key={idx} className="h-full flex items-center justify-center relative flex-shrink-0" style={{ width: `${100 / trackImages.length}%`, overflow: 'hidden' }}>
                 <img
@@ -299,6 +305,8 @@ export default function ProductDetailsPage({
                   alt={`${product.name} - view ${visualIndex + 1}`}
                   className="w-full h-full object-cover pointer-events-none"
                   draggable="false"
+                  loading={isInitialVisible ? 'eager' : 'lazy'}
+                  fetchPriority={isInitialVisible ? 'high' : 'low'}
                   style={{
                     transform: visualIndex === 1
                       ? 'scale(1.15)'
