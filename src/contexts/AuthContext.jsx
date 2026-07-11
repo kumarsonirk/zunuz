@@ -29,6 +29,27 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const login = async (email, password) => {
+    const data = await api.post('/auth/login', { email, password });
+    localStorage.setItem('zunuz_customer_token', data.token);
+    setCustomer(data.customer);
+    return data;
+  };
+
+  const signup = async (name, email, password, phone) => {
+    const data = await api.post('/auth/register', { name, email, password, phone });
+    localStorage.setItem('zunuz_customer_token', data.token);
+    setCustomer(data.customer);
+    return data;
+  };
+
+  const loginWithGoogle = async (credential) => {
+    const data = await api.post('/auth/google', { credential });
+    localStorage.setItem('zunuz_customer_token', data.token);
+    setCustomer(data.customer);
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem('zunuz_customer_token');
     setCustomer(null);
@@ -41,7 +62,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ customer, loading, sendOtp, verifyOtp, logout, updateProfile }}>
+    <AuthContext.Provider value={{ customer, loading, sendOtp, verifyOtp, login, signup, loginWithGoogle, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

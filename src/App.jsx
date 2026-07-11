@@ -18,8 +18,9 @@ import FaqPage from './pages/customer-care/FaqPage';
 import HelpCenterPage from './pages/account/HelpCenterPage';
 import { useAppState } from './hooks/useAppState';
 
-// Customer auth page (mobile OTP)
-import OtpAuthPage from './pages/auth/OtpAuthPage';
+// Customer auth pages (email + Google sign-in)
+import LoginPage from './pages/auth/LoginPage';
+import SignupPage from './pages/auth/SignupPage';
 
 // Customer account pages
 import AccountPage from './pages/account/AccountPage';
@@ -113,8 +114,8 @@ export default function App() {
             } />
 
             {/* Auth */}
-            <Route path="/login"  element={<OtpAuthPage />} />
-            <Route path="/signup" element={<OtpAuthPage />} />
+            <Route path="/login"  element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
 
             {/* Customer Care */}
             <Route path="/customer-care" element={<CustomerCarePage />} />

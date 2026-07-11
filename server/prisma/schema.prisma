@@ -22,7 +22,8 @@ model Customer {
   name         String?
   email        String?   @unique
   passwordHash String?
-  phone        String    @unique
+  phone        String?   @unique
+  googleId     String?   @unique
   createdAt    DateTime  @default(now())
   addresses    Address[]
   orders       Order[]

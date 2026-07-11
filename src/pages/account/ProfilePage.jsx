@@ -60,8 +60,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <label style={{ display: 'block', color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '6px' }}>PHONE</label>
-                <input value={form.phone} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
-                <p style={{ color: '#52525B', fontSize: '11px', marginTop: '6px' }}>Phone number can't be changed — it's tied to your OTP login.</p>
+                <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+91 98765 43210" style={inp} />
               </div>
               <button type="submit" disabled={saving} className="btn-buy-now" style={{ height: '46px', borderRadius: '10px', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
                 {saving ? 'Saving...' : 'Save Changes'}
