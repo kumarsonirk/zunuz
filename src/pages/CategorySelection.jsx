@@ -1,21 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { wp } from '../data/productData';
 
-export default function CategorySelection({ onSelectCategory }) {
-  const [categories, setCategories] = useState(wp);
-
-  useEffect(() => {
-    const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-    fetch(`${BASE}/categories`)
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => {
-        if (Array.isArray(data.categories) && data.categories.length > 0) {
-          setCategories(data.categories.map(c => ({ id: c.slug, title: c.name, subtitle: c.subtitle, image: c.image })));
-        }
-      })
-      .catch(() => {});
-  }, []);
-
+export default function CategorySelection({ onSelectCategory, categories = wp }) {
   return (
     <>
       <section className="flex-1 flex flex-col w-full bg-[#1F2024] divide-y divide-zinc-800 overflow-hidden">

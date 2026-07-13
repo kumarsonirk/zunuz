@@ -1,8 +1,11 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { ShoppingCart, ArrowLeft, RotateCcw, Truck, ChevronRight, Star } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, RotateCcw, Truck, ChevronRight, Star, ZoomIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData';
 import zr from '../utils/audio';
+import ImageLightbox from '../components/ImageLightbox';
+import Price from '../components/Price';
+import { sampleCornerColor } from '../utils/sampleImageColor';
 
 export default function ProductDetailsPage({
   product,
@@ -14,7 +17,9 @@ export default function ProductDetailsPage({
   isTransitioning,
   onMeasured,
   cartItems = [],
-  onBuyNow
+  onBuyNow,
+  categories = [],
+  onSelectCategory
 }) {
   const findActiveTab = () => {
     const activeMap = productMap || productData;
@@ -35,6 +40,7 @@ export default function ProductDetailsPage({
 
   const [isAdding, setIsAdding] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const navigate = useNavigate();
   const isInCart = cartItems.some(item => item.id === product.id);
 
@@ -111,9 +117,13 @@ export default function ProductDetailsPage({
     }
   }, [product, onMeasured]);
 
-  // Setup variants for the carousel (use product.images if available, otherwise fallback)
+  // Setup variants for the carousel (use product.images if available, otherwise fallback).
+  // The morph transition from the product card ends on product.image (the card
+  // thumbnail), so that same photo must be the carousel's first slide — otherwise
+  // whenever the gallery's own first entry differs from the thumbnail, the details
+  // page mounts showing a different photo and it visibly swaps out.
   const carouselImages = product.images && product.images.length > 0
-    ? product.images
+    ? [product.image, ...product.images.filter(img => img !== product.image)]
     : [product.image];
   const slideCount = carouselImages.length;
 
@@ -151,13 +161,20 @@ export default function ProductDetailsPage({
     }, 2000);
   };
 
-  // Reset carousel + restart autoplay when product changes; clear on unmount
+  // Reset carousel + restart autoplay when product changes; clear on unmount.
+  // Autoplay's countdown must start once the entrance morph has actually
+  // settled, not the instant this page mounts (which is the moment the user
+  // taps the card, still ~600ms before the morph finishes) — otherwise its
+  // first auto-advance lands awkwardly just after arrival and reads as an
+  // unexpected flash/jump right when things were supposed to be settled.
   useEffect(() => {
     setIsTransitionEnabled(false);
     setCurrentIndex(1);
-    startAutoplay();
+    if (!isTransitioning) {
+      startAutoplay();
+    }
     return () => stopAutoplay();
-  }, [product]);
+  }, [product, isTransitioning]);
 
   // Simple touch swipe implementation for product image carousel
   const touchStartX = useRef(0);
@@ -213,6 +230,16 @@ export default function ProductDetailsPage({
     startAutoplay();
   };
 
+  const openLightbox = (visualIdx) => {
+    stopAutoplay();
+    setLightboxIndex(visualIdx);
+  };
+
+  const closeLightbox = () => {
+    setLightboxIndex(null);
+    startAutoplay();
+  };
+
   const handleTransitionEnd = () => {
     if (currentIndexRef.current === slideCount + 1) {
       setIsTransitionEnabled(false);
@@ -251,6 +278,32 @@ export default function ProductDetailsPage({
     return list;
   }, [currentCollection, product.id]);
 
+  // Other top-level categories (e.g. viewing a Core product shows Trending +
+  // Complete Vibe) — lets a shopper jump straight into another collection
+  // from wherever they currently are, rather than only from the home screen.
+  const otherCategories = React.useMemo(
+    () => categories.filter(c => c.id !== category?.id),
+    [categories, category]
+  );
+
+  // Sample each "Complete Your Look" photo's own backdrop color (product photos
+  // aren't all shot on the same background — some are cream, some are black
+  // studio backdrops) so the thumbnail's fallback background matches that
+  // specific photo instead of a single fixed color that only matches some of
+  // them, leaving a visible mismatched border on the rest.
+  const [lookColors, setLookColors] = useState({});
+  useEffect(() => {
+    let cancelled = false;
+    sliderProducts.forEach((p) => {
+      if (!p?.image || lookColors[p.id]) return;
+      sampleCornerColor(p.image).then((sample) => {
+        if (cancelled || !sample) return;
+        setLookColors(prev => (prev[p.id] ? prev : { ...prev, [p.id]: sample }));
+      });
+    });
+    return () => { cancelled = true; };
+  }, [sliderProducts, lookColors]);
+
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] select-none overflow-hidden relative">
       {/* Scrollable Middle Container */}
@@ -266,12 +319,22 @@ export default function ProductDetailsPage({
           // card) instead of a fixed 380px, so object-cover fills the box without
           // cropping most of the necklace away. maxHeight only kicks in on very wide
           // screens (tablets) — on phones the aspect ratio is what actually governs.
-          aspectRatio: '1 / 1.45',
-          maxHeight: '380px',
+          aspectRatio: '2 / 1',
+          // maxHeight: '380px',
           opacity: isTransitioning ? 0 : 1,
+          transition: 'opacity 0.25s ease-out',
           backgroundColor: '#fef5e7'
         }}
       >
+        <button
+          onClick={() => openLightbox(canonicalIndex)}
+          aria-label="Zoom image"
+          className="absolute top-3 right-3 z-20 flex items-center justify-center"
+          style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', cursor: 'pointer' }}
+        >
+          <ZoomIn size={16} strokeWidth={2} color="#F5F2EB" />
+        </button>
+
         <div
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -299,7 +362,11 @@ export default function ProductDetailsPage({
             const isInitialVisible = visualIndex === 0;
 
             return (
-              <div key={idx} className="h-full flex items-center justify-center relative flex-shrink-0" style={{ width: `${100 / trackImages.length}%`, overflow: 'hidden' }}>
+              <div
+                key={idx}
+                className="h-full flex items-center justify-center relative flex-shrink-0"
+                style={{ width: `${100 / trackImages.length}%`, overflow: 'hidden' }}
+              >
                 <img
                   src={imgSrc}
                   alt={`${product.name} - view ${visualIndex + 1}`}
@@ -358,8 +425,13 @@ export default function ProductDetailsPage({
         </div>
       </div>
 
-      {/* Details content below image that slides up dynamically */}
-      <div className="animate-details-content-slide-up flex flex-col">
+      {/* Details content below image — stays hidden while the card morph is
+          still in flight and only starts its slide-up once the image has
+          actually landed, so the two don't visibly race each other. */}
+      <div
+        className={isTransitioning ? 'flex flex-col' : 'animate-details-content-slide-up flex flex-col'}
+        style={isTransitioning ? { opacity: 0 } : undefined}
+      >
         {/* Title & Price Row */}
         <div className="px-6 py-5 flex flex-col">
           <div className="flex justify-between items-start gap-4">
@@ -367,11 +439,11 @@ export default function ProductDetailsPage({
               {product.name}
             </h1>
             <div className="text-[26px] font-medium font-grift text-[#F5F2EB] whitespace-nowrap" style={{ fontFamily: "'Grift', sans-serif" }}>
-              {effectivePrice}
+              <Price value={effectivePrice} />
             </div>
           </div>
           {effectiveTagline && (
-            <p className="text-[15px] font-grift text-zinc-400" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif" }}>
+            <p className="text-[15px] font-grift text-zinc-400 leading-tight" style={{ color: '#a1a1aa', fontFamily: "'Grift', sans-serif", marginTop: '-4px' }}>
               {effectiveTagline}
             </p>
           )}
@@ -453,13 +525,56 @@ export default function ProductDetailsPage({
                     alt={lookProd.name}
                     className="w-full aspect-square object-contain rounded-t-[10px] mb-2 pointer-events-none"
                     draggable="false"
-                    style={{ backgroundColor: '#f8ebda' }}
+                    style={{
+                      backgroundColor: lookColors[lookProd.id]
+                        ? `rgb(${lookColors[lookProd.id].r}, ${lookColors[lookProd.id].g}, ${lookColors[lookProd.id].b})`
+                        : '#f8ebda',
+                      transition: 'background-color 0.4s ease'
+                    }}
                   />
                   <h4 className="text-[10px] font-grift text-zinc-900 truncate" style={{ fontFamily: "'Grift', sans-serif" }}>
                     {lookProd.name}
                   </h4>
                   <div className="text-[11px] font-grift text-zinc-900 mt-0.5" style={{ fontFamily: "'Grift', sans-serif" }}>
-                    {lookProd.price}
+                    <Price value={lookProd.price} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Browse other collections */}
+        {otherCategories.length > 0 && (
+          <div className="py-6 px-6 flex flex-col gap-4 select-none border-t border-zinc-900/60" style={{ borderTop: '1px solid rgba(24, 24, 27, 0.4)' }}>
+            <h3 className="text-[18px] font-grift font-light text-[#F5F2EB] tracking-wide" style={{ fontFamily: "'Grift', sans-serif" }}>
+              Explore More Collections
+            </h3>
+            <div className="flex gap-4">
+              {otherCategories.map(cat => (
+                <div
+                  key={cat.id}
+                  onClick={() => {
+                    zr.playConfirm();
+                    onSelectCategory?.(cat);
+                  }}
+                  className="relative flex-1 rounded-[18px] overflow-hidden cursor-pointer group"
+                  style={{ height: '140px' }}
+                >
+                  <img
+                    src={cat.image}
+                    alt={cat.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    draggable="false"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10" />
+                  <div className="absolute inset-0 flex items-center justify-center text-center px-2">
+                    <h4
+                      className="text-[16px] text-white tracking-widest font-qrokinex font-bold"
+                      style={{ fontFamily: "'Qrokinex', 'Syncopate', sans-serif" }}
+                    >
+                      {cat.title}
+                    </h4>
                   </div>
                 </div>
               ))}
@@ -487,6 +602,14 @@ export default function ProductDetailsPage({
           {isAdding ? 'Added!' : isInCart ? 'Go to Cart' : 'Add To Cart'} <ShoppingCart size={18} strokeWidth={2} />
         </button>
       </div>
+
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={carouselImages}
+          initialIndex={lightboxIndex}
+          onClose={closeLightbox}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
+import Price from './Price';
 
 export default function OrderSuccessOverlay({ isOpen, order, onContinue }) {
   const navigate = useNavigate();
@@ -135,7 +136,7 @@ export default function OrderSuccessOverlay({ isOpen, order, onContinue }) {
               )}
             </div>
             <p style={{ fontSize: '16px', fontWeight: 700, color: '#F5F2EB' }}>
-              Rs {order.total?.toLocaleString()}/-
+              <Price value={`₹${order.total?.toLocaleString()}`} />
             </p>
           </div>
 

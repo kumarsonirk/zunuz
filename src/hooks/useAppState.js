@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import zr from '../utils/audio';
-import { Br, productData } from '../data/productData';
+import { Br, productData, wp } from '../data/productData';
 import { findProductById, findCategoryByProductId } from '../utils/productUtils';
 
 export function useAppState() {
@@ -70,6 +70,10 @@ export function useAppState() {
 
   const [productMap, setProductMap] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
+  // All top-level categories (Core/Trending/Complete Vibe) — shared by
+  // CategorySelection and ProductDetailsPage's "browse other categories"
+  // section, so both read from one fetch instead of each doing their own.
+  const [categories, setCategories] = useState(wp);
   // Flips true once the first products fetch settles (success or failure) — lets
   // consumers avoid rendering stale mock data before we even know if the real
   // data is available, and avoid the URL-sync effect below acting on incomplete data.
@@ -82,6 +86,9 @@ export function useAppState() {
       .then(data => {
         if (Array.isArray(data.subcategories) && data.subcategories.length > 0) {
           setSubcategories(data.subcategories.map(s => ({ slug: s.slug, name: s.name })));
+        }
+        if (Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(data.categories.map(c => ({ id: c.slug, title: c.name, subtitle: c.subtitle, image: c.image })));
         }
       })
       .catch(() => {});
@@ -106,7 +113,7 @@ export function useAppState() {
           map[catSlug][subSlug].push({
             id: String(p.id),
             name: p.name,
-            price: `Rs ${Math.round(p.price).toLocaleString('en-IN')}/-`,
+            price: `₹${Math.round(p.price).toLocaleString('en-IN')}`,
             likes: '0k',
             stock: p.stock ?? null,
             image: p.image || '/gold_knot_necklace.png',
@@ -162,6 +169,10 @@ export function useAppState() {
   const [isMorphing, setIsMorphing] = useState(false);
   const [showCartToast, setShowCartToast] = useState(false);
   const isFirstMount = useRef(true);
+  // Tracks the pending "finish the morph" timeout so a second tap mid-transition
+  // can't leave two overlapping timers racing each other (the classic cause of
+  // an occasional stutter/jump in the card <-> details morph).
+  const transitionTimeoutRef = useRef(null);
 
   // Buy Now Bill Summary Drawer States
   const [showBillSummaryDrawer, setShowBillSummaryDrawer] = useState(false);
@@ -403,12 +414,19 @@ export function useAppState() {
   };
 
   const handleSelectProduct = (product, rect) => {
+    // Ignore taps while a morph is already mid-flight — starting a second one
+    // before the first's 600ms timer clears would race two overlapping
+    // animations and is what causes the occasional glitch/jump.
+    if (transitionState === 'animating_in' || transitionState === 'animating_out') return;
+
     navigate(`/products/${product.id}`);
     if (!rect) {
       setSelectedProduct(product);
       setTransitionState('details');
       return;
     }
+
+    if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
 
     setSelectedProduct(product);
     setClickedCardRect(rect);
@@ -422,12 +440,17 @@ export function useAppState() {
       });
     });
 
-    setTimeout(() => {
+    transitionTimeoutRef.current = setTimeout(() => {
       setTransitionState('details');
+      transitionTimeoutRef.current = null;
     }, 600);
   };
 
   const handleBackToProductPage = (targetTab) => {
+    // Same re-entrancy guard as handleSelectProduct — ignore back-navigation
+    // while a morph is already animating so timers can't overlap.
+    if (transitionState === 'animating_in' || transitionState === 'animating_out') return;
+
     navigate('/products');
     const productCategory = (() => {
       if (!selectedProduct) return null;
@@ -456,9 +479,11 @@ export function useAppState() {
     }
     
     if (selectedProduct) {
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+
       setTransitionState('animating_out');
       setIsMorphing(true); // make sure it starts at detail header coords
-      
+
       // Let one frame pass, then morph back down to card coords
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -466,15 +491,27 @@ export function useAppState() {
         });
       });
 
-      setTimeout(() => {
+      transitionTimeoutRef.current = setTimeout(() => {
         setSelectedProduct(null);
         setTransitionState('none');
         setTargetCardRect(null);
+        transitionTimeoutRef.current = null;
       }, 600);
     }
   };
 
   const handleSelectCategory = (category) => {
+    // Clears any in-flight product-details transition state too, so this is
+    // safe to call directly from ProductDetailsPage (jumping to a whole
+    // different category) as well as from the CategorySelection screen.
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+      transitionTimeoutRef.current = null;
+    }
+    setSelectedProduct(null);
+    setTransitionState('none');
+    setClickedCardRect(null);
+    setTargetCardRect(null);
     setSelectedCategory(category);
     navigate('/products');
     zr.playConfirm();
@@ -484,6 +521,7 @@ export function useAppState() {
     productMap,
     productsLoaded,
     subcategories,
+    categories,
     showPreloader,
     preloaderPercentage,
     muted,

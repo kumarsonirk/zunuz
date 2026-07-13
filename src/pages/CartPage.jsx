@@ -9,6 +9,7 @@ import AuthRequiredSheet from '../components/AuthRequiredSheet';
 import AddressPickerSheet from '../components/AddressPickerSheet';
 import OrderSuccessOverlay from '../components/OrderSuccessOverlay';
 import PaymentMethodPicker from '../components/PaymentMethodPicker';
+import Price from '../components/Price';
 
 export default function CartPage({
   cartItems,
@@ -182,7 +183,7 @@ export default function CartPage({
                       {item.name}
                     </h4>
                     <p className="text-[18px] font-light text-zinc-300 mt-1 font-grift" style={{ fontFamily: "'Grift', sans-serif", textDecoration: isOOS ? 'line-through' : 'none' }}>
-                      {livePrice.price}
+                      <Price value={livePrice.price} />
                     </p>
                   </div>
 
@@ -254,7 +255,7 @@ export default function CartPage({
                       {pick.name}
                     </h4>
                     <div className="text-[13px] font-grift text-zinc-900 mt-0.5" style={{ fontFamily: "'Grift', sans-serif" }}>
-                      {pick.price}
+                      <Price value={pick.price} />
                     </div>
                   </div>
                   <button
@@ -315,7 +316,7 @@ export default function CartPage({
                         {isOOS && <div className="text-zinc-600 text-[10px] mt-0.5">Out of Stock</div>}
                       </div>
                       <div className="text-[13px] font-mono flex-shrink-0" style={{ color: isOOS ? '#52525b' : '#F5F2EB', textDecoration: isOOS ? 'line-through' : 'none' }}>
-                        Rs {livePrice.priceNumeric * item.quantity}/-
+                        <Price value={`₹${livePrice.priceNumeric * item.quantity}`} />
                       </div>
                     </div>
                   );
@@ -367,7 +368,7 @@ export default function CartPage({
                 )}
                 <div className="flex text-[13px] justify-between">
                   <span>Items Total</span>
-                  <span className="text-[#F5F2EB] font-mono">Rs {totalPrice}/-</span>
+                  <span className="text-[#F5F2EB] font-mono"><Price value={`₹${totalPrice}`} /></span>
                 </div>
                 <div className="flex text-[13px] justify-between">
                   <span>Delivery Fee</span>
@@ -375,7 +376,7 @@ export default function CartPage({
                 </div>
                 <div className="flex justify-between pt-1 border-t border-zinc-800/40 text-[16px] font-bold text-[#F5F2EB]">
                   <span>Grand Total</span>
-                  <span className="font-mono">Rs {totalPrice}/-</span>
+                  <span className="font-mono"><Price value={`₹${totalPrice}`} /></span>
                 </div>
               </div>
             </div>
@@ -398,7 +399,7 @@ export default function CartPage({
               {placing ? 'Placing Order...' : availableItems.length === 0 ? 'No Items Available' : 'Checkout'}
             </span>
             <span className="text-base font-bold text-white tracking-widest font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>
-              Rs {totalPrice}/-
+              <Price value={`₹${totalPrice}`} />
             </span>
           </div>
         </div>

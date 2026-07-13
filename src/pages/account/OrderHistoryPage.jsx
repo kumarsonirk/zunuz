@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Package } from 'lucide-react';
 import { api } from '../../utils/api';
+import Price from '../../components/Price';
 
 const STATUS_STYLE = {
   PENDING:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  label: 'Pending'   },
@@ -72,7 +73,7 @@ export default function OrderHistoryPage() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
               <span style={{ color: '#A1A1AA', fontSize: '12px' }}>{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</span>
-              <span style={{ color: '#F5F2EB', fontSize: '14px', fontWeight: 600 }}>Rs {order.total?.toLocaleString()}/-</span>
+              <span style={{ color: '#F5F2EB', fontSize: '14px', fontWeight: 600 }}><Price value={`₹${order.total?.toLocaleString()}`} /></span>
             </div>
           </div>
         ))}
@@ -106,14 +107,14 @@ export default function OrderHistoryPage() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ color: '#F5F2EB', fontSize: '13px' }}>{item.product?.name}</p>
-                      <p style={{ color: '#71717A', fontSize: '11px' }}>Qty: {item.quantity} × Rs {item.price}</p>
+                      <p style={{ color: '#71717A', fontSize: '11px' }}>Qty: {item.quantity} × <Price value={`₹${item.price}`} /></p>
                     </div>
-                    <p style={{ color: '#F5F2EB', fontSize: '13px', fontWeight: 600 }}>Rs {item.quantity * item.price}</p>
+                    <p style={{ color: '#F5F2EB', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${item.quantity * item.price}`} /></p>
                   </div>
                 ))}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '12px', paddingTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#A1A1AA', fontSize: '14px' }}>Total</span>
-                  <span style={{ color: '#F5F2EB', fontWeight: 700, fontSize: '15px' }}>Rs {detail.total?.toLocaleString()}/-</span>
+                  <span style={{ color: '#F5F2EB', fontWeight: 700, fontSize: '15px' }}><Price value={`₹${detail.total?.toLocaleString()}`} /></span>
                 </div>
               </div>
 

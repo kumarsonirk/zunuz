@@ -1,4 +1,5 @@
 import React from 'react';
+import Price from './Price';
 
 export default function CardMorphOverlay({
   transitionState,
@@ -23,26 +24,32 @@ export default function CardMorphOverlay({
 
   return (
     <div
-      className="fixed z-50 border border-zinc-200 shadow-2xl flex flex-col justify-between items-center box-border p-6 overflow-hidden morph-transition-overlay"
+      className="fixed z-50 border flex flex-col justify-between items-center box-border overflow-hidden morph-transition-overlay"
       style={{
         top: isMorphing ? `${finalTop}px` : `${clickedCardRect.top}px`,
         left: isMorphing ? `${finalLeft}px` : `${clickedCardRect.left}px`,
         width: isMorphing ? `${finalWidth}px` : `${clickedCardRect.width}px`,
         height: isMorphing ? `${finalHeight}px` : `${clickedCardRect.height}px`,
+        padding: isMorphing ? '0px' : '24px',
         borderRadius: isMorphing ? '0px' : '32px',
+        borderColor: isMorphing ? 'transparent' : '#e4e4e7',
+        boxShadow: isMorphing ? 'none' : '0 25px 50px -12px rgba(0,0,0,0.25)',
         backgroundColor: '#fef5e7'
       }}
     >
-      {/* Absolute Image morphing from full-bleed to centered/fitted inside the shorter card */}
+      {/* Absolute Image morphing from centered/fitted (matching the source card) to
+          full-bleed cover (matching ProductDetailsPage's carousel exactly), so there's
+          no visual pop when this overlay hands off to the real page underneath. */}
       <img
         src={selectedProduct.image}
         alt={selectedProduct.name}
-        className="absolute object-contain pointer-events-none aspect-square morph-image-transition"
+        className="absolute pointer-events-none morph-image-transition"
         style={{
           backgroundColor: '#fef5e7',
-          width: isMorphing ? `calc(${finalHeight}px - 48px)` : `${clickedCardRect.imgWidth || clickedCardRect.width}px`,
-          height: isMorphing ? `calc(${finalHeight}px - 48px)` : `${clickedCardRect.imgHeight || clickedCardRect.width}px`,
-          top: isMorphing ? '24px' : '50%',
+          objectFit: isMorphing ? 'cover' : 'contain',
+          width: isMorphing ? '100%' : `${clickedCardRect.imgWidth || clickedCardRect.width}px`,
+          height: isMorphing ? '100%' : `${clickedCardRect.imgHeight || clickedCardRect.width}px`,
+          top: isMorphing ? '0' : '50%',
           transform: isMorphing ? 'translate3d(-50%, 0, 0)' : 'translate3d(-50%, -50%, 0)'
         }}
       />
@@ -66,7 +73,7 @@ export default function CardMorphOverlay({
       >
         <div className="w-[36px]" />
         <div className="text-[28px] font-medium text-zinc-900 font-grift">
-          {selectedProduct.price}
+          <Price value={selectedProduct.price} />
         </div>
         <div className="w-[36px]" />
       </div>

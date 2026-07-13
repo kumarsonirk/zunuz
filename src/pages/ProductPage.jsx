@@ -3,50 +3,8 @@ import { ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData'; // fallback when API not loaded
 import zr from '../utils/audio';
-
-// Samples the average color of a photo's bottom strip (where the text scrim
-// sits) via an offscreen image, so the scrim/text can be tinted to match each
-// photo instead of always using a flat black overlay that looks muddy on
-// light backgrounds. Runs on a separate Image (not the visible <img>), so a
-// CORS hiccup here just skips the adaptive color — it never breaks the actual
-// card photo.
-function sampleBottomColor(src) {
-  return new Promise((resolve) => {
-    try {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        try {
-          const w = 16, h = 16;
-          const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          const sh = Math.max(1, Math.round(img.naturalHeight * 0.35));
-          const sy = img.naturalHeight - sh;
-          ctx.drawImage(img, 0, sy, img.naturalWidth, sh, 0, 0, w, h);
-          const { data } = ctx.getImageData(0, 0, w, h);
-          let r = 0, g = 0, b = 0, count = 0;
-          for (let i = 0; i < data.length; i += 4) {
-            r += data[i]; g += data[i + 1]; b += data[i + 2];
-            count++;
-          }
-          r = Math.round(r / count);
-          g = Math.round(g / count);
-          b = Math.round(b / count);
-          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-          resolve({ r, g, b, luminance });
-        } catch {
-          resolve(null);
-        }
-      };
-      img.onerror = () => resolve(null);
-      img.src = src;
-    } catch {
-      resolve(null);
-    }
-  });
-}
+import Price from '../components/Price';
+import { sampleBottomColor } from '../utils/sampleImageColor';
 
 function CardImage({ src, alt, style }) {
   const checkCached = (url) => {
@@ -607,14 +565,14 @@ export default function ProductPage({
                   <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-1.5 px-6 pb-5 pt-3">
                     <div className="flex justify-between items-end gap-3">
                       <div style={{ textAlign: 'left', minWidth: 0 }}>
-                        <h3 className="text-[24px] sm:text-[24px] font-medium tracking-wide font-grift truncate leading-tight" style={{ color: titleColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
+                        <h3 className="text-[26px] sm:text-[26px] font-medium tracking-wide font-grift truncate leading-tight" style={{ color: titleColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
                           {product.name}
                         </h3>
-                        {product.tagline && (
+                        {/* {product.tagline && (
                           <p className="text-[16px] font-grift truncate leading-tight" style={{ color: taglineColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease', marginTop: '-2px' }}>
                             {product.tagline}
                           </p>
-                        )}
+                        )} */}
                       </div>
                       <div
                         className="text-[28px] sm:text-[28px] font-medium font-grift flex-shrink-0"
@@ -624,7 +582,7 @@ export default function ProductPage({
                           transition: 'color 0.4s ease'
                         }}
                       >
-                        {product.price}
+                        <Price value={product.price} />
                       </div>
                     </div>
                   </div>

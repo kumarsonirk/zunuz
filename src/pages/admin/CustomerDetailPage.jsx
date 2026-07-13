@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, ShoppingBag } from 'lucide-react';
 import { api } from '../../utils/api';
+import Price from '../../components/Price';
 
 const STATUS_STYLE = {
   PENDING:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)'  },
@@ -57,7 +58,7 @@ export default function CustomerDetailPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
             <StatCard label="Orders" value={customer.orders?.length || 0} />
-            <StatCard label="Total Spent" value={`Rs ${totalSpent.toLocaleString()}/-`} color="#22C55E" />
+            <StatCard label="Total Spent" value={<Price value={`₹${totalSpent.toLocaleString()}`} />} color="#22C55E" />
             <StatCard label="Saved Addresses" value={customer.addresses?.length || 0} />
           </div>
 
@@ -105,7 +106,7 @@ export default function CustomerDetailPage() {
                       </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}>Rs {order.total?.toLocaleString()}/-</p>
+                      <p style={{ color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${order.total?.toLocaleString()}`} /></p>
                       <span style={{ background: s.bg, color: s.color, borderRadius: '5px', padding: '2px 8px', fontSize: '10px', fontWeight: 600 }}>{order.status}</span>
                     </div>
                   </div>

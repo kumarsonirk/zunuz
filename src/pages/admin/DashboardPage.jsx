@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { TrendingUp, ShoppingBag, Users, Package, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
 import { api } from '../../utils/api';
+import Price from '../../components/Price';
 
 const STATUS_STYLE = {
   PENDING:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  label: 'Pending'   },
@@ -62,7 +63,7 @@ export default function DashboardPage() {
 
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-        <StatCard icon={TrendingUp} label="TOTAL REVENUE"   value={`Rs ${(stats?.totalRevenue || 0).toLocaleString()}/-`} color="#FC4B4E" />
+        <StatCard icon={TrendingUp} label="TOTAL REVENUE"   value={<Price value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`} />} color="#FC4B4E" />
         <StatCard icon={ShoppingBag} label="TOTAL ORDERS"   value={stats?.totalOrders || 0}   color="#3B82F6" />
         <StatCard icon={Users}       label="CUSTOMERS"      value={stats?.totalCustomers || 0} color="#22C55E" />
         <StatCard icon={Package}     label="PRODUCTS"       value={stats?.totalProducts || 0}  color="#A78BFA" />
@@ -98,7 +99,7 @@ export default function DashboardPage() {
                       <div style={{ color: 'var(--admin-text-muted)', fontSize: '12px' }}>{order.customer?.email}</div>
                     </td>
                     <td style={{ padding: '14px 24px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</td>
-                    <td style={{ padding: '14px 24px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}>Rs {order.total?.toLocaleString()}/-</td>
+                    <td style={{ padding: '14px 24px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${order.total?.toLocaleString()}`} /></td>
                     <td style={{ padding: '14px 24px' }}><StatusBadge status={order.status} /></td>
                     <td style={{ padding: '14px 24px', color: 'var(--admin-text-muted)', fontSize: '12px', whiteSpace: 'nowrap' }}>
                       {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

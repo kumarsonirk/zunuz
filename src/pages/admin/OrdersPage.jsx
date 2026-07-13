@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ShoppingBag, X, ChevronDown } from 'lucide-react';
 import { api } from '../../utils/api';
+import Price from '../../components/Price';
 
 const STATUSES = ['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 const STATUS_STYLE = {
@@ -118,7 +119,7 @@ export default function OrdersPage() {
                       <div style={{ color: 'var(--admin-text-muted)', fontSize: '12px' }}>{order.customer?.phone || order.customer?.email}</div>
                     </td>
                     <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{order.items?.length}</td>
-                    <td style={{ padding: '14px 20px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}>Rs {order.total?.toLocaleString()}/-</td>
+                    <td style={{ padding: '14px 20px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${order.total?.toLocaleString()}`} /></td>
                     <td style={{ padding: '14px 20px' }}><PaymentBadge order={order} /></td>
                     <td style={{ padding: '14px 20px' }}><StatusBadge status={order.status} /></td>
                     <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '12px', whiteSpace: 'nowrap' }}>
@@ -193,14 +194,14 @@ export default function OrdersPage() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ color: 'var(--admin-text)', fontSize: '13px' }}>{item.product?.name}</p>
-                      <p style={{ color: 'var(--admin-text-muted)', fontSize: '12px' }}>Qty: {item.quantity} × Rs {item.price}</p>
+                      <p style={{ color: 'var(--admin-text-muted)', fontSize: '12px' }}>Qty: {item.quantity} × <Price value={`₹${item.price}`} /></p>
                     </div>
-                    <p style={{ color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}>Rs {item.quantity * item.price}</p>
+                    <p style={{ color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${item.quantity * item.price}`} /></p>
                   </div>
                 ))}
                 <div style={{ borderTop: '1px solid var(--admin-border-2)', marginTop: '12px', paddingTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--admin-text-muted)', fontSize: '14px' }}>Total</span>
-                  <span style={{ color: 'var(--admin-text)', fontWeight: 700, fontSize: '15px' }}>Rs {detailOrder.total?.toLocaleString()}/-</span>
+                  <span style={{ color: 'var(--admin-text)', fontWeight: 700, fontSize: '15px' }}><Price value={`₹${detailOrder.total?.toLocaleString()}`} /></span>
                 </div>
               </div>
               <div>

@@ -63,7 +63,7 @@ export default function App() {
       <Route path="/*" element={
         <MainLayout state={state}>
           <Routes>
-            <Route path="/" element={<CategorySelection onSelectCategory={state.handleSelectCategory} />} />
+            <Route path="/" element={<CategorySelection onSelectCategory={state.handleSelectCategory} categories={state.categories} />} />
 
             <Route path="/products" element={
               state.selectedCategory
@@ -95,6 +95,8 @@ export default function App() {
                     onMeasured={state.setTargetCardRect}
                     cartItems={state.cartItems}
                     onBuyNow={state.handleBuyNow}
+                    categories={state.categories}
+                    onSelectCategory={state.handleSelectCategory}
                   />
                 : <Navigate to="/products" replace />
             } />

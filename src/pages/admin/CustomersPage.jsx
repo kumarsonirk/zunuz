@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search } from 'lucide-react';
 import { api } from '../../utils/api';
+import Price from '../../components/Price';
 
 export default function CustomersPage() {
   const navigate = useNavigate();
@@ -81,7 +82,7 @@ export default function CustomersPage() {
                       </td>
                       <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{c.phone || '—'}</td>
                       <td style={{ padding: '14px 20px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 500 }}>{c._count?.orders || 0}</td>
-                      <td style={{ padding: '14px 20px', color: '#22C55E', fontSize: '13px', fontWeight: 600 }}>Rs {spent.toLocaleString()}/-</td>
+                      <td style={{ padding: '14px 20px', color: '#22C55E', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${spent.toLocaleString()}`} /></td>
                       <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{c._count?.addresses || 0}</td>
                       <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '12px', whiteSpace: 'nowrap' }}>
                         {new Date(c.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

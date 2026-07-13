@@ -8,6 +8,7 @@ import AuthRequiredSheet from './AuthRequiredSheet';
 import AddressPickerSheet from './AddressPickerSheet';
 import OrderSuccessOverlay from './OrderSuccessOverlay';
 import PaymentMethodPicker from './PaymentMethodPicker';
+import Price from './Price';
 
 export default function BillSummaryDrawer({ isOpen, onClose, product }) {
   const { customer } = useAuth();
@@ -45,7 +46,7 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
   const priceNumeric = product.priceNumeric != null
     ? product.priceNumeric
     : parseInt((product.price || '').replace(/[^\d]/g, ''), 10) || 0;
-  const priceDisplay = product.price || `Rs ${priceNumeric}/-`;
+  const priceDisplay = product.price || `₹${priceNumeric}`;
 
   const handlePlaceOrder = () => {
     if (!customer) { setShowAuthSheet(true); return; }
@@ -114,7 +115,7 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
             <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
               <div className="text-[#F5F2EB] font-grift text-[17px] font-medium tracking-wide leading-tight" style={{ fontFamily: "'Grift', sans-serif" }}>{product.name}</div>
               <div className="text-zinc-500 text-[13px]" style={{ fontFamily: "'Grift', sans-serif" }}>Quantity: 1</div>
-              <div className="text-[#F5F2EB] font-grift text-[16px] font-light mt-1" style={{ fontFamily: "'Grift', sans-serif" }}>{priceDisplay}</div>
+              <div className="text-[#F5F2EB] font-grift text-[16px] font-light mt-1" style={{ fontFamily: "'Grift', sans-serif" }}><Price value={priceDisplay} /></div>
             </div>
           </div>
 
@@ -158,7 +159,7 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
             <span className="text-[13px] uppercase tracking-wider text-zinc-400 font-semibold">Price Details</span>
             <div className="flex text-[13px] justify-between">
               <span>Items Total</span>
-              <span className="text-[#F5F2EB] font-mono">{priceDisplay}</span>
+              <span className="text-[#F5F2EB] font-mono"><Price value={priceDisplay} /></span>
             </div>
             <div className="flex text-[13px] justify-between">
               <span>Delivery Fee</span>
@@ -166,7 +167,7 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
             </div>
             <div className="flex justify-between pt-3 border-t border-zinc-800/40 text-[16px] font-bold text-[#F5F2EB]">
               <span>Grand Total</span>
-              <span className="font-mono">{priceDisplay}</span>
+              <span className="font-mono"><Price value={priceDisplay} /></span>
             </div>
           </div>
         </div>
@@ -185,7 +186,7 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
             style={{ height: '58px', opacity: placing ? 0.7 : 1, cursor: placing ? 'not-allowed' : 'pointer' }}
           >
             <span>{placing ? 'Placing Order...' : 'PLACE ORDER'}</span>
-            <span className="font-mono">{priceDisplay}</span>
+            <span className="font-mono"><Price value={priceDisplay} /></span>
           </button>
         </div>
       </div>

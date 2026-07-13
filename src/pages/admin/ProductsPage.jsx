@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Package, Upload, ImagePlus } from 'lucide-react';
 import { api } from '../../utils/api';
+import Price from '../../components/Price';
 
 const EMPTY_FORM = { name: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, tagline: '', description: '', materials: '' };
 
@@ -263,7 +264,7 @@ export default function ProductsPage() {
                       </td>
                       <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{p.category?.name}</td>
                       <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{p.subcategory?.name}</td>
-                      <td style={{ padding: '14px 20px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}>Rs {p.price?.toLocaleString()}</td>
+                      <td style={{ padding: '14px 20px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${p.price?.toLocaleString()}`} /></td>
                       <td style={{ padding: '14px 20px' }}>
                         <span style={{ color: p.stock === 0 ? '#EF4444' : p.stock <= 5 ? '#EF4444' : p.stock <= 15 ? '#F59E0B' : '#22C55E', fontSize: '13px', fontWeight: 500 }}>{p.stock}</span>
                       </td>
