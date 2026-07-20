@@ -34,7 +34,7 @@ router.post('/register', registerLimiter, async (req, res) => {
       data: { name: name?.trim() || null, email, passwordHash, phone: phone?.trim() || null },
     });
 
-    const token = jwt.sign({ id: customer.id, email: customer.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: customer.id, email: customer.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({
       token,
       customer: { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone },
@@ -59,7 +59,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     const valid = await bcrypt.compare(password, customer.passwordHash);
     if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
 
-    const token = jwt.sign({ id: customer.id, email: customer.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: customer.id, email: customer.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({
       token,
       customer: { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone },
@@ -93,7 +93,7 @@ router.post('/google', googleLimiter, async (req, res) => {
       customer = await prisma.customer.create({ data: { googleId, email: email || null, name: name || null } });
     }
 
-    const token = jwt.sign({ id: customer.id, email: customer.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: customer.id, email: customer.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({
       token,
       customer: { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone },
@@ -183,7 +183,7 @@ router.post('/verify-otp', verifyOtpLimiter, async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ id: customer.id, phone: customer.phone }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: customer.id, phone: customer.phone }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({
       token,
       customer: { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone },

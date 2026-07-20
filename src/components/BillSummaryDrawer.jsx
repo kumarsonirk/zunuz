@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, MapPin } from 'lucide-react';
 import zr from '../utils/audio';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +12,7 @@ import PaymentMethodPicker from './PaymentMethodPicker';
 import Price from './Price';
 
 export default function BillSummaryDrawer({ isOpen, onClose, product }) {
+  const navigate = useNavigate();
   const { customer } = useAuth();
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
@@ -125,12 +127,18 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
               <span className="text-[13px] uppercase tracking-wider text-zinc-400 font-semibold flex items-center gap-1.5">
                 <MapPin size={14} className="text-[#FC4B4E]" /> Deliver to
               </span>
-              <button
-                onClick={() => customer ? setShowAddressPicker(true) : setShowAuthSheet(true)}
-                className="text-[#FC4B4E] hover:text-[#ff6b6d] text-[12px] font-bold cursor-pointer transition-colors bg-transparent border-none"
-              >
-                Change
-              </button>
+              {customer && !loadingAddress && (
+                <button
+                  onClick={() => {
+                    if (selectedAddress) { setShowAddressPicker(true); return; }
+                    onClose();
+                    navigate('/account/addresses');
+                  }}
+                  className="text-[#FC4B4E] hover:text-[#ff6b6d] text-[12px] font-bold cursor-pointer transition-colors bg-transparent border-none"
+                >
+                  {selectedAddress ? 'Change' : 'Add'}
+                </button>
+              )}
             </div>
 
             {!customer ? (
@@ -138,7 +146,7 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
             ) : loadingAddress ? (
               <p className="text-zinc-500 text-[13px]">Loading address...</p>
             ) : !selectedAddress ? (
-              <p className="text-zinc-500 text-[13px]">No address selected. Tap Change to add one.</p>
+              <p className="text-zinc-500 text-[13px]">No address saved. Tap Add to add one.</p>
             ) : (
               <div className="text-[13px]">
                 <div className="text-[#F5F2EB] font-semibold">{selectedAddress.name || customer.name || 'Customer'}</div>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { productData } from '../data/productData';
 import zr from '../utils/audio';
@@ -22,6 +23,7 @@ export default function CartPage({
   category,
   productsLoaded = false
 }) {
+  const navigate = useNavigate();
   const { customer } = useAuth();
 
   const getLiveProduct = (itemId) => {
@@ -332,7 +334,7 @@ export default function CartPage({
                   ) : loadingAddress ? (
                     <p className="text-zinc-500 text-[13px]">Loading address...</p>
                   ) : !selectedAddress ? (
-                    <p className="text-zinc-500 text-[13px]">No address saved. Tap Change to add one.</p>
+                    <p className="text-zinc-500 text-[13px]">No address saved. Tap Add to add one.</p>
                   ) : (
                     <>
                       <div className="text-[#F5F2EB] font-medium text-[14px]">{selectedAddress.name || customer.name || 'Customer'}</div>
@@ -342,13 +344,19 @@ export default function CartPage({
                     </>
                   )}
                 </div>
-                <button
-                  onClick={e => { e.stopPropagation(); customer ? setShowAddressPicker(true) : setShowAuthSheet(true); }}
-                  className="text-[#FC4B4E] hover:text-[#ff6b6d] text-[12px] font-bold cursor-pointer transition-colors"
-                  style={{ background: 'none', border: 'none', flexShrink: 0, marginLeft: '12px' }}
-                >
-                  Change
-                </button>
+                {customer && !loadingAddress && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      if (selectedAddress) { setShowAddressPicker(true); return; }
+                      navigate('/account/addresses');
+                    }}
+                    className="text-[#FC4B4E] hover:text-[#ff6b6d] text-[12px] font-bold cursor-pointer transition-colors"
+                    style={{ background: 'none', border: 'none', flexShrink: 0, marginLeft: '12px' }}
+                  >
+                    {selectedAddress ? 'Change' : 'Add'}
+                  </button>
+                )}
               </div>
 
               {/* Payment Method Section */}
