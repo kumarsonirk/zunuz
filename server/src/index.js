@@ -7,6 +7,14 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Railway (and most PaaS hosts) sit the app behind a reverse proxy, which sets
+// X-Forwarded-For. Without telling Express to trust that proxy hop, both
+// req.ip and express-rate-limit's IP-based key generator throw at request
+// time (rate-limit does this deliberately, to stop X-Forwarded-For spoofing
+// from bypassing limits) — silently breaking every rate-limited route (all
+// of /api/auth/*, admin login) while unaffected routes work fine.
+app.set('trust proxy', 1);
+
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
 
 // Razorpay webhooks need the raw body for signature verification, so this must be
