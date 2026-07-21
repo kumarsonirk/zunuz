@@ -107,45 +107,6 @@ export default function ShineWithUsPage() {
           boxSizing: 'border-box'
         }}>
 
-        {/* Banner Title */}
-        <div style={{ textAlign: 'center', marginBottom: 'clamp(20px, 4vw, 32px)' }}>
-          <div style={{
-            width: 'clamp(48px, 12vw, 64px)',
-            height: 'clamp(48px, 12vw, 64px)',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, rgba(252, 75, 78, 0.2), rgba(252, 75, 78, 0.05))',
-            border: '1px solid rgba(252, 75, 78, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justify: 'center',
-            margin: '0 auto 12px auto',
-            color: '#FC4B4E',
-            boxShadow: '0 0 25px rgba(252, 75, 78, 0.25)'
-          }}>
-            <Sparkles size={26} />
-          </div>
-          <h1 style={{
-            fontSize: 'clamp(22px, 6vw, 28px)',
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
-            margin: '0 0 8px 0',
-            background: 'linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.8) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Join. Win. Shine.
-          </h1>
-          <p style={{
-            color: 'rgba(255, 255, 255, 0.6)',
-            fontSize: 'clamp(13px, 3.5vw, 14px)',
-            lineHeight: '1.5',
-            margin: 0
-          }}>
-           Register today for a chance to be selected as one of our Lucky 10 members and enjoy exclusive jewellery offers, special discounts, and exciting rewards. Fill out the form below to enter.
-          </p>
-        </div>
-
-
         {submitted ? (
           <div style={{
             textAlign: 'center',
@@ -154,48 +115,69 @@ export default function ShineWithUsPage() {
             border: '1px solid rgba(34, 197, 94, 0.25)',
             borderRadius: '20px'
           }}>
-            <CheckCircle2 size={54} style={{ color: '#22C55E', margin: '0 auto 16px auto' }} />
-            <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#FFFFFF', marginBottom: '8px' }}>Application Submitted!</h3>
-            <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
-              Thank you for applying to join the Zunuz Creator Program. Our team will review your application and reach out to you on Instagram or via email soon!
+            <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#FFFFFF', marginBottom: '8px' }}>🎉 You're In!</h3>
+            <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', lineHeight: '1.6', marginBottom: '0px' }}>   
+              Thank you for joining the ZUNUZ Lucky Campaign. If you're selected, Our team will review your application and reach out to you on Instagram or via email soon!
             </p>
-            <button
-              onClick={() => {
-                setSubmitted(false);
-                setFormData({ name: '', dob: '', email: '', phone: '', insta_id: '' });
-              }}
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '12px',
-                padding: '12px 24px',
-                color: '#FFF',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer'
-              }}
-            >
-              Submit Another Application
-            </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(14px, 3.5vw, 20px)' }}>
-            {error && (
+          <>
+            {/* Banner Title */}
+            <div style={{ textAlign: 'center', marginBottom: 'clamp(20px, 4vw, 32px)' }}>
               <div style={{
+                width: 'clamp(48px, 12vw, 64px)',
+                height: 'clamp(48px, 12vw, 64px)',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(252, 75, 78, 0.2), rgba(252, 75, 78, 0.05))',
+                border: '1px solid rgba(252, 75, 78, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: '12px',
-                padding: '12px 16px',
-                color: '#EF4444',
-                fontSize: '13px'
+                justify: 'center',
+                margin: '0 auto 12px auto',
+                color: '#FC4B4E',
+                boxShadow: '0 0 25px rgba(252, 75, 78, 0.25)'
               }}>
-                <AlertCircle size={18} style={{ flexShrink: 0 }} />
-                <span>{error}</span>
+                <Sparkles size={26} />
               </div>
-            )}
+              <h1 style={{
+                fontSize: 'clamp(22px, 6vw, 28px)',
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                margin: '0 0 8px 0',
+                background: 'linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.8) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
+                Join. Win. Shine.
+              </h1>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontSize: 'clamp(13px, 3.5vw, 14px)',
+                lineHeight: '1.5',
+                margin: 0
+              }}>
+               Register today for a chance to be selected as one of our Lucky 10 members and enjoy exclusive jewellery offers, special discounts, and exciting rewards. Fill out the form below to enter.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(14px, 3.5vw, 20px)' }}>
+              {error && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  color: '#EF4444',
+                  fontSize: '13px'
+                }}>
+                  <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                  <span>{error}</span>
+                </div>
+              )}
+
 
             {/* Name */}
             <div style={{ position: 'relative' }}>
@@ -340,7 +322,6 @@ export default function ShineWithUsPage() {
               />
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -374,11 +355,12 @@ export default function ShineWithUsPage() {
                   <span>Join Us</span>
                 </>
               )}
-
             </button>
           </form>
+        </>
+      )}
 
-        )}
+
       </div>
     </div>
   </div>
