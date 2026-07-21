@@ -34,6 +34,7 @@ app.use('/api/products',  require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/customers', require('./routes/customers'));
 app.use('/api/orders',    require('./routes/orders'));
+app.use('/api/campaign',  require('./routes/campaign'));
 
 // Admin routes
 app.use('/api/admin/auth',       require('./routes/admin/auth'));
@@ -42,6 +43,8 @@ app.use('/api/admin/products',   require('./routes/admin/products'));
 app.use('/api/admin/orders',     require('./routes/admin/orders'));
 app.use('/api/admin/customers',  require('./routes/admin/customers'));
 app.use('/api/admin/categories', require('./routes/admin/categories'));
+app.use('/api/admin/campaign',   require('./routes/admin/campaign'));
+
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', app: 'Zunuz API' }));
 

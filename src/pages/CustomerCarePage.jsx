@@ -33,12 +33,14 @@ const Divider = () => (
 );
 
 const MENU = [
+  { icon: Sparkles, label: 'Shine with Us (Creators & Ambassadors)', path: '/shine-with-us' },
   { icon: Truck, label: 'Shipping Policy', path: '/customer-care/shipping-policy' },
   { icon: RotateCcw, label: 'Returns & Replacements', path: '/customer-care/returns-replacements' },
   { icon: XCircle, label: 'Cancellation Policy', path: '/customer-care/cancellation-policy' },
   { icon: Sparkles, label: 'Product Care', path: '/customer-care/product-care' },
   { icon: HelpCircle, label: 'FAQ', path: '/customer-care/faq' },
 ];
+
 
 export default function CustomerCarePage() {
   const navigate = useNavigate();

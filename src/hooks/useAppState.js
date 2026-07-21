@@ -16,8 +16,15 @@ export function useAppState() {
         const product = findProductById(productId);
         if (product) {
           const category = findCategoryByProductId(productId);
-          return { product, category };
+          return { product, category: category || wp[0] };
         }
+      }
+    } else if (path === '/products') {
+      try {
+        const saved = localStorage.getItem('zunuz_selected_category');
+        return { product: null, category: saved ? JSON.parse(saved) : wp[0] };
+      } catch {
+        return { product: null, category: wp[0] };
       }
     }
     return { product: null, category: null };
@@ -219,10 +226,11 @@ export function useAppState() {
   useEffect(() => {
     const path = location.pathname;
 
-    // Admin, auth, account, legal, and customer-care routes are handled by their own components
-    if (path.startsWith('/admin') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/account') || path.startsWith('/terms') || path.startsWith('/privacy') || path.startsWith('/customer-care')) {
+    // Admin, auth, account, legal, customer-care, and campaign routes are handled by their own components
+    if (path.startsWith('/admin') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/account') || path.startsWith('/terms') || path.startsWith('/privacy') || path.startsWith('/customer-care') || path.startsWith('/shine-with-us')) {
       return;
     }
+
 
     const activeMap = productMap || productData;
     const savedCategory = (() => {
@@ -237,11 +245,11 @@ export function useAppState() {
       if (!productMap && !productsLoaded && !(selectedProduct && selectedProduct.id === productId)) {
         return;
       }
-      const resolvedCategory = savedCategory || (productId ? findCategoryByProductId(productId, activeMap) : null);
-      if (resolvedCategory && productId) {
+      const resolvedCategory = savedCategory || (productId ? findCategoryByProductId(productId, activeMap) : null) || (categories && categories[0]) || wp[0];
+      if (productId) {
         const product = findProductById(productId, activeMap);
         if (product) {
-          if (!savedCategory) {
+          if (!savedCategory || savedCategory.id !== resolvedCategory.id) {
             try { localStorage.setItem('zunuz_selected_category', JSON.stringify(resolvedCategory)); } catch (e) {}
             setSelectedCategory(resolvedCategory);
           }
@@ -256,21 +264,19 @@ export function useAppState() {
         } else {
           navigate('/products', { replace: true });
         }
-      } else if (selectedProduct && selectedProduct.id === productId) {
-        // Same fallback: selectedProduct is already set, just show it
-        setTransitionState('details');
       } else {
-        navigate(resolvedCategory ? '/products' : '/', { replace: true });
+        navigate('/products', { replace: true });
       }
     } else if (path === '/products') {
-      if (!savedCategory) {
-        navigate('/', { replace: true });
-      } else {
-        // If we are at /products and have a selected product, the user went back!
-        if (selectedProduct) {
-          setSelectedProduct(null);
-          setTransitionState('none');
-        }
+      const defaultCategory = (categories && categories[0]) || wp[0];
+      if (!savedCategory && !selectedCategory) {
+        try { localStorage.setItem('zunuz_selected_category', JSON.stringify(defaultCategory)); } catch (e) {}
+        setSelectedCategory(defaultCategory);
+      }
+      // If we are at /products and have a selected product, the user went back!
+      if (selectedProduct) {
+        setSelectedProduct(null);
+        setTransitionState('none');
       }
     } else if (path === '/cart') {
       // Valid path, let it render the CartPage

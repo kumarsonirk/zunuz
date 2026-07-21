@@ -143,3 +143,15 @@ model OrderItem {
   quantity  Int
   price     Int
 }
+
+model CampaignSubmission {
+  id        Int      @id @default(autoincrement())
+  name      String
+  dob       String
+  email     String
+  phone     String?
+  instaId   String   @map("insta_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

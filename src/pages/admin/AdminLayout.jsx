@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingBag, Users, Tag, LogOut, Menu, X, ChevronRight, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Users, Tag, Megaphone, LogOut, Menu, X, ChevronRight, Sun, Moon } from 'lucide-react';
 
 const NAV = [
   { to: '/admin',            label: 'Dashboard',  icon: LayoutDashboard, exact: true },
@@ -8,7 +8,9 @@ const NAV = [
   { to: '/admin/orders',     label: 'Orders',     icon: ShoppingBag },
   { to: '/admin/customers',  label: 'Customers',  icon: Users },
   { to: '/admin/categories', label: 'Categories', icon: Tag },
+  { to: '/admin/campaign',   label: 'Campaign',   icon: Megaphone },
 ];
+
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -126,7 +128,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Page content */}
-        <main style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
+        <main style={{ flex: 1, overflow: 'auto', padding: '24px', paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px) + 24px)' }}>
           <Outlet />
         </main>
       </div>
