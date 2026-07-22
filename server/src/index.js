@@ -15,7 +15,25 @@ const PORT = process.env.PORT || 5000;
 // of /api/auth/*, admin login) while unaffected routes work fine.
 app.set('trust proxy', 1);
 
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+// CLIENT_URL supports a comma-separated list, so both the custom domain(s) and
+// the raw *.vercel.app URL can hit the API at once — a single fixed origin
+// meant only one of them ever worked, with the other silently CORS-blocked
+// (which the frontend can't distinguish from "no data", so it just looked
+// like stale/wrong data instead of an obvious error).
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Requests with no Origin header (curl, server-to-server, Postman) aren't
+    // subject to CORS in the first place — only browsers send/enforce it.
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
 
 // Razorpay webhooks need the raw body for signature verification, so this must be
 // mounted before the global express.json() parser below.
