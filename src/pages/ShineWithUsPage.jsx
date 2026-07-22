@@ -3,6 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowLeft, CheckCircle2, AlertCircle, Send, Mail, Phone, Calendar, User } from 'lucide-react';
 import { api } from '../utils/api';
 
+// A dense field of tiny twinkling dots (starfield/dust look), not a handful of
+// big icon shapes. Generated once from a seeded PRNG (not Math.random() at
+// render time) so the layout is dense and organic-looking but still stable
+// across re-renders.
+function seededRandom(seed) {
+  let s = seed;
+  return () => {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+const rand = seededRandom(42);
+const SPARKLE_DOTS = Array.from({ length: 90 }, () => {
+  const size = 1 + rand() * 2.5; // 1px–3.5px
+  return {
+    left: (rand() * 100).toFixed(1) + '%',
+    size,
+    delay: (rand() * 8).toFixed(1) + 's',
+    duration: (6 + rand() * 6).toFixed(1) + 's',
+    color: rand() > 0.65 ? '#D4AF37' : '#F5F2EB',
+    opacity: (0.35 + rand() * 0.5).toFixed(2),
+  };
+});
+
 const InstagramIcon = ({ size = 18, style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
     <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
@@ -64,8 +88,7 @@ export default function ShineWithUsPage() {
       width: '100%',
       overflowY: 'auto',
       WebkitOverflowScrolling: 'touch',
-      backgroundColor: '#141416',
-      backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(252, 75, 78, 0.15) 0%, rgba(20, 20, 22, 0.95) 75%)',
+      backgroundColor: '#000000',
       color: '#F5F2EB',
       fontFamily: "'Inter', system-ui, sans-serif",
       display: 'flex',
@@ -75,9 +98,43 @@ export default function ShineWithUsPage() {
       boxSizing: 'border-box'
     }}>
 
+      {/* Golden sparkle drift — decorative, celebration/offer feel. Fixed to
+          the viewport (not the scrolling container) so it stays put behind
+          the content regardless of scroll position. */}
+      <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+        {SPARKLE_DOTS.map((s, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: s.left,
+              top: '-2%',
+              width: `${s.size}px`,
+              height: `${s.size}px`,
+              borderRadius: '50%',
+              background: s.color,
+              '--peak-opacity': s.opacity,
+              boxShadow: `0 0 ${s.size * 2}px ${s.color}`,
+              animation: `sparkle-fall ${s.duration} linear ${s.delay} infinite, sparkle-twinkle 2.4s ease-in-out ${s.delay} infinite`
+            }}
+          />
+        ))}
+      </div>
+      <style>{`
+        @keyframes sparkle-fall {
+          0%   { transform: translateY(0); }
+          100% { transform: translateY(105vh); }
+        }
+        @keyframes sparkle-twinkle {
+          0%, 100% { opacity: 0.15; }
+          50%      { opacity: var(--peak-opacity, 0.8); }
+        }
+      `}</style>
 
       {/* Centered Content Wrapper (margin: auto handles vertical centering without clipping on small screens like iPhone SE) */}
       <div style={{
+        position: 'relative',
+        zIndex: 1,
         margin: 'auto 0',
         width: '100%',
         maxWidth: '480px',
@@ -128,14 +185,14 @@ export default function ShineWithUsPage() {
                 width: 'clamp(48px, 12vw, 64px)',
                 height: 'clamp(48px, 12vw, 64px)',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(252, 75, 78, 0.2), rgba(252, 75, 78, 0.05))',
-                border: '1px solid rgba(252, 75, 78, 0.3)',
+                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.05))',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justify: 'center',
                 margin: '0 auto 12px auto',
-                color: '#FC4B4E',
-                boxShadow: '0 0 25px rgba(252, 75, 78, 0.25)'
+                color: '#D4AF37',
+                boxShadow: '0 0 25px rgba(212, 175, 55, 0.25)'
               }}>
                 <Sparkles size={26} />
               </div>
@@ -328,7 +385,7 @@ export default function ShineWithUsPage() {
               style={{
                 marginTop: '8px',
                 width: '100%',
-                background: 'linear-gradient(135deg, #FC4B4E 0%, #D32F2F 100%)',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
                 border: 'none',
                 borderRadius: '14px',
                 padding: '14px',
@@ -342,7 +399,7 @@ export default function ShineWithUsPage() {
                 justifyContent: 'center',
                 gap: '8px',
 
-                boxShadow: '0 10px 25px rgba(252, 75, 78, 0.3)',
+                boxShadow: '0 10px 25px rgba(212, 175, 55, 0.3)',
                 transition: 'transform 0.2s, boxShadow 0.2s',
                 opacity: loading ? 0.7 : 1
               }}
