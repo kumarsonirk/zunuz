@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 
@@ -7,8 +7,15 @@ export default function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup, loginWithGoogle } = useAuth();
+  const { customer, loading: authLoading, signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  // Already signed in — don't show the form again until they log out.
+  // Wait for the initial /customers/me check (authLoading) before deciding,
+  // otherwise a logged-in user reloading this page briefly sees the form
+  // flash before redirecting.
+  if (authLoading) return null;
+  if (customer) return <Navigate to="/account" replace />;
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
