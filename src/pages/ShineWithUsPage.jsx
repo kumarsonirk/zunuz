@@ -48,6 +48,9 @@ export default function ShineWithUsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  // Today's date, so the picker can't be used to enter a future birth date
+  // (the old hardcoded "2026-12-31" max allowed dates months into the future).
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -263,40 +266,45 @@ export default function ShineWithUsPage() {
               />
             </div>
 
-            {/* Date of Birth */}
-            <div style={{ position: 'relative' }}>
-              <Calendar size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none' }} />
-              <input
-                type={formData.dob ? "date" : "text"}
-                name="dob"
-                min="1940-01-01"
-                max="2026-12-31"
-                value={formData.dob}
-                onChange={handleChange}
-                onFocus={e => {
-                  e.target.type = 'date';
-                  e.target.style.borderColor = '#FC4B4E';
-                }}
-                onBlur={e => {
-                  if (!e.target.value) e.target.type = 'text';
-                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-                }}
-                placeholder="Date of Birth *"
-                required
-                style={{
-                  width: '100%',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '12px',
-                  padding: '13px 14px 13px 42px',
-                  color: '#FFF',
-                  fontSize: '15px',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  colorScheme: 'dark',
-                  transition: 'border-color 0.2s'
-                }}
-              />
+            {/* Date of Birth — always type="date" (no more toggling between
+                text/date on focus/blur via direct DOM mutation, which fought
+                with React's own re-renders and could leave the field stuck
+                or fail to open the native picker on mobile). Native date
+                inputs also ignore the placeholder attribute entirely, so a
+                real label is shown above instead. */}
+            <div>
+              <label style={{ display: 'block', color: 'rgba(255, 255, 255, 0.45)', fontSize: '12px', marginBottom: '6px', marginLeft: '2px' }}>
+                Date of Birth *
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Calendar size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none' }} />
+                <input
+                  type="date"
+                  name="dob"
+                  min="1940-01-01"
+                  max={todayISO}
+                  value={formData.dob}
+                  onChange={handleChange}
+                  required
+                  aria-label="Date of Birth"
+                  style={{
+                    width: '100%',
+                    minWidth: 0,
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '12px',
+                    padding: '13px 14px 13px 42px',
+                    color: '#FFF',
+                    fontSize: '16px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    colorScheme: 'dark',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#FC4B4E'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.12)'}
+                />
+              </div>
             </div>
 
             {/* Email */}
