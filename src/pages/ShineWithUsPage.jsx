@@ -272,11 +272,11 @@ export default function ShineWithUsPage() {
                 or fail to open the native picker on mobile). Native date
                 inputs also ignore the placeholder attribute entirely, so a
                 real label is shown above instead. */}
-            <div>
+            <div style={{ minWidth: 0, width: '100%' }}>
               <label style={{ display: 'block', color: 'rgba(255, 255, 255, 0.45)', fontSize: '12px', marginBottom: '6px', marginLeft: '2px' }}>
                 Date of Birth *
               </label>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', minWidth: 0, width: '100%' }}>
                 <Calendar size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none' }} />
                 <input
                   type="date"
@@ -287,13 +287,15 @@ export default function ShineWithUsPage() {
                   onChange={handleChange}
                   required
                   aria-label="Date of Birth"
+                  className="zn-dob-input"
                   style={{
                     width: '100%',
+                    maxWidth: '100%',
                     minWidth: 0,
                     background: 'rgba(0, 0, 0, 0.3)',
                     border: '1px solid rgba(255, 255, 255, 0.12)',
                     borderRadius: '12px',
-                    padding: '13px 14px 13px 42px',
+                    padding: '13px 10px 13px 42px',
                     color: '#FFF',
                     fontSize: '16px',
                     outline: 'none',
@@ -306,6 +308,21 @@ export default function ShineWithUsPage() {
                 />
               </div>
             </div>
+            <style>{`
+              .zn-dob-input::-webkit-datetime-edit,
+              .zn-dob-input::-webkit-datetime-edit-fields-wrapper,
+              .zn-dob-input::-webkit-datetime-edit-text,
+              .zn-dob-input::-webkit-datetime-edit-day-field,
+              .zn-dob-input::-webkit-datetime-edit-month-field,
+              .zn-dob-input::-webkit-datetime-edit-year-field {
+                min-width: 0;
+                padding: 0;
+              }
+              .zn-dob-input::-webkit-calendar-picker-indicator {
+                margin-left: 2px;
+                padding: 0;
+              }
+            `}</style>
 
             {/* Email */}
             <div style={{ position: 'relative' }}>
