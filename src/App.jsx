@@ -40,6 +40,13 @@ const CustomerDetailPage = lazy(() => import('./pages/admin/CustomerDetailPage')
 const CategoriesPage = lazy(() => import('./pages/admin/CategoriesPage'));
 const CampaignPage = lazy(() => import('./pages/admin/CampaignPage'));
 
+// TEMPORARY pre-launch lockdown: while true, every customer-facing route
+// (other than /shine-with-us) redirects there instead of rendering — the
+// admin panel stays reachable so the store can still be managed before
+// launch. Set this to false (and feel free to delete this flag entirely)
+// once the site is ready to go live.
+const LAUNCH_LOCKDOWN = true;
+
 function AdminGuard({ children }) {
   const token = localStorage.getItem('zunuz_admin_token');
   return token ? children : <Navigate to="/admin/login" replace />;
@@ -88,6 +95,7 @@ export default function App() {
 
         {/* ── Customer-facing store (MainLayout) ── */}
         <Route path="/*" element={
+          LAUNCH_LOCKDOWN ? <Navigate to="/shine-with-us" replace /> :
           <MainLayout state={state}>
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
