@@ -266,18 +266,20 @@ export default function ShineWithUsPage() {
               />
             </div>
 
-            {/* Date of Birth — always type="date" (no more toggling between
-                text/date on focus/blur via direct DOM mutation, which fought
-                with React's own re-renders and could leave the field stuck
-                or fail to open the native picker on mobile). Native date
-                inputs also ignore the placeholder attribute entirely, so a
-                real label is shown above instead. */}
+            {/* Date of Birth — a real, fully visible, fully interactive
+                native date input. iOS/Android can render this wider than the
+                specified width in some cases, so the wrapper clips any excess
+                with overflow: hidden rather than letting it bleed outside the
+                card — but the input itself is never hidden or intercepted, so
+                tapping/typing always works normally. Native date inputs also
+                ignore the placeholder attribute entirely, so a real label is
+                shown above instead. */}
             <div style={{ minWidth: 0, width: '100%' }}>
               <label style={{ display: 'block', color: 'rgba(255, 255, 255, 0.45)', fontSize: '12px', marginBottom: '6px', marginLeft: '2px' }}>
                 Date of Birth *
               </label>
-              <div style={{ position: 'relative', minWidth: 0, width: '100%' }}>
-                <Calendar size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none' }} />
+              <div style={{ position: 'relative', minWidth: 0, width: '100%', overflow: 'hidden', borderRadius: '12px' }}>
+                <Calendar size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none', zIndex: 1 }} />
                 <input
                   type="date"
                   name="dob"
@@ -289,9 +291,11 @@ export default function ShineWithUsPage() {
                   aria-label="Date of Birth"
                   className="zn-dob-input"
                   style={{
+                    display: 'block',
                     width: '100%',
                     maxWidth: '100%',
                     minWidth: 0,
+                    boxSizing: 'border-box',
                     background: 'rgba(0, 0, 0, 0.3)',
                     border: '1px solid rgba(255, 255, 255, 0.12)',
                     borderRadius: '12px',
@@ -299,7 +303,6 @@ export default function ShineWithUsPage() {
                     color: '#FFF',
                     fontSize: '16px',
                     outline: 'none',
-                    boxSizing: 'border-box',
                     colorScheme: 'dark',
                     transition: 'border-color 0.2s'
                   }}
