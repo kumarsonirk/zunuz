@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowLeft, CheckCircle2, AlertCircle, Send, Mail, Phone, Calendar, User } from 'lucide-react';
+import { Sparkles, ArrowLeft, CheckCircle2, AlertCircle, Send, Mail, Phone, User, ChevronDown, Check } from 'lucide-react';
 import { api } from '../utils/api';
 
 // A dense field of tiny twinkling dots (starfield/dust look), not a handful of
@@ -27,6 +27,186 @@ const SPARKLE_DOTS = Array.from({ length: 90 }, () => {
   };
 });
 
+// Day/Month/Year options for the DOB field, rendered via CustomSelect below
+// instead of a native <select>/<input type="date"> — a native dropdown's
+// open list is drawn by the OS, so its height can't be constrained by CSS,
+// and on mobile it's often a full native wheel/sheet picker outside the
+// page's control entirely. CustomSelect renders its own list, so its height
+// (and everything else about it) is fully ours to control.
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DOB_DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+const CURRENT_YEAR = new Date().getFullYear();
+const DOB_YEARS = Array.from({ length: CURRENT_YEAR - 1940 + 1 }, (_, i) => CURRENT_YEAR - i);
+
+const dobSelectStyle = {
+  minWidth: 0,
+  width: '100%',
+  boxSizing: 'border-box',
+  background: 'rgba(0, 0, 0, 0.3)',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
+  borderRadius: '12px',
+  padding: '13px 8px',
+  color: '#FFF',
+  fontSize: '15px',
+  outline: 'none',
+  colorScheme: 'dark',
+};
+
+// A minimal custom dropdown: styled trigger button + an absolutely positioned
+// options list capped at maxHeight and scrollable, so it can never grow
+// beyond that regardless of how many options there are or what device/browser
+// this renders on. Closes on selecting an option or clicking/tapping outside.
+function CustomSelect({ value, onChange, options, placeholder, ariaLabel, flex, maxHeight = 180 }) {
+  const [open, setOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const wrapperRef = useRef(null);
+  const optionRefs = useRef([]);
+
+  const selectedIndex = options.findIndex(o => String(o.value) === String(value));
+  const selected = selectedIndex >= 0 ? options[selectedIndex] : null;
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [open]);
+
+  // On open, jump the keyboard highlight to (and scroll to) whatever's
+  // already selected — important for the 87-option Year list, which would
+  // otherwise always open scrolled to the top regardless of the picked year.
+  useEffect(() => {
+    if (!open) return;
+    const idx = selectedIndex >= 0 ? selectedIndex : 0;
+    setHighlightedIndex(idx);
+    // Wait a frame so the list has actually mounted before scrolling it.
+    requestAnimationFrame(() => {
+      optionRefs.current[idx]?.scrollIntoView({ block: 'nearest' });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const handleKeyDown = (e) => {
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setOpen(true);
+      }
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex(i => {
+        const next = Math.min(options.length - 1, i + 1);
+        optionRefs.current[next]?.scrollIntoView({ block: 'nearest' });
+        return next;
+      });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(i => {
+        const next = Math.max(0, i - 1);
+        optionRefs.current[next]?.scrollIntoView({ block: 'nearest' });
+        return next;
+      });
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (highlightedIndex >= 0) {
+        onChange(options[highlightedIndex].value);
+        setOpen(false);
+      }
+    }
+  };
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', flex, minWidth: 0 }}>
+      <button
+        type="button"
+        className="zn-dob-trigger"
+        onClick={() => setOpen(o => !o)}
+        onKeyDown={handleKeyDown}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        style={{
+          ...dobSelectStyle,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '4px',
+          cursor: 'pointer',
+          color: selected ? '#FFF' : 'rgba(255, 255, 255, 0.45)',
+          borderColor: open ? '#D4AF37' : 'rgba(255, 255, 255, 0.12)',
+          transition: 'border-color 0.15s ease',
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.6, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="zn-dob-list"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            right: 0,
+            maxHeight: `${maxHeight}px`,
+            overflowY: 'auto',
+            background: '#1c1d22',
+            border: '1px solid rgba(212, 175, 55, 0.25)',
+            borderRadius: '10px',
+            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
+            padding: '4px',
+            zIndex: 20,
+          }}
+        >
+          {options.map((opt, i) => {
+            const isSelected = String(opt.value) === String(value);
+            const isHighlighted = i === highlightedIndex;
+            return (
+              <div
+                key={opt.value}
+                ref={el => { optionRefs.current[i] = el; }}
+                role="option"
+                aria-selected={isSelected}
+                className={`zn-dob-option${isSelected ? ' is-selected' : ''}${isHighlighted ? ' is-highlighted' : ''}`}
+                onMouseEnter={() => setHighlightedIndex(i)}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 10px',
+                  fontSize: '14px',
+                  borderRadius: '7px',
+                  color: isSelected ? '#D4AF37' : '#F5F2EB',
+                  cursor: 'pointer',
+                }}
+              >
+                {opt.label}
+                {isSelected && <Check size={14} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const InstagramIcon = ({ size = 18, style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
     <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
@@ -48,13 +228,29 @@ export default function ShineWithUsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  // Today's date, so the picker can't be used to enter a future birth date
-  // (the old hardcoded "2026-12-31" max allowed dates months into the future).
+  // Today's date, so a combined DOB can't land in the future.
   const todayISO = new Date().toISOString().slice(0, 10);
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (error) setError('');
+  };
+
+  // Combines the three DOB selects into a single "YYYY-MM-DD" string once all
+  // three are chosen (left empty until then, so existing validation on
+  // formData.dob keeps working unchanged); also guards against a combination
+  // that would land in the future.
+  const updateDob = (day, month, year) => {
+    let dob = '';
+    if (day && month && year) {
+      const candidate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      dob = candidate <= todayISO ? candidate : '';
+    }
+    setFormData(prev => ({ ...prev, dob }));
     if (error) setError('');
   };
 
@@ -132,6 +328,23 @@ export default function ShineWithUsPage() {
           0%, 100% { opacity: 0.15; }
           50%      { opacity: var(--peak-opacity, 0.8); }
         }
+        @keyframes zn-dob-list-in {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .zn-dob-list {
+          animation: zn-dob-list-in 0.15s ease-out;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(212, 175, 55, 0.4) transparent;
+        }
+        .zn-dob-list::-webkit-scrollbar { width: 6px; }
+        .zn-dob-list::-webkit-scrollbar-track { background: transparent; }
+        .zn-dob-list::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.35); border-radius: 3px; }
+        .zn-dob-list::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.55); }
+        .zn-dob-option { transition: background 0.12s ease, color 0.12s ease; }
+        .zn-dob-option:hover, .zn-dob-option.is-highlighted { background: rgba(255, 255, 255, 0.06); }
+        .zn-dob-option.is-selected:hover, .zn-dob-option.is-selected.is-highlighted { background: rgba(212, 175, 55, 0.18); }
+        .zn-dob-trigger:focus-visible { border-color: #D4AF37 !important; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); }
       `}</style>
 
       {/* Centered Content Wrapper (margin: auto handles vertical centering without clipping on small screens like iPhone SE) */}
@@ -266,66 +479,46 @@ export default function ShineWithUsPage() {
               />
             </div>
 
-            {/* Date of Birth — a real, fully visible, fully interactive
-                native date input. iOS/Android can render this wider than the
-                specified width in some cases, so the wrapper clips any excess
-                with overflow: hidden rather than letting it bleed outside the
-                card — but the input itself is never hidden or intercepted, so
-                tapping/typing always works normally. Native date inputs also
-                ignore the placeholder attribute entirely, so a real label is
-                shown above instead. */}
+            {/* Date of Birth — three CustomSelect dropdowns (see definition
+                near the top of this file) instead of <input type="date">,
+                whose box/picker UI differs wildly per browser and OS with no
+                way to make it consistent, and whose open list height can't be
+                CSS-constrained. Each CustomSelect's list is capped and
+                scrollable, guaranteed to stay within maxHeight. */}
             <div style={{ minWidth: 0, width: '100%' }}>
               <label style={{ display: 'block', color: 'rgba(255, 255, 255, 0.45)', fontSize: '12px', marginBottom: '6px', marginLeft: '2px' }}>
                 Date of Birth *
               </label>
-              <div style={{ position: 'relative', minWidth: 0, width: '100%', overflow: 'hidden', borderRadius: '12px' }}>
-                <Calendar size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none', zIndex: 1 }} />
-                <input
-                  type="date"
-                  name="dob"
-                  min="1940-01-01"
-                  max={todayISO}
-                  value={formData.dob}
-                  onChange={handleChange}
-                  required
-                  aria-label="Date of Birth"
-                  className="zn-dob-input"
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    maxWidth: '100%',
-                    minWidth: 0,
-                    boxSizing: 'border-box',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '12px',
-                    padding: '13px 10px 13px 42px',
-                    color: '#FFF',
-                    fontSize: '16px',
-                    outline: 'none',
-                    colorScheme: 'dark',
-                    transition: 'border-color 0.2s'
-                  }}
-                  onFocus={e => e.target.style.borderColor = '#FC4B4E'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.12)'}
+              <div style={{ display: 'flex', gap: '8px', minWidth: 0, width: '100%' }}>
+                <CustomSelect
+                  value={dobDay}
+                  onChange={(v) => { setDobDay(v); updateDob(v, dobMonth, dobYear); }}
+                  options={DOB_DAYS.map(d => ({ value: d, label: String(d) }))}
+                  placeholder="Day"
+                  ariaLabel="Day"
+                  flex="1 1 0"
+                  maxHeight={180}
+                />
+                <CustomSelect
+                  value={dobMonth}
+                  onChange={(v) => { setDobMonth(v); updateDob(dobDay, v, dobYear); }}
+                  options={MONTH_NAMES.map((m, i) => ({ value: i + 1, label: m }))}
+                  placeholder="Month"
+                  ariaLabel="Month"
+                  flex="1.6 1 0"
+                  maxHeight={180}
+                />
+                <CustomSelect
+                  value={dobYear}
+                  onChange={(v) => { setDobYear(v); updateDob(dobDay, dobMonth, v); }}
+                  options={DOB_YEARS.map(y => ({ value: y, label: String(y) }))}
+                  placeholder="Year"
+                  ariaLabel="Year"
+                  flex="1.3 1 0"
+                  maxHeight={180}
                 />
               </div>
             </div>
-            <style>{`
-              .zn-dob-input::-webkit-datetime-edit,
-              .zn-dob-input::-webkit-datetime-edit-fields-wrapper,
-              .zn-dob-input::-webkit-datetime-edit-text,
-              .zn-dob-input::-webkit-datetime-edit-day-field,
-              .zn-dob-input::-webkit-datetime-edit-month-field,
-              .zn-dob-input::-webkit-datetime-edit-year-field {
-                min-width: 0;
-                padding: 0;
-              }
-              .zn-dob-input::-webkit-calendar-picker-indicator {
-                margin-left: 2px;
-                padding: 0;
-              }
-            `}</style>
 
             {/* Email */}
             <div style={{ position: 'relative' }}>
