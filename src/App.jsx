@@ -22,6 +22,9 @@ const HelpCenterPage = lazy(() => import('./pages/account/HelpCenterPage'));
 
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const SignupPage = lazy(() => import('./pages/auth/SignupPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
+
 
 const AccountPage = lazy(() => import('./pages/account/AccountPage'));
 const ProfilePage = lazy(() => import('./pages/account/ProfilePage'));
@@ -84,26 +87,26 @@ export default function App() {
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
           <Route index element={<DashboardPage />} />
-          <Route path="products"   element={<ProductsPage />} />
-          <Route path="orders"     element={<OrdersPage />} />
-          <Route path="customers"  element={<CustomersPage />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
           <Route path="categories" element={<CategoriesPage />} />
-          <Route path="campaign"   element={<CampaignPage />} />
+          <Route path="campaign" element={<CampaignPage />} />
         </Route>
 
 
         {/* ── Customer-facing store (MainLayout) ── */}
         <Route path="/*" element={
           LAUNCH_LOCKDOWN ? <Navigate to="/shine-with-us" replace /> :
-          <MainLayout state={state}>
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                <Route path="/" element={<CategorySelection onSelectCategory={state.handleSelectCategory} categories={state.categories} />} />
+            <MainLayout state={state}>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  <Route path="/" element={<CategorySelection onSelectCategory={state.handleSelectCategory} categories={state.categories} />} />
 
-                <Route path="/products" element={
-                  activeCategory
-                    ? <ProductPage
+                  <Route path="/products" element={
+                    activeCategory
+                      ? <ProductPage
                         selectedCategory={activeCategory}
                         productMap={state.productMap}
                         onAddToCart={state.handleAddToCart}
@@ -115,12 +118,12 @@ export default function App() {
                         subcategories={state.subcategories}
                         productsLoaded={state.productsLoaded}
                       />
-                    : <Navigate to="/" replace />
-                } />
+                      : <Navigate to="/" replace />
+                  } />
 
-                <Route path="/products/:id" element={
-                  state.selectedProduct
-                    ? <ProductDetailsPage
+                  <Route path="/products/:id" element={
+                    state.selectedProduct
+                      ? <ProductDetailsPage
                         product={state.selectedProduct}
                         category={activeCategory}
                         productMap={state.productMap}
@@ -134,54 +137,57 @@ export default function App() {
                         categories={state.categories}
                         onSelectCategory={state.handleSelectCategory}
                       />
-                    : state.productsLoaded
-                      ? <Navigate to="/products" replace />
-                      : <LoadingFallback />
-                } />
+                      : state.productsLoaded
+                        ? <Navigate to="/products" replace />
+                        : <LoadingFallback />
+                  } />
 
-                <Route path="/cart" element={
-                  <CartPage
-                    cartItems={state.cartItems}
-                    onUpdateQuantity={state.handleUpdateCartQuantity}
-                    onRemoveItem={state.handleRemoveCartItem}
-                    onAddToCart={state.handleAddToCart}
-                    onSelectProduct={state.handleSelectProduct}
-                    onClearCart={state.handleClearCart}
-                    productMap={state.productMap}
-                    category={activeCategory}
-                    productsLoaded={state.productsLoaded}
-                  />
-                } />
+                  <Route path="/cart" element={
+                    <CartPage
+                      cartItems={state.cartItems}
+                      onUpdateQuantity={state.handleUpdateCartQuantity}
+                      onRemoveItem={state.handleRemoveCartItem}
+                      onAddToCart={state.handleAddToCart}
+                      onSelectProduct={state.handleSelectProduct}
+                      onClearCart={state.handleClearCart}
+                      productMap={state.productMap}
+                      category={activeCategory}
+                      productsLoaded={state.productsLoaded}
+                    />
+                  } />
 
-                {/* Auth */}
-                <Route path="/login"  element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
+                  {/* Auth */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-                {/* Customer Care & Campaign */}
-                <Route path="/shine-with-us" element={<ShineWithUsPage />} />
-                <Route path="/customer-care" element={<CustomerCarePage />} />
-                <Route path="/customer-care/shipping-policy" element={<ShippingPolicyPage />} />
 
-                <Route path="/customer-care/returns-replacements" element={<ReturnsReplacementsPage />} />
-                <Route path="/customer-care/cancellation-policy" element={<CancellationPolicyPage />} />
-                <Route path="/customer-care/product-care" element={<ProductCarePage />} />
-                <Route path="/customer-care/faq" element={<FaqPage />} />
+                  {/* Customer Care & Campaign */}
+                  <Route path="/shine-with-us" element={<ShineWithUsPage />} />
+                  <Route path="/customer-care" element={<CustomerCarePage />} />
+                  <Route path="/customer-care/shipping-policy" element={<ShippingPolicyPage />} />
 
-                {/* Legal */}
-                <Route path="/terms" element={<TermsPage />} />
-                <Route path="/privacy" element={<PrivacyPage />} />
+                  <Route path="/customer-care/returns-replacements" element={<ReturnsReplacementsPage />} />
+                  <Route path="/customer-care/cancellation-policy" element={<CancellationPolicyPage />} />
+                  <Route path="/customer-care/product-care" element={<ProductCarePage />} />
+                  <Route path="/customer-care/faq" element={<FaqPage />} />
 
-                {/* Account */}
-                <Route path="/account"            element={<AccountPage />} />
-                <Route path="/account/profile"    element={<ProfilePage />} />
-                <Route path="/account/addresses"  element={<AddressesPage />} />
-                <Route path="/account/orders"     element={<OrderHistoryPage />} />
-                <Route path="/account/help-center" element={<HelpCenterPage />} />
+                  {/* Legal */}
+                  <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/privacy" element={<PrivacyPage />} />
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </MainLayout>
+                  {/* Account */}
+                  <Route path="/account" element={<AccountPage />} />
+                  <Route path="/account/profile" element={<ProfilePage />} />
+                  <Route path="/account/addresses" element={<AddressesPage />} />
+                  <Route path="/account/orders" element={<OrderHistoryPage />} />
+                  <Route path="/account/help-center" element={<HelpCenterPage />} />
+
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </MainLayout>
         } />
       </Routes>
     </Suspense>

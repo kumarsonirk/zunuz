@@ -227,9 +227,10 @@ export function useAppState() {
     const path = location.pathname;
 
     // Admin, auth, account, legal, customer-care, and campaign routes are handled by their own components
-    if (path.startsWith('/admin') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/account') || path.startsWith('/terms') || path.startsWith('/privacy') || path.startsWith('/customer-care') || path.startsWith('/shine-with-us')) {
+    if (path.startsWith('/admin') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/forgot-password') || path.startsWith('/reset-password') || path.startsWith('/account') || path.startsWith('/terms') || path.startsWith('/privacy') || path.startsWith('/customer-care') || path.startsWith('/shine-with-us')) {
       return;
     }
+
 
 
     const activeMap = productMap || productData;

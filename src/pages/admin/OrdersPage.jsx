@@ -71,6 +71,20 @@ export default function OrdersPage() {
     finally { setUpdatingId(null); }
   };
 
+  const [sendingEmailId, setSendingEmailId] = useState(null);
+
+  const sendEmail = async (orderId, template) => {
+    setSendingEmailId(orderId);
+    try {
+      const res = await api.post(`/admin/orders/${orderId}/send-email`, { template }, true);
+      alert(res.message || 'Email sent successfully!');
+    } catch (e) {
+      alert(e.message || 'Failed to send email.');
+    } finally {
+      setSendingEmailId(null);
+    }
+  };
+
   return (
     <div style={{ maxWidth: '1200px' }}>
       <div style={{ marginBottom: '24px' }}>
@@ -126,13 +140,29 @@ export default function OrdersPage() {
                       {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                     </td>
                     <td style={{ padding: '14px 20px' }} onClick={e => e.stopPropagation()}>
-                      <select
-                        value={order.status}
-                        disabled={updatingId === order.id}
-                        onChange={e => updateStatus(order.id, e.target.value)}
-                        style={{ background: 'var(--admin-bg)', border: '1px solid var(--admin-border-3)', borderRadius: '8px', padding: '6px 10px', color: 'var(--admin-text)', fontSize: '12px', cursor: 'pointer', outline: 'none' }}>
-                        {['PENDING','CONFIRMED','SHIPPED','DELIVERED','CANCELLED'].map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {order.status === 'PENDING' && (
+                          <button
+                            onClick={() => updateStatus(order.id, 'CONFIRMED')}
+                            disabled={updatingId === order.id}
+                            style={{
+                              background: '#22C55E', color: '#FFFFFF', border: 'none', borderRadius: '8px',
+                              padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                              whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px'
+                            }}
+                            title="Approve order and send confirmation email to customer"
+                          >
+                            {updatingId === order.id ? 'Approving...' : '✓ Approve'}
+                          </button>
+                        )}
+                        <select
+                          value={order.status}
+                          disabled={updatingId === order.id}
+                          onChange={e => updateStatus(order.id, e.target.value)}
+                          style={{ background: 'var(--admin-bg)', border: '1px solid var(--admin-border-3)', borderRadius: '8px', padding: '6px 10px', color: 'var(--admin-text)', fontSize: '12px', cursor: 'pointer', outline: 'none' }}>
+                          {(order.status === 'PENDING' ? ['PENDING','CONFIRMED','SHIPPED','DELIVERED','CANCELLED'] : ['CONFIRMED','SHIPPED','DELIVERED','CANCELLED']).map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -206,9 +236,17 @@ export default function OrdersPage() {
               </div>
               <div>
                 <p style={{ color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>UPDATE STATUS</p>
+                {detailOrder.status === 'PENDING' && (
+                  <button
+                    onClick={() => updateStatus(detailOrder.id, 'CONFIRMED')}
+                    disabled={updatingId === detailOrder.id}
+                    style={{ width: '100%', marginBottom: '10px', height: '42px', borderRadius: '10px', border: 'none', background: '#22C55E', color: 'white', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    {updatingId === detailOrder.id ? 'Approving...' : '✓ Approve Order & Send Email'}
+                  </button>
+                )}
                 <select value={detailOrder.status} onChange={e => updateStatus(detailOrder.id, e.target.value)}
                   style={{ width: '100%', background: 'var(--admin-bg)', border: '1px solid var(--admin-border-3)', borderRadius: '10px', padding: '10px 14px', color: 'var(--admin-text)', fontSize: '14px', outline: 'none', cursor: 'pointer' }}>
-                  {['PENDING','CONFIRMED','SHIPPED','DELIVERED','CANCELLED'].map(s => <option key={s} value={s}>{s}</option>)}
+                  {(detailOrder.status === 'PENDING' ? ['PENDING','CONFIRMED','SHIPPED','DELIVERED','CANCELLED'] : ['CONFIRMED','SHIPPED','DELIVERED','CANCELLED']).map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             </div>

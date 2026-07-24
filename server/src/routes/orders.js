@@ -7,7 +7,9 @@ const { validateItemsAndTotal, decrementStockAtomic } = require('../lib/stock');
 
 const prisma = new PrismaClient();
 
-const ORDER_INCLUDE = { items: { include: { product: true } }, address: true };
+const { sendOrderConfirmationEmail } = require('../lib/email');
+
+const ORDER_INCLUDE = { items: { include: { product: true } }, address: true, customer: { select: { name: true, email: true, phone: true } } };
 const MAX_QUANTITY_PER_ITEM = 10;
 
 // POST /api/orders  (place an order — COD confirms immediately, RAZORPAY needs verify-payment)
@@ -29,14 +31,23 @@ router.post('/', auth, async (req, res) => {
       const order = await prisma.$transaction(async (tx) => {
         const { total, orderItemsData } = await validateItemsAndTotal(tx, items);
         const created = await tx.order.create({
-          data: { customerId: req.customer.id, addressId: Number(addressId), total, paymentMethod, items: { create: orderItemsData } },
+          data: { 
+            customerId: req.customer.id, 
+            addressId: Number(addressId), 
+            total, 
+            paymentMethod, 
+            items: { create: orderItemsData },
+            status: 'PENDING'
+          },
           include: ORDER_INCLUDE
         });
         await decrementStockAtomic(tx, items);
         return created;
       });
+
       return res.status(201).json(order);
     }
+
 
     const { total, orderItemsData } = await validateItemsAndTotal(prisma, items);
     const order = await prisma.order.create({
@@ -123,6 +134,13 @@ router.post('/:id/verify-payment', auth, async (req, res) => {
           include: ORDER_INCLUDE
         });
       });
+      // Send Order Confirmation Email on successful Razorpay payment verification
+      const emailToUse = updated.customer?.email || updated.address?.email;
+      if (emailToUse) {
+        sendOrderConfirmationEmail(emailToUse, updated).catch(err => console.error('Error sending order confirmation email:', err));
+      }
+
+      res.json(updated);
     } catch (stockErr) {
       // Payment succeeded but stock ran out while it was pending (e.g. someone else
       // bought the last unit via COD first). Money was taken — mark PAID + CANCELLED
@@ -142,12 +160,12 @@ router.post('/:id/verify-payment', auth, async (req, res) => {
         order: updated
       });
     }
-    res.json(updated);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // POST /api/orders/:id/cancel-payment  (user closed the Razorpay checkout without paying)
 router.post('/:id/cancel-payment', auth, async (req, res) => {

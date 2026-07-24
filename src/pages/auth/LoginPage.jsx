@@ -63,13 +63,21 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" required style={inp} />
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required style={inp} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required style={inp} />
+            <div style={{ textAlign: 'right' }}>
+              <Link to="/forgot-password" style={{ color: '#FC4B4E', textDecoration: 'none', fontSize: '12px', fontWeight: 500 }}>
+                Forgot Password?
+              </Link>
+            </div>
+          </div>
           <button type="submit" disabled={loading}
             className="btn-buy-now"
-            style={{ marginTop: '8px', height: '52px', borderRadius: '12px', border: 'none', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+            style={{ marginTop: '4px', height: '52px', borderRadius: '12px', border: 'none', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />

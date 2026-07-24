@@ -88,8 +88,10 @@ export default function OrderSuccessOverlay({ isOpen, order, onContinue }) {
         <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#F5F2EB', letterSpacing: '-0.02em', fontFamily: "'Qrokinex', sans-serif", marginBottom: '8px' }}>
           Order Placed!
         </h2>
-        <p style={{ fontSize: '14px', color: '#71717A', lineHeight: 1.5 }}>
-          Your order has been confirmed and{'\n'}will be delivered soon.
+        <p style={{ fontSize: '14px', color: '#71717A', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+          {order?.paymentMethod === 'COD' || order?.status === 'PENDING'
+            ? 'Your order is pending admin approval.\nYou will receive an email once it is confirmed.'
+            : 'Your order has been confirmed and\nwill be delivered soon.'}
         </p>
         {order?.id && (
           <p style={{ fontSize: '12px', color: '#52525B', marginTop: '6px', letterSpacing: '0.06em' }}>
@@ -141,10 +143,10 @@ export default function OrderSuccessOverlay({ isOpen, order, onContinue }) {
           </div>
 
           {order.paymentMethod && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '12px', background: order.paymentMethod === 'RAZORPAY' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${order.paymentMethod === 'RAZORPAY' ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '20px', padding: '4px 10px' }}>
-              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: order.paymentMethod === 'RAZORPAY' ? '#22C55E' : '#71717A' }} />
-              <span style={{ fontSize: '10px', fontWeight: 600, color: order.paymentMethod === 'RAZORPAY' ? '#22C55E' : '#A1A1AA', letterSpacing: '0.05em' }}>
-                {order.paymentMethod === 'RAZORPAY' ? 'Paid Online' : 'Cash on Delivery'}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '12px', background: order.paymentMethod === 'RAZORPAY' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${order.paymentMethod === 'RAZORPAY' ? 'rgba(34,197,94,0.25)' : 'rgba(245,158,11,0.25)'}`, borderRadius: '20px', padding: '4px 10px' }}>
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: order.paymentMethod === 'RAZORPAY' ? '#22C55E' : '#F59E0B' }} />
+              <span style={{ fontSize: '10px', fontWeight: 600, color: order.paymentMethod === 'RAZORPAY' ? '#22C55E' : '#F59E0B', letterSpacing: '0.05em' }}>
+                {order.paymentMethod === 'RAZORPAY' ? 'Paid Online' : 'COD (Pending Approval)'}
               </span>
             </div>
           )}

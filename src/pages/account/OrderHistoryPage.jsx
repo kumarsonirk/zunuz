@@ -4,7 +4,7 @@ import { api } from '../../utils/api';
 import Price from '../../components/Price';
 
 const STATUS_STYLE = {
-  PENDING:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  label: 'Pending'   },
+  PENDING:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  label: 'Pending Approval' },
   CONFIRMED: { color: '#3B82F6', bg: 'rgba(59,130,246,0.12)',  label: 'Confirmed' },
   SHIPPED:   { color: '#A78BFA', bg: 'rgba(167,139,250,0.12)', label: 'Shipped'   },
   DELIVERED: { color: '#22C55E', bg: 'rgba(34,197,94,0.12)',   label: 'Delivered' },

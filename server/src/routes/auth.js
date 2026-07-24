@@ -4,12 +4,17 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const { OAuth2Client } = require('google-auth-library');
 const { PrismaClient } = require('@prisma/client');
+const { sendWelcomeEmail, sendPasswordResetEmail } = require('../lib/email');
 
 const prisma = new PrismaClient();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const RESEND_COOLDOWN_MS = 30 * 1000; // matches the frontend's 30s resend timer
 const MAX_VERIFY_ATTEMPTS = 5;
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15 min
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Defense-in-depth against a single IP hammering these endpoints, on top of
 // the per-phone resend cooldown and per-OTP attempt cap enforced below.
@@ -18,11 +23,13 @@ const verifyOtpLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standard
 const registerLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
 const googleLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
+const forgotPasswordLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false });
 
 // POST /api/auth/register
 router.post('/register', registerLimiter, async (req, res) => {
   const { name, email, password, phone } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+  if (!emailRegex.test(email)) return res.status(400).json({ error: 'Invalid email format' });
   if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
   try {
@@ -34,6 +41,9 @@ router.post('/register', registerLimiter, async (req, res) => {
       data: { name: name?.trim() || null, email, passwordHash, phone: phone?.trim() || null },
     });
 
+    // Send Welcome Email asynchronously
+    sendWelcomeEmail(customer.email, customer.name).catch(err => console.error('Error sending welcome email:', err));
+
     const token = jwt.sign({ id: customer.id, email: customer.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({
       token,
@@ -41,6 +51,9 @@ router.post('/register', registerLimiter, async (req, res) => {
       isNewUser: true,
     });
   } catch (e) {
+    if (e.code === 'P2002' && e.meta?.target?.includes('phone')) {
+      return res.status(409).json({ error: 'Phone number is already associated with another account' });
+    }
     console.error(e);
     res.status(500).json({ error: 'Server error' });
   }
@@ -56,8 +69,35 @@ router.post('/login', loginLimiter, async (req, res) => {
     // Same generic error whether the account doesn't exist, has no password (Google-only), or the password is wrong.
     if (!customer || !customer.passwordHash) return res.status(401).json({ error: 'Invalid email or password' });
 
+    // Check customer account lockout
+    if (customer.lockedUntil && customer.lockedUntil > new Date()) {
+      const waitMin = Math.ceil((customer.lockedUntil.getTime() - Date.now()) / 60000);
+      return res.status(429).json({ error: `Too many failed attempts. Account is locked. Try again in ${waitMin} minute(s).` });
+    }
+
     const valid = await bcrypt.compare(password, customer.passwordHash);
-    if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
+    if (!valid) {
+      const failedAttempts = customer.failedAttempts + 1;
+      const lockedUntil = failedAttempts >= MAX_FAILED_LOGIN_ATTEMPTS ? new Date(Date.now() + LOCKOUT_MS) : null;
+      
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: { failedAttempts: lockedUntil ? 0 : failedAttempts, lockedUntil }
+      });
+
+      if (lockedUntil) {
+        return res.status(429).json({ error: 'Too many failed login attempts. Your account is locked for 15 minutes.' });
+      }
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Reset failed attempts on successful login
+    if (customer.failedAttempts > 0 || customer.lockedUntil) {
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: { failedAttempts: 0, lockedUntil: null }
+      });
+    }
 
     const token = jwt.sign({ id: customer.id, email: customer.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({
@@ -69,6 +109,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // POST /api/auth/google
 router.post('/google', googleLimiter, async (req, res) => {
@@ -192,6 +233,70 @@ router.post('/verify-otp', verifyOtpLimiter, async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+  if (!emailRegex.test(email)) return res.status(400).json({ error: 'Invalid email format' });
+
+  try {
+    const customer = await prisma.customer.findUnique({ where: { email } });
+    
+    // Mitigate email enumeration: return success even if email is not found
+    if (!customer) {
+      return res.json({ message: 'If this email is associated with an account, a reset link has been sent.' });
+    }
+
+    const token = jwt.sign({ id: customer.id, action: 'reset-password' }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    const resetLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
+
+    // Send email using our email service
+    await sendPasswordResetEmail(customer.email, customer.name, resetLink);
+
+    const response = { message: 'If this email is associated with an account, a reset link has been sent.' };
+    if (process.env.NODE_ENV !== 'production') {
+      response.devToken = token;
+      response.devLink = resetLink;
+    }
+    res.json(response);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'Token and password are required' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (payload.action !== 'reset-password') {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+
+    const customer = await prisma.customer.findUnique({ where: { id: payload.id } });
+    if (!customer) return res.status(404).json({ error: 'Customer not found' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: {
+        passwordHash,
+        failedAttempts: 0,
+        lockedUntil: null
+      }
+    });
+
+    res.json({ message: 'Password has been reset successfully. You can now log in.' });
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: 'Token invalid or expired. Please request a new link.' });
   }
 });
 

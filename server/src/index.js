@@ -64,6 +64,57 @@ app.use('/api/admin/categories', require('./routes/admin/categories'));
 app.use('/api/admin/campaign',   require('./routes/admin/campaign'));
 
 
+// Development route to preview the premium email design directly in browser
+app.get('/api/dev/preview-order-email', (req, res) => {
+  const { getOrderConfirmationHtml } = require('./lib/email');
+  
+  // Simulated premium mockup order data
+  const mockOrder = {
+    id: 1237651365,
+    total: 4500,
+    createdAt: new Date(),
+    paymentMethod: 'COD',
+    address: {
+      name: 'Pavithran',
+      phone: '9876543210',
+      houseNo: '4140',
+      street: 'Parker Rd.',
+      landmark: 'Near Central Park',
+      city: 'Allentown',
+      state: 'New Mexico',
+      pincode: '31134'
+    },
+    items: [
+      {
+        quantity: 1,
+        price: 3000,
+        product: {
+          name: 'Grey man T-shirt',
+          image: '/uploads/placeholder.png'
+        }
+      },
+      {
+        quantity: 1,
+        price: 1500,
+        product: {
+          name: 'Milton water bottle',
+          image: '/uploads/placeholder.png'
+        }
+      }
+    ]
+  };
+
+  const html = getOrderConfirmationHtml(mockOrder);
+  res.send(html);
+});
+
+// Development route to preview the welcome email design directly in browser
+app.get('/api/dev/preview-welcome-email', (req, res) => {
+  const { getWelcomeEmailHtml } = require('./lib/email');
+  const html = getWelcomeEmailHtml('Pavithran');
+  res.send(html);
+});
+
 app.get('/api/health', (_, res) => res.json({ status: 'ok', app: 'Zunuz API' }));
 
 app.listen(PORT, () => {

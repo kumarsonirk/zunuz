@@ -18,10 +18,24 @@ router.get('/me', auth, async (req, res) => {
 // PUT /api/customers/me
 router.put('/me', auth, async (req, res) => {
   const { name, email, phone } = req.body;
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (email && !emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
+  let cleanPhone = null;
+  if (phone) {
+    cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    if (cleanPhone.length !== 10) {
+      return res.status(400).json({ error: 'Phone number must be a valid 10-digit number' });
+    }
+  }
+
   try {
     const customer = await prisma.customer.update({
       where: { id: req.customer.id },
-      data: { name, email: email || null, phone: phone?.trim() || null },
+      data: { name: name?.trim() || null, email: email || null, phone: cleanPhone },
       select: { id: true, name: true, email: true, phone: true }
     });
     res.json(customer);
@@ -33,6 +47,7 @@ router.put('/me', auth, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // GET /api/customers/addresses
 router.get('/addresses', auth, async (req, res) => {

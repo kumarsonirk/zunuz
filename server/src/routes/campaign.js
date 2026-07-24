@@ -22,6 +22,15 @@ router.post('/submit', async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
 
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    const cleanPhone = phone.trim().replace(/[\s\-\+\(\)]/g, '').replace(/^91/, '');
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      return res.status(400).json({ error: 'Please enter a valid 10-digit mobile number' });
+    }
+
     if (!insta_id || !insta_id.trim()) {
       return res.status(400).json({ error: 'Instagram ID is required' });
     }

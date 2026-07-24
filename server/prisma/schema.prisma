@@ -18,15 +18,17 @@ model Admin {
 }
 
 model Customer {
-  id           Int       @id @default(autoincrement())
-  name         String?
-  email        String?   @unique
-  passwordHash String?
-  phone        String?   @unique
-  googleId     String?   @unique
-  createdAt    DateTime  @default(now())
-  addresses    Address[]
-  orders       Order[]
+  id             Int       @id @default(autoincrement())
+  name           String?
+  email          String?   @unique
+  passwordHash   String?
+  phone          String?   @unique
+  googleId       String?   @unique
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  createdAt      DateTime  @default(now())
+  addresses      Address[]
+  orders         Order[]
 }
 
 model OtpRequest {

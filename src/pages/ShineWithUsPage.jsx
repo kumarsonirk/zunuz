@@ -265,6 +265,13 @@ export default function ShineWithUsPage() {
     }
 
     if (!formData.email.trim()) return setError('Please enter your email address.');
+    
+    if (!formData.phone.trim()) return setError('Please enter your phone number.');
+    const cleanPhone = formData.phone.trim().replace(/[\s\-\+\(\)]/g, '').replace(/^91/, '');
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      return setError('Please enter a valid 10-digit mobile number.');
+    }
+
     if (!formData.insta_id.trim()) return setError('Please enter your Instagram handle/ID.');
 
 
@@ -547,7 +554,7 @@ export default function ShineWithUsPage() {
               />
             </div>
 
-            {/* Phone (Optional) */}
+            {/* Phone */}
             <div style={{ position: 'relative' }}>
               <Phone size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.35)', pointerEvents: 'none' }} />
               <input
@@ -555,7 +562,8 @@ export default function ShineWithUsPage() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="Phone Number (Optional)"
+                placeholder="Phone Number *"
+                required
                 style={{
                   width: '100%',
                   background: 'rgba(0, 0, 0, 0.3)',
