@@ -89,12 +89,12 @@ export default function AccountPage() {
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
       {/* Header */}
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
         <h2 style={{ fontSize: '18px', fontWeight: 500 }}>Account</h2>
       </div>
 
       {/* Profile Summary */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '24px 24px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '24px 24px 20px', flexShrink: 0 }}>
         <div style={{
           width: '56px', height: '56px', borderRadius: '50%', flexShrink: 0,
           background: 'linear-gradient(135deg, #FC4B4E 0%, #c0392b 100%)',
@@ -112,7 +112,7 @@ export default function AccountPage() {
       </div>
 
       {/* Main Menu */}
-      <div style={{ margin: '0 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', overflow: 'hidden' }}>
+      <div style={{ margin: '0 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', overflow: 'hidden', flexShrink: 0 }}>
         <ROW icon={User} label="Edit Profile" sublabel="Update name, phone & password" onClick={() => navigate('/account/profile')} />
         <Divider />
         <ROW icon={MapPin} label="Saved Addresses" sublabel="Manage delivery addresses" onClick={() => navigate('/account/addresses')} />
@@ -121,7 +121,7 @@ export default function AccountPage() {
       </div>
 
       {/* Legal */}
-      <div style={{ margin: '12px 16px 0', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', overflow: 'hidden' }}>
+      <div style={{ margin: '12px 16px 0', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', overflow: 'hidden', flexShrink: 0 }}>
         <ROW icon={Headphones} label="Customer Care" onClick={() => navigate('/customer-care')} />
         <Divider />
         <ROW icon={FileText} label="Terms & Conditions" onClick={() => navigate('/terms')} />
@@ -132,7 +132,7 @@ export default function AccountPage() {
       </div>
 
       {/* Logout */}
-      <div style={{ margin: '12px 16px 24px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '16px', overflow: 'hidden' }}>
+      <div style={{ margin: '12px 16px 24px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '16px', overflow: 'hidden', flexShrink: 0 }}>
         <ROW icon={LogOut} label="Sign Out" onClick={handleLogout} danger />
       </div>
     </div>

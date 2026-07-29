@@ -34,7 +34,7 @@ export default function HelpCenterPage() {
           We're here to help. Reach out to us anytime — our team is always happy to assist.
         </p>
 
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', overflow: 'hidden' }}>
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', overflow: 'hidden', flexShrink: 0 }}>
           {CONTACT_ITEMS.map((item, i) => {
             const Content = (
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 20px' }}>
