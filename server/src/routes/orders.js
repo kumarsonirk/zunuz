@@ -45,6 +45,11 @@ router.post('/', auth, async (req, res) => {
         return created;
       });
 
+      const emailToUse = order.customer?.email || order.address?.email;
+      if (emailToUse) {
+        sendOrderConfirmationEmail(emailToUse, order).catch(err => console.error('Error sending order confirmation email:', err));
+      }
+
       return res.status(201).json(order);
     }
 
