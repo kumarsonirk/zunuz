@@ -594,8 +594,8 @@ export default function ProductPage({
       </div>
 
       {/* Swipe/Tap helper hint */}
-      <div className="text-[9px] font-grift tracking-wider text-zinc-500 text-center pt-1.5 pb-1 select-none uppercase" style={{ color: '#71717a', fontFamily: "'Grift', sans-serif" }}>
-        Swipe cards horizontally or tap for product details
+      <div className="text-[12px] font-grift tracking-wider text-zinc-500 text-center pt-1.5 pb-1 select-none uppercase" style={{ color: '#71717a', fontFamily: "'Grift', sans-serif" }}>
+        Find Your Vibe!
       </div>
 
       {/* Bottom Sticky Action Buttons */}
