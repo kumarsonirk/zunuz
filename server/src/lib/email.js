@@ -1,56 +1,38 @@
-const nodemailer = require('nodemailer');
+// Sends via Resend's HTTPS API instead of raw SMTP — Railway (and many other
+// cloud hosts) blocks/times-out outbound SMTP (ports 25/465/587) as an
+// anti-spam measure, but plain HTTPS to api.resend.com is never blocked.
+const { RESEND_API_KEY, RESEND_FROM } = process.env;
 
-// Load environment variables for email
-const {
-  SMTP_HOST,
-  SMTP_PORT,
-  SMTP_USER,
-  SMTP_PASS,
-  SMTP_FROM
-} = process.env;
+const isConfigured = !!RESEND_API_KEY;
 
-const isConfigured = SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS;
-
-let transporter = null;
-
-if (isConfigured) {
-  transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: parseInt(SMTP_PORT, 10) || 587,
-    secure: parseInt(SMTP_PORT, 10) === 465, // true for 465, false for other ports
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
-
-  // Verify connection configuration
-  transporter.verify((error) => {
-    if (error) {
-      console.warn('❌ SMTP Connection failed:', error.message);
-    } else {
-      console.log('✅ SMTP Connection established successfully.');
-    }
-  });
-} else {
-  console.log('ℹ️ SMTP is not configured. System emails will be logged to the console instead.');
+if (!isConfigured) {
+  console.log('ℹ️ Resend is not configured. System emails will be logged to the console instead.');
 }
 
 /**
  * Helper to send email or log to console
  */
 async function sendMailHelper(options) {
-  if (isConfigured && transporter) {
+  if (isConfigured) {
     try {
-      const info = await transporter.sendMail({
-        from: SMTP_FROM || SMTP_USER,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text,
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: RESEND_FROM || 'Zunuz <onboarding@resend.dev>',
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text,
+        }),
       });
-      console.log(`✉️ Email sent successfully to ${options.to}. MessageID: ${info.messageId}`);
-      return info;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || `Resend API error (${res.status})`);
+      console.log(`✉️ Email sent successfully to ${options.to}. MessageID: ${data.id}`);
+      return data;
     } catch (error) {
       console.error(`❌ Failed to send email to ${options.to}:`, error);
       // Don't throw so that the application doesn't crash on email failure
