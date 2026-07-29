@@ -616,6 +616,17 @@ export default function ProductDetailsPage({
 
 // Inner Helper Accordion component
 function AccordionItem({ title, content, isOpen, onToggle }) {
+  // Measures the actual content height instead of using a fixed maxHeight
+  // (previously a hardcoded 120px, which clipped any description/materials
+  // text longer than that) — this way it always expands to fit exactly,
+  // regardless of how long the text is, on any device.
+  const contentRef = useRef(null);
+  const [measuredHeight, setMeasuredHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    if (contentRef.current) setMeasuredHeight(contentRef.current.scrollHeight);
+  }, [content, isOpen]);
+
   return (
     <div className="border-b border-zinc-900/60" style={{ borderBottom: '1px solid rgba(24, 24, 27, 0.4)' }}>
       <button
@@ -629,11 +640,11 @@ function AccordionItem({ title, content, isOpen, onToggle }) {
       <div
         className="overflow-hidden transition-all duration-300"
         style={{
-          maxHeight: isOpen ? '120px' : '0px',
+          maxHeight: isOpen ? `${measuredHeight}px` : '0px',
           opacity: isOpen ? 1 : 0,
         }}
       >
-        <p className="pb-4 text-sm text-zinc-400 leading-relaxed font-sans" style={{ color: '#a1a1aa' }}>
+        <p ref={contentRef} className="pb-4 text-sm text-zinc-400 leading-relaxed font-sans" style={{ color: '#a1a1aa' }}>
           {content}
         </p>
       </div>

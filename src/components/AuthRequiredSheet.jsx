@@ -1,11 +1,18 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { X, Lock } from 'lucide-react';
 
-export default function AuthRequiredSheet({ isOpen, onClose, onNavigate }) {
+export default function AuthRequiredSheet({ isOpen, onClose, onNavigate, reopenBillSummary = false }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const go = (path) => { onClose(); onNavigate?.(); navigate(path); };
+  const go = (path) => {
+    onClose();
+    onNavigate?.();
+    // Remember where we were so LoginPage/SignupPage can send the user back
+    // to this same checkout screen after they sign in, instead of home.
+    navigate(path, { state: { returnTo: location.pathname, reopenBillSummary } });
+  };
 
   return (
     <>

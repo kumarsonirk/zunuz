@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { X, MapPin } from 'lucide-react';
 import zr from '../utils/audio';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,6 +14,7 @@ import { computeDeliveryFee, amountToFreeDelivery } from '../utils/delivery';
 
 export default function BillSummaryDrawer({ isOpen, onClose, product }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { customer } = useAuth();
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
@@ -31,7 +32,10 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
     api.get('/customers/addresses')
       .then(addrs => {
         if (!addrs.length) return;
-        setSelectedAddress(addrs.find(a => a.isDefault) || addrs[0]);
+        const preferred = location.state?.selectedAddressId
+          ? addrs.find(a => a.id === location.state.selectedAddressId)
+          : null;
+        setSelectedAddress(preferred || addrs.find(a => a.isDefault) || addrs[0]);
       })
       .catch(() => {})
       .finally(() => setLoadingAddress(false));
@@ -70,13 +74,14 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
   return (
     <>
       <OrderSuccessOverlay isOpen={showSuccess} order={placedOrder} onContinue={onClose} />
-      <AuthRequiredSheet isOpen={showAuthSheet} onClose={() => setShowAuthSheet(false)} onNavigate={onClose} />
+      <AuthRequiredSheet isOpen={showAuthSheet} onClose={() => setShowAuthSheet(false)} onNavigate={onClose} reopenBillSummary />
       <AddressPickerSheet
         isOpen={showAddressPicker}
         onClose={() => setShowAddressPicker(false)}
         selectedId={selectedAddress?.id}
         onSelect={setSelectedAddress}
         onAddNew={onClose}
+        reopenBillSummary
       />
 
       {/* Backdrop */}
@@ -139,7 +144,7 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
                   onClick={() => {
                     if (selectedAddress) { setShowAddressPicker(true); return; }
                     onClose();
-                    navigate('/account/addresses');
+                    navigate('/account/addresses', { state: { returnTo: location.pathname, reopenBillSummary: true } });
                   }}
                   className="text-[#FC4B4E] hover:text-[#ff6b6d] text-[12px] font-bold cursor-pointer transition-colors bg-transparent border-none"
                 >

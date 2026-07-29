@@ -1,23 +1,36 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 
-export default function SignupPage() {
+export default function SignupPage({ onReopenBillSummary }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { customer, loading: authLoading, signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = location.state?.returnTo;
 
   // Already signed in — don't show the form again until they log out.
   // Wait for the initial /customers/me check (authLoading) before deciding,
   // otherwise a logged-in user reloading this page briefly sees the form
   // flash before redirecting.
   if (authLoading) return null;
-  if (customer) return <Navigate to="/account" replace />;
+  if (customer) return <Navigate to={returnTo || '/account'} replace />;
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  // Sent here from a checkout screen (Cart/Buy Now) that required sign-in —
+  // go straight back there instead of home. Otherwise land on the home page.
+  const goAfterAuth = () => {
+    if (returnTo) {
+      if (location.state?.reopenBillSummary) onReopenBillSummary?.();
+      navigate(returnTo);
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,7 +40,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signup(form.name, form.email, form.password, form.phone);
-      navigate('/account');
+      goAfterAuth();
     } catch (err) {
       setError(err.message || 'Could not create account');
     } finally {
@@ -40,7 +53,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await loginWithGoogle(credential);
-      navigate('/account');
+      goAfterAuth();
     } catch (err) {
       setError(err.message || 'Google sign-in failed');
     } finally {

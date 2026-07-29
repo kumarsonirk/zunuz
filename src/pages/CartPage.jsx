@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { productData } from '../data/productData';
 import zr from '../utils/audio';
@@ -25,6 +25,7 @@ export default function CartPage({
   productsLoaded = false
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { customer } = useAuth();
 
   const getLiveProduct = (itemId) => {
@@ -63,7 +64,10 @@ export default function CartPage({
     api.get('/customers/addresses')
       .then(addrs => {
         if (!addrs.length) return;
-        setSelectedAddress(addrs.find(a => a.isDefault) || addrs[0]);
+        const preferredId = location.state?.selectedAddressId;
+        const preferred = preferredId ? addrs.find(a => a.id === preferredId) : null;
+        setSelectedAddress(preferred || addrs.find(a => a.isDefault) || addrs[0]);
+        if (preferred) setBillSummaryExpanded(true);
       })
       .catch(() => {})
       .finally(() => setLoadingAddress(false));
@@ -356,7 +360,7 @@ export default function CartPage({
                     onClick={e => {
                       e.stopPropagation();
                       if (selectedAddress) { setShowAddressPicker(true); return; }
-                      navigate('/account/addresses');
+                      navigate('/account/addresses', { state: { returnTo: '/cart' } });
                     }}
                     className="text-[#FC4B4E] hover:text-[#ff6b6d] text-[12px] font-bold cursor-pointer transition-colors"
                     style={{ background: 'none', border: 'none', flexShrink: 0, marginLeft: '12px' }}

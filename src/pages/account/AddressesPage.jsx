@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Plus, Edit2, Trash2, X, Check, ChevronDown } from 'lucide-react';
 import { api } from '../../utils/api';
 
@@ -46,7 +47,9 @@ function LabelPicker({ value, onChange }) {
   );
 }
 
-export default function AddressesPage() {
+export default function AddressesPage({ onReopenBillSummary }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null); // null | 'add' | 'edit'
@@ -77,11 +80,20 @@ export default function AddressesPage() {
 
   const handleSave = async () => {
     setSaving(true);
+    const wasAdd = modal === 'add';
     try {
-      if (modal === 'edit') await api.put(`/customers/addresses/${editAddr.id}`, form);
-      else await api.post('/customers/addresses', form);
+      const saved = modal === 'edit'
+        ? await api.put(`/customers/addresses/${editAddr.id}`, form)
+        : await api.post('/customers/addresses', form);
       setModal(null);
-      load();
+      await load();
+      // If we got here via "Add New Address" from checkout, return there with
+      // the freshly saved address selected instead of stranding the user here.
+      const returnTo = location.state?.returnTo;
+      if (wasAdd && returnTo) {
+        if (location.state?.reopenBillSummary) onReopenBillSummary?.();
+        navigate(returnTo, { state: { selectedAddressId: saved.id } });
+      }
     } catch (e) { alert(e.message); }
     finally { setSaving(false); }
   };

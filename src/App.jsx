@@ -157,8 +157,8 @@ export default function App() {
                   } />
 
                   {/* Auth */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/login" element={<LoginPage onReopenBillSummary={() => state.setShowBillSummaryDrawer(true)} />} />
+                  <Route path="/signup" element={<SignupPage onReopenBillSummary={() => state.setShowBillSummaryDrawer(true)} />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
 
@@ -180,7 +180,7 @@ export default function App() {
                   {/* Account */}
                   <Route path="/account" element={<AccountPage />} />
                   <Route path="/account/profile" element={<ProfilePage />} />
-                  <Route path="/account/addresses" element={<AddressesPage />} />
+                  <Route path="/account/addresses" element={<AddressesPage onReopenBillSummary={() => state.setShowBillSummaryDrawer(true)} />} />
                   <Route path="/account/orders" element={<OrderHistoryPage />} />
                   <Route path="/account/help-center" element={<HelpCenterPage />} />
 

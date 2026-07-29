@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { X, MapPin, Check, Plus } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function AddressPickerSheet({ isOpen, onClose, selectedId, onSelect, onAddNew }) {
+export default function AddressPickerSheet({ isOpen, onClose, selectedId, onSelect, onAddNew, reopenBillSummary = false }) {
   const { customer } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +31,9 @@ export default function AddressPickerSheet({ isOpen, onClose, selectedId, onSele
     // drawer) too — otherwise it stays open on top of the Addresses page since
     // that drawer is mounted outside the routed page and survives navigation.
     onAddNew?.();
-    navigate('/account/addresses');
+    // Remember where we came from so AddressesPage can return here (with the
+    // new address selected) once the user saves, instead of stranding them.
+    navigate('/account/addresses', { state: { returnTo: location.pathname, reopenBillSummary } });
   };
 
   return (
