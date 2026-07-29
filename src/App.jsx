@@ -48,7 +48,7 @@ const CampaignPage = lazy(() => import('./pages/admin/CampaignPage'));
 // admin panel stays reachable so the store can still be managed before
 // launch. Set this to false (and feel free to delete this flag entirely)
 // once the site is ready to go live.
-const LAUNCH_LOCKDOWN = true;
+const LAUNCH_LOCKDOWN = false;
 
 function AdminGuard({ children }) {
   const token = localStorage.getItem('zunuz_admin_token');
