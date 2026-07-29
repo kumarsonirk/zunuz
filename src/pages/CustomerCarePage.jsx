@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Truck, RotateCcw, XCircle, Sparkles, HelpCircle } from 'lucide-react';
+import { ChevronRight, Truck, RotateCcw, XCircle, Sparkles } from 'lucide-react';
 
 const ROW = ({ icon: Icon, label, onClick }) => (
   <button
@@ -38,7 +38,6 @@ const MENU = [
   { icon: RotateCcw, label: 'Returns & Replacements', path: '/customer-care/returns-replacements' },
   { icon: XCircle, label: 'Cancellation Policy', path: '/customer-care/cancellation-policy' },
   { icon: Sparkles, label: 'Product Care', path: '/customer-care/product-care' },
-  { icon: HelpCircle, label: 'FAQ', path: '/customer-care/faq' },
 ];
 
 

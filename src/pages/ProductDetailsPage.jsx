@@ -1,5 +1,5 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { ShoppingCart, ArrowLeft, RotateCcw, Truck, ChevronRight, Star, ZoomIn } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, RotateCcw, Truck, ChevronRight, Star, ZoomIn, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData';
 import zr from '../utils/audio';
@@ -63,8 +63,6 @@ export default function ProductDetailsPage({
   const effectivePrice = fullProduct?.price || product.price;
   const effectiveDescription = product.description || fullProduct?.description
     || "Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle. Ideal for elevating daily ensembles or making a statement at special occasions.";
-  const effectiveMaterials = product.materials || fullProduct?.materials
-    || "Made from premium 18K yellow gold plated sterling silver (925). Nickel-free and hypoallergenic for sensitive skin.";
   const effectiveTagline = product.tagline || fullProduct?.tagline || null;
 
   // Deterministic per-product rating (stable across renders/reloads, not a real
@@ -470,11 +468,20 @@ export default function ProductDetailsPage({
             }}
           />
           <AccordionItem
-            title="Materials"
-            content={effectiveMaterials}
+            title="Materials & Quality"
+            content={<MaterialsQualityContent />}
             isOpen={openAccordion === 'Materials'}
             onToggle={() => {
               setOpenAccordion(openAccordion === 'Materials' ? null : 'Materials');
+              zr.playTick();
+            }}
+          />
+          <AccordionItem
+            title="Product Care"
+            content={<ProductCareContent />}
+            isOpen={openAccordion === 'ProductCare'}
+            onToggle={() => {
+              setOpenAccordion(openAccordion === 'ProductCare' ? null : 'ProductCare');
               zr.playTick();
             }}
           />
@@ -614,6 +621,71 @@ export default function ProductDetailsPage({
   );
 }
 
+// TEMPORARY: hardcoded in place of the backend-driven materials text while
+// that data isn't ready — swap back to `effectiveMaterials` once it is.
+function MaterialsQualityContent() {
+  const items = [
+    <>
+      <strong style={{ color: '#F5F2EB' }}>Premium 316L Stainless Steel</strong> or{' '}
+      <strong style={{ color: '#F5F2EB' }}>Premium Copper-Based Alloy</strong>
+    </>,
+    <>
+      <strong style={{ color: '#F5F2EB' }}>0.8 Micron 18K Gold Plating</strong> or{' '}
+      <strong style={{ color: '#F5F2EB' }}>Premium Silver Plating</strong>
+    </>,
+    <strong style={{ color: '#F5F2EB' }}>High-Quality Cubic Zirconia Stones</strong>,
+    <strong style={{ color: '#F5F2EB' }}>Hypoallergenic</strong>,
+    <strong style={{ color: '#F5F2EB' }}>Designed for Everyday Wear</strong>,
+  ];
+
+  return (
+    <>
+      <p style={{ margin: '0 0 12px 0' }}>
+        At ZUNUZ, we use carefully selected materials to create jewellery that's made to be worn every day.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {items.map((item, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+            <Sparkles size={15} strokeWidth={1.5} color="#D4AF37" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span>{item}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ProductCareContent() {
+  const items = [
+    'Wipe gently with a soft, dry cloth after each wear.',
+    'Avoid direct contact with perfumes, lotions, hairsprays, and harsh chemicals.',
+    'Remove your jewellery before swimming, showering, exercising, or cleaning.',
+    'Store each piece separately in jewellery box to help prevent scratches.',
+    'Avoid dropping, bending, or applying excessive force to delicate designs.',
+    'Wear with care to preserve the finish and brilliance.',
+  ];
+
+  return (
+    <>
+      <p style={{ margin: '0 0 12px 0' }}>
+        Every ZUNUZ piece is thoughtfully crafted for everyday style and lasting beauty. With a little care, your jewellery will keep its shine for years.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {items.map((item, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+            <Sparkles size={15} strokeWidth={1.5} color="#D4AF37" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span>{item}</span>
+          </div>
+        ))}
+      </div>
+      <p style={{ margin: '16px 0 6px 0', fontWeight: 600, color: '#F5F2EB' }}>Important Note</p>
+      <p style={{ margin: 0 }}>
+        Our jewellery is designed for everyday use, but all plated jewellery naturally experiences gradual wear over time. Following the recommended care instructions will help maintain the beauty, shine, and finish of your ZUNUZ pieces for as long as possible.
+      </p>
+    </>
+  );
+}
+
 // Inner Helper Accordion component
 function AccordionItem({ title, content, isOpen, onToggle }) {
   // Measures the actual content height instead of using a fixed maxHeight
@@ -644,9 +716,9 @@ function AccordionItem({ title, content, isOpen, onToggle }) {
           opacity: isOpen ? 1 : 0,
         }}
       >
-        <p ref={contentRef} className="pb-4 text-sm text-zinc-400 leading-relaxed font-sans" style={{ color: '#a1a1aa' }}>
+        <div ref={contentRef} className="pb-4 text-sm text-zinc-400 leading-relaxed font-sans" style={{ color: '#a1a1aa' }}>
           {content}
-        </p>
+        </div>
       </div>
     </div>
   );
