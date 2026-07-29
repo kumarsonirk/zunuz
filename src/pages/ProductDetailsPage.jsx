@@ -319,7 +319,7 @@ export default function ProductDetailsPage({
           // card) instead of a fixed 380px, so object-cover fills the box without
           // cropping most of the necklace away. maxHeight only kicks in on very wide
           // screens (tablets) — on phones the aspect ratio is what actually governs.
-          aspectRatio: '2 / 1',
+          aspectRatio: '3 / 2',
           // maxHeight: '380px',
           opacity: isTransitioning ? 0 : 1,
           transition: 'opacity 0.25s ease-out',

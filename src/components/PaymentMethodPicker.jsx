@@ -1,10 +1,18 @@
 import React from 'react';
 import { Wallet, Truck } from 'lucide-react';
 
-const OPTIONS = [
+// TEMPORARY: online payments are hidden while the Razorpay Live mode website
+// review is pending (24-48h, per Razorpay) — only Cash on Delivery is offered
+// in the meantime. Set this back to true once Live mode is approved and the
+// keys are swapped in, and CartPage.jsx / BillSummaryDrawer.jsx's default
+// paymentMethod state should go back to 'RAZORPAY' at the same time.
+const ONLINE_PAYMENTS_ENABLED = false;
+
+const ALL_OPTIONS = [
   { id: 'RAZORPAY', label: 'Pay Online', sub: 'UPI, Cards, Netbanking', Icon: Wallet },
   { id: 'COD', label: 'Cash on Delivery', sub: 'Pay when it arrives', Icon: Truck },
 ];
+const OPTIONS = ONLINE_PAYMENTS_ENABLED ? ALL_OPTIONS : ALL_OPTIONS.filter(o => o.id !== 'RAZORPAY');
 
 export default function PaymentMethodPicker({ value, onChange }) {
   return (
