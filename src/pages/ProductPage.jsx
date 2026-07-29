@@ -523,8 +523,8 @@ export default function ProductPage({
                         transform: 'none',
                       }}
                     />
-                    {product.stock != null && product.stock <= 5 && (
-                      <div style={{ position: 'absolute', top: '14px', left: '14px', zIndex: 10, display: 'inline-flex', alignItems: 'center', gap: '4px', background: product.stock === 0 ? 'rgba(113,113,122,0.12)' : product.stock <= 2 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${product.stock === 0 ? 'rgba(113,113,122,0.3)' : product.stock <= 2 ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`, borderRadius: '20px', padding: '3px 10px' }}>
+                    {product.stock != null && product.stock <= 2 && (
+                      <div style={{ position: 'absolute', top: '58px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, display: 'inline-flex', alignItems: 'center', gap: '4px', background: product.stock === 0 ? 'rgba(113,113,122,0.12)' : product.stock <= 2 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${product.stock === 0 ? 'rgba(113,113,122,0.3)' : product.stock <= 2 ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`, borderRadius: '20px', padding: '3px 10px' }}>
                         <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: product.stock === 0 ? '#71717A' : product.stock <= 2 ? '#EF4444' : '#F59E0B', display: 'inline-block', flexShrink: 0 }} />
                         <span style={{ fontSize: '10px', fontWeight: 600, color: product.stock === 0 ? '#71717A' : product.stock <= 2 ? '#EF4444' : '#F59E0B', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
                           {product.stock === 0 ? 'Out of Stock' : product.stock === 1 ? 'Last piece!' : `Only ${product.stock} left!`}

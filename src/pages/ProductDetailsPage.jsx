@@ -448,7 +448,7 @@ export default function ProductDetailsPage({
             </p>
           )}
 
-          {effectiveStock != null && effectiveStock <= 5 && (
+          {effectiveStock != null && effectiveStock <= 2 && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '8px', background: effectiveStock === 0 ? 'rgba(113,113,122,0.1)' : effectiveStock <= 2 ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)', border: `1px solid ${effectiveStock === 0 ? 'rgba(113,113,122,0.25)' : effectiveStock <= 2 ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`, borderRadius: '20px', padding: '5px 12px' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: effectiveStock === 0 ? '#71717A' : effectiveStock <= 2 ? '#EF4444' : '#F59E0B', display: 'inline-block', flexShrink: 0 }} />
               <span style={{ fontSize: '12px', fontWeight: 600, color: effectiveStock === 0 ? '#71717A' : effectiveStock <= 2 ? '#EF4444' : '#F59E0B', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
