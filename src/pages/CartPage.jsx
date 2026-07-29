@@ -52,10 +52,7 @@ export default function CartPage({
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [loadingAddress, setLoadingAddress] = useState(true);
-  // TEMPORARY: defaults to COD while online payments are hidden — see
-  // PaymentMethodPicker.jsx's ONLINE_PAYMENTS_ENABLED flag. Revert to
-  // 'RAZORPAY' together with that flag once Live mode is approved.
-  const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [paymentMethod, setPaymentMethod] = useState('RAZORPAY');
   const { placing, orderError, setOrderError, placedOrder, showSuccess, setShowSuccess, placeOrder } = usePlaceOrder(customer);
 
   useEffect(() => {
