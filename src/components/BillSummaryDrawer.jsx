@@ -10,6 +10,7 @@ import AddressPickerSheet from './AddressPickerSheet';
 import OrderSuccessOverlay from './OrderSuccessOverlay';
 import PaymentMethodPicker from './PaymentMethodPicker';
 import Price from './Price';
+import { computeDeliveryFee, amountToFreeDelivery } from '../utils/delivery';
 
 export default function BillSummaryDrawer({ isOpen, onClose, product }) {
   const navigate = useNavigate();
@@ -49,6 +50,9 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
     ? product.priceNumeric
     : parseInt((product.price || '').replace(/[^\d]/g, ''), 10) || 0;
   const priceDisplay = product.price || `₹${priceNumeric}`;
+  const deliveryFee = computeDeliveryFee(priceNumeric);
+  const grandTotal = priceNumeric + deliveryFee;
+  const amountToFree = amountToFreeDelivery(priceNumeric);
 
   const handlePlaceOrder = () => {
     if (!customer) { setShowAuthSheet(true); return; }
@@ -171,12 +175,21 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
             </div>
             <div className="flex text-[13px] justify-between">
               <span>Delivery Fee</span>
-              <span className="text-emerald-400 font-mono">Free</span>
+              {deliveryFee > 0
+                ? <span className="text-[#F5F2EB] font-mono"><Price value={`₹${deliveryFee}`} /></span>
+                : <span className="text-emerald-400 font-mono">Free</span>}
             </div>
             <div className="flex justify-between pt-3 border-t border-zinc-800/40 text-[16px] font-bold text-[#F5F2EB]">
               <span>Grand Total</span>
-              <span className="font-mono"><Price value={priceDisplay} /></span>
+              <span className="font-mono"><Price value={`₹${grandTotal}`} /></span>
             </div>
+            {amountToFree != null && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', alignSelf: 'flex-start', background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '20px', padding: '5px 12px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#D4AF37', fontFamily: "'Grift', sans-serif", letterSpacing: '0.02em' }}>
+                  Add items worth <Price value={`₹${amountToFree}`} /> more to get FREE delivery
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -194,7 +207,7 @@ export default function BillSummaryDrawer({ isOpen, onClose, product }) {
             style={{ height: '58px', opacity: placing ? 0.7 : 1, cursor: placing ? 'not-allowed' : 'pointer' }}
           >
             <span>{placing ? 'Placing Order...' : 'PLACE ORDER'}</span>
-            <span className="font-mono"><Price value={priceDisplay} /></span>
+            <span className="font-mono"><Price value={`₹${grandTotal}`} /></span>
           </button>
         </div>
       </div>

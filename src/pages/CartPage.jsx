@@ -11,6 +11,7 @@ import AddressPickerSheet from '../components/AddressPickerSheet';
 import OrderSuccessOverlay from '../components/OrderSuccessOverlay';
 import PaymentMethodPicker from '../components/PaymentMethodPicker';
 import Price from '../components/Price';
+import { computeDeliveryFee, amountToFreeDelivery } from '../utils/delivery';
 
 export default function CartPage({
   cartItems,
@@ -100,6 +101,9 @@ export default function CartPage({
   const totalPrice = useMemo(() => {
     return availableItems.reduce((acc, item) => acc + (getItemPrice(item).priceNumeric * item.quantity), 0);
   }, [availableItems, productMap]);
+  const deliveryFee = computeDeliveryFee(totalPrice);
+  const grandTotal = totalPrice + deliveryFee;
+  const amountToFree = amountToFreeDelivery(totalPrice);
 
   useEffect(() => {
     if (showSuccess && placedOrder) {
@@ -380,12 +384,21 @@ export default function CartPage({
                 </div>
                 <div className="flex text-[13px] justify-between">
                   <span>Delivery Fee</span>
-                  <span className="text-emerald-400 font-mono">Free</span>
+                  {deliveryFee > 0
+                    ? <span className="text-[#F5F2EB] font-mono"><Price value={`₹${deliveryFee}`} /></span>
+                    : <span className="text-emerald-400 font-mono">Free</span>}
                 </div>
                 <div className="flex justify-between pt-1 border-t border-zinc-800/40 text-[16px] font-bold text-[#F5F2EB]">
                   <span>Grand Total</span>
-                  <span className="font-mono"><Price value={`₹${totalPrice}`} /></span>
+                  <span className="font-mono"><Price value={`₹${grandTotal}`} /></span>
                 </div>
+                {amountToFree != null && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', alignSelf: 'flex-start', marginTop: '2px', background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '20px', padding: '5px 12px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#D4AF37', fontFamily: "'Grift', sans-serif", letterSpacing: '0.02em' }}>
+                      Add items worth <Price value={`₹${amountToFree}`} /> more to get FREE delivery
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -407,7 +420,7 @@ export default function CartPage({
               {placing ? 'Placing Order...' : availableItems.length === 0 ? 'No Items Available' : 'Checkout'}
             </span>
             <span className="text-base font-bold text-white tracking-widest font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>
-              <Price value={`₹${totalPrice}`} />
+              <Price value={`₹${grandTotal}`} />
             </span>
           </div>
         </div>

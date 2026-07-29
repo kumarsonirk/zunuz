@@ -232,6 +232,14 @@ function getOrderConfirmationHtml(order) {
     `;
   }).join('');
 
+  // Orders only ever store the grand total (items + delivery) — the items
+  // subtotal is recomputed here from the persisted per-item price/quantity
+  // (immutable once the order is placed), so the delivery fee shown is
+  // whatever it actually was for this order, not a hardcoded "Free".
+  const itemsSubtotal = order.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const deliveryFee = order.total - itemsSubtotal;
+  const deliveryFeeDisplay = deliveryFee > 0 ? `₹${deliveryFee}.00` : `₹0.00 (Free)`;
+
   const addr = order.address || {};
   const addressString = [addr.houseNo, addr.street, addr.landmark, addr.city, addr.state, addr.pincode].filter(Boolean).join(', ');
 
@@ -267,11 +275,11 @@ function getOrderConfirmationHtml(order) {
                         <table cellpadding="0" cellspacing="0" width="100%" style="font-size: 14px; color: #52525b; border-collapse: collapse;">
                           <tr>
                             <td style="padding: 4px 0; text-align: left;">Sub total:</td>
-                            <td style="padding: 4px 0; text-align: right; font-weight: 600; color: #1a1a1a;">₹${order.total}</td>
+                            <td style="padding: 4px 0; text-align: right; font-weight: 600; color: #1a1a1a;">₹${itemsSubtotal}</td>
                           </tr>
                           <tr>
                             <td style="padding: 4px 0; text-align: left;">Shipping fee:</td>
-                            <td style="padding: 4px 0; text-align: right; font-weight: 600; color: #1a1a1a;">₹0.00 (Free)</td>
+                            <td style="padding: 4px 0; text-align: right; font-weight: 600; color: #1a1a1a;">${deliveryFeeDisplay}</td>
                           </tr>
                           <tr style="border-top: 1px solid rgba(0, 0, 0, 0.08);">
                             <td style="padding: 16px 0 0 0; text-align: left; font-size: 15px; font-weight: bold; color: #1a1a1a;">Grand Total:</td>
@@ -342,15 +350,18 @@ async function sendOrderConfirmationEmail(email, order) {
   const subject = `Order Confirmed #${order.id} - ZUNUZ`;
   const customerName = order.address?.name || order.customer?.name || 'Customer';
 
-  const itemsText = order.items.map(item => 
+  const itemsText = order.items.map(item =>
     `- ${item.product?.name} (Qty: ${item.quantity} @ ₹${item.price}) = ₹${item.quantity * item.price}`
   ).join('\n');
+  const itemsSubtotal = order.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const deliveryFee = order.total - itemsSubtotal;
+  const deliveryFeeText = deliveryFee > 0 ? `₹${deliveryFee}` : 'Free';
 
   const addr = order.address || {};
   const addressString = [addr.houseNo, addr.street, addr.landmark, addr.city, addr.state, addr.pincode].filter(Boolean).join(', ');
 
   const html = getOrderConfirmationHtml(order);
-  const text = `Order Confirmed!\n\nThank you for shopping at ZUNUZ, ${customerName}. Your order #${order.id} has been placed.\n\nITEMS:\n${itemsText}\n\nTOTAL: ₹${order.total}\n\nSHIPPING ADDRESS:\n${addressString}\n\nPAYMENT METHOD: ${order.paymentMethod}`;
+  const text = `Order Confirmed!\n\nThank you for shopping at ZUNUZ, ${customerName}. Your order #${order.id} has been placed.\n\nITEMS:\n${itemsText}\n\nSUB TOTAL: ₹${itemsSubtotal}\nSHIPPING FEE: ${deliveryFeeText}\nTOTAL: ₹${order.total}\n\nSHIPPING ADDRESS:\n${addressString}\n\nPAYMENT METHOD: ${order.paymentMethod}`;
 
   return sendMailHelper({ to: email, subject, html, text });
 }
