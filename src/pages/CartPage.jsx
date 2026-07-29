@@ -247,7 +247,7 @@ export default function CartPage({
               {recommendedPicks.map(pick => (
                 <div
                   key={pick.id}
-                  className="flex-shrink-0 w-[140px] rounded-[18px] bg-white p-3 border border-zinc-200 flex flex-col justify-between"
+                  className="flex-shrink-0 w-[140px] rounded-[18px] bg-white border border-zinc-200 flex flex-col justify-between overflow-hidden"
                   style={{ borderRadius: '18px', border: '1px solid #e4e4e7', height: '210px' }}
                 >
                   <div
@@ -257,21 +257,23 @@ export default function CartPage({
                     <img
                       src={pick.image}
                       alt={pick.name}
-                      className="w-full aspect-square object-contain rounded-t-[10px] mb-2 pointer-events-none"
+                      className="w-full aspect-square object-cover pointer-events-none"
                       draggable="false"
                       style={{ backgroundColor: '#ffffff' }}
                     />
-                    <h4 className="text-[14px] font-grift text-zinc-900 truncate" style={{ fontFamily: "'Grift', sans-serif" }}>
-                      {pick.name}
-                    </h4>
-                    <div className="text-[13px] font-grift text-zinc-900 mt-0.5" style={{ fontFamily: "'Grift', sans-serif" }}>
-                      <Price value={pick.price} />
+                    <div className="flex items-center justify-between gap-2 px-3 pt-2">
+                      <h4 className="text-[14px] font-grift text-zinc-900 truncate min-w-0" style={{ fontFamily: "'Grift', sans-serif" }}>
+                        {pick.name}
+                      </h4>
+                      <div className="text-[13px] font-grift text-zinc-900 flex-shrink-0" style={{ fontFamily: "'Grift', sans-serif" }}>
+                        <Price value={pick.price} />
+                      </div>
                     </div>
                   </div>
                   <button
                     onClick={() => onAddToCart(pick)}
-                    className="w-full h-[32px] bg-[#FC4B4E] hover:bg-[#ff6b6d] text-white text-[12px] font-bold rounded-[6px] tracking-wide cursor-pointer transition-colors mt-2"
-                    style={{ border: 'none', fontFamily: "'Grift', sans-serif" }}
+                    className="w-full h-[32px] bg-[#FC4B4E] hover:bg-[#ff6b6d] text-white text-[12px] font-bold rounded-[6px] tracking-wide cursor-pointer transition-colors mt-2 mx-3 mb-3"
+                    style={{ border: 'none', fontFamily: "'Grift', sans-serif", width: 'calc(100% - 24px)' }}
                   >
                     ADD
                   </button>

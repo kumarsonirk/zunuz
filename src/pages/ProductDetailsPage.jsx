@@ -524,13 +524,13 @@ export default function ProductDetailsPage({
                     zr.playConfirm();
                     onSelectProduct(lookProd);
                   }}
-                  className="flex-shrink-0 w-[140px] rounded-[18px] bg-white p-3 border border-zinc-200 cursor-pointer hover:scale-103 transition-transform"
+                  className="flex-shrink-0 w-[140px] rounded-[18px] bg-white border border-zinc-200 cursor-pointer hover:scale-103 transition-transform overflow-hidden"
                   style={{ borderRadius: '18px', border: '1px solid #e4e4e7' }}
                 >
                   <img
                     src={lookProd.image}
                     alt={lookProd.name}
-                    className="w-full aspect-square object-contain rounded-t-[10px] mb-2 pointer-events-none"
+                    className="w-full aspect-square object-cover pointer-events-none"
                     draggable="false"
                     style={{
                       backgroundColor: lookColors[lookProd.id]
@@ -539,11 +539,13 @@ export default function ProductDetailsPage({
                       transition: 'background-color 0.4s ease'
                     }}
                   />
-                  <h4 className="text-[10px] font-grift text-zinc-900 truncate" style={{ fontFamily: "'Grift', sans-serif" }}>
-                    {lookProd.name}
-                  </h4>
-                  <div className="text-[11px] font-grift text-zinc-900 mt-0.5" style={{ fontFamily: "'Grift', sans-serif" }}>
-                    <Price value={lookProd.price} />
+                  <div className="flex items-center justify-between gap-2 px-3 py-2">
+                    <h4 className="text-[10px] font-grift text-zinc-900 truncate min-w-0" style={{ fontFamily: "'Grift', sans-serif" }}>
+                      {lookProd.name}
+                    </h4>
+                    <div className="text-[11px] font-grift text-zinc-900 flex-shrink-0" style={{ fontFamily: "'Grift', sans-serif" }}>
+                      <Price value={lookProd.price} />
+                    </div>
                   </div>
                 </div>
               ))}

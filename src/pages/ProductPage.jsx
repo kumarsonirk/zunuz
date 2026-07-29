@@ -563,9 +563,9 @@ export default function ProductPage({
 
                   {/* Bottom Area: Title+Tagline on the left / Price on the right, counter centered below */}
                   <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-1.5 px-6 pb-5 pt-3">
-                    <div className="flex justify-between items-end gap-3">
+                    <div className="flex justify-between items-center gap-3">
                       <div style={{ textAlign: 'left', minWidth: 0 }}>
-                        <h3 className="text-[26px] sm:text-[26px] font-medium tracking-wide font-grift truncate leading-tight" style={{ color: titleColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
+                        <h3 className="text-[26px] sm:text-[26px] font-medium tracking-wide font-grift truncate leading-none" style={{ color: titleColor, fontFamily: "'Grift', sans-serif", transition: 'color 0.4s ease' }}>
                           {product.name}
                         </h3>
                         {/* {product.tagline && (
@@ -575,7 +575,7 @@ export default function ProductPage({
                         )} */}
                       </div>
                       <div
-                        className="text-[28px] sm:text-[28px] font-medium font-grift flex-shrink-0"
+                        className="text-[28px] sm:text-[28px] font-medium font-grift leading-none flex-shrink-0"
                         style={{
                           color: priceColor,
                           fontFamily: "'Grift', sans-serif",
