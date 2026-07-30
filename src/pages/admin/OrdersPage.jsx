@@ -141,7 +141,7 @@ export default function OrdersPage() {
                     </td>
                     <td style={{ padding: '14px 20px' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {order.status === 'PENDING' && (
+                        {order.status === 'PENDING' && order.paymentStatus !== 'FAILED' && (
                           <button
                             onClick={() => updateStatus(order.id, 'CONFIRMED')}
                             disabled={updatingId === order.id}
@@ -236,7 +236,7 @@ export default function OrdersPage() {
               </div>
               <div>
                 <p style={{ color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>UPDATE STATUS</p>
-                {detailOrder.status === 'PENDING' && (
+                {detailOrder.status === 'PENDING' && detailOrder.paymentStatus !== 'FAILED' && (
                   <button
                     onClick={() => updateStatus(detailOrder.id, 'CONFIRMED')}
                     disabled={updatingId === detailOrder.id}

@@ -123,8 +123,8 @@ export function useAppState() {
             price: `₹${Math.round(p.price).toLocaleString('en-IN')}`,
             likes: '0k',
             stock: p.stock ?? null,
-            image: p.image || '/gold_knot_necklace.png',
-            images: imgs.length > 0 ? imgs : [p.image || '/gold_knot_necklace.png'],
+            image: p.image || '/gold_knot_necklace.webp',
+            images: imgs.length > 0 ? imgs : [p.image || '/gold_knot_necklace.webp'],
             tagline: p.tagline || null,
             description: p.description || null,
             materials: p.materials || null
@@ -294,9 +294,24 @@ export function useAppState() {
   useEffect(() => {
     if (hasSavedCategory) return;
     let timer;
+    let cancelled = false;
+
+    // Preload every shutter photo up front — the flash sequence below cycles
+    // through them at a fixed 70ms/frame regardless of network speed, so
+    // without this, a frame that's still mid-download when its turn comes up
+    // renders as a blank/black flash instead of the photo. Waiting for this
+    // (alongside the percentage counter) guarantees every frame is already
+    // decoded before the rapid-fire sequence ever starts.
+    const shutterImagesReady = Promise.all(Br.map(src => new Promise(resolve => {
+      const img = new Image();
+      img.onload = resolve;
+      img.onerror = resolve; // don't let one failed image hang the intro forever
+      img.src = src;
+    })));
+
     const countUp = (currentVal) => {
       if (currentVal >= 100) {
-        triggerShutterReveal();
+        shutterImagesReady.then(() => { if (!cancelled) triggerShutterReveal(); });
         return;
       }
       let increment = 1, delay = 50;
@@ -321,7 +336,7 @@ export function useAppState() {
       }, delay);
     };
     countUp(0);
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, []);
 
   const triggerShutterReveal = () => {

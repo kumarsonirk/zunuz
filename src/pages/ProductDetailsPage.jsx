@@ -319,8 +319,12 @@ export default function ProductDetailsPage({
           // screens (tablets) — on phones the aspect ratio is what actually governs.
           aspectRatio: '3 / 2',
           // maxHeight: '380px',
+          // No fade here (unlike the details content below) — the morph overlay
+          // already shows this exact photo at this exact spot right up until it
+          // hands off, so revealing it instantly (not via a 250ms fade from 0)
+          // avoids a blank gap between the overlay disappearing and the image
+          // fading back in.
           opacity: isTransitioning ? 0 : 1,
-          transition: 'opacity 0.25s ease-out',
           backgroundColor: '#fef5e7'
         }}
       >

@@ -5,6 +5,11 @@ const { RESEND_API_KEY, RESEND_FROM } = process.env;
 
 const isConfigured = !!RESEND_API_KEY;
 
+// CLIENT_URL supports a comma-separated list for CORS (multiple allowed
+// origins) — emails only ever link to one place, so use just the first
+// (primary) domain instead of the raw, invalid multi-value string.
+const CLIENT_URL = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
+
 if (!isConfigured) {
   console.log('ℹ️ Resend is not configured. System emails will be logged to the console instead.');
 }
@@ -56,7 +61,7 @@ async function sendMailHelper(options) {
  */
 function getWelcomeEmailHtml(name) {
   const formattedName = name || 'Friend';
-  const imageBase = process.env.CLIENT_URL || 'http://localhost:5173';
+  const imageBase = CLIENT_URL;
 
   return `
     <div style="padding: 40px 20px; font-family: 'Grift', 'Space Grotesk', sans-serif; text-align: center;">
@@ -127,7 +132,7 @@ async function sendWelcomeEmail(email, name) {
   const formattedName = name || 'Friend';
   
   const html = getWelcomeEmailHtml(formattedName);
-  const text = `Welcome to ZUNUZ, ${formattedName}!\n\nWe are thrilled to welcome you to our community. Thank you for creating an account with us.\n\nStart shopping by visiting: ${process.env.CLIENT_URL || 'http://localhost:5173'}/login`;
+  const text = `Welcome to ZUNUZ, ${formattedName}!\n\nWe are thrilled to welcome you to our community. Thank you for creating an account with us.\n\nStart shopping by visiting: ${CLIENT_URL}/login`;
 
   return sendMailHelper({ to: email, subject, html, text });
 }
@@ -178,7 +183,7 @@ async function sendPasswordResetEmail(email, name, resetLink) {
  */
 function getOrderConfirmationHtml(order) {
   const customerName = order.address?.name || order.customer?.name || 'Customer';
-  const imageBase = process.env.CLIENT_URL || 'http://localhost:5173';
+  const imageBase = CLIENT_URL;
 
   // Format order date
   const orderDateFormatted = order.createdAt 
@@ -187,9 +192,11 @@ function getOrderConfirmationHtml(order) {
 
   // Format items HTML
   const itemsHtml = order.items.map(item => {
-    // Construct absolute product image URL
-    const productImage = item.product?.image 
-      ? (item.product.image.startsWith('http') ? item.product.image : `http://localhost:3001${item.product.image}`)
+    // Construct absolute product image URL — relative paths (e.g. seeded catalog
+    // images like '/gold_knot_necklace.png') live in the frontend's public
+    // assets, not the backend, so they resolve against CLIENT_URL (imageBase).
+    const productImage = item.product?.image
+      ? (item.product.image.startsWith('http') ? item.product.image : `${imageBase}${item.product.image}`)
       : `${imageBase}/placeholder.png`;
 
     return `
@@ -285,23 +292,30 @@ function getOrderConfirmationHtml(order) {
             <h3 style="font-family: 'Grift', 'Space Grotesk', sans-serif; font-size: 18px; font-weight: normal; color: #fff; margin: 0 0 20px 0; text-align: left;">Order details</h3>
             
             <!-- Information Grid -->
-            <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 36px; border-collapse: collapse;">
+            <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px; border-collapse: collapse;">
               <tr>
-                <td width="25%" style="vertical-align: top; border-right: 1px solid #e4e4e7; padding: 0 10px 0 0; text-align: left;">
+                <td width="33.33%" style="vertical-align: top; border-right: 1px solid #e4e4e7; padding: 0 10px 0 0; text-align: left;">
                   <div style="font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px;">Order id:</div>
                   <div style="font-size: 13px; color: #fff; line-height: 1.4;">${order.id}</div>
                 </td>
-                <td width="25%" style="vertical-align: top; border-right: 1px solid #e4e4e7; padding: 0 10px; text-align: left;">
-                  <div style="font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px;">Address:</div>
-                  <div style="font-size: 12px; color: #fff; line-height: 1.4; word-break: break-word;">${addressString}</div>
-                </td>
-                <td width="25%" style="vertical-align: top; border-right: 1px solid #e4e4e7; padding: 0 10px; text-align: left;">
+                <td width="33.33%" style="vertical-align: top; border-right: 1px solid #e4e4e7; padding: 0 10px; text-align: left;">
                   <div style="font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px;">Order date:</div>
                   <div style="font-size: 13px; color: #fff; line-height: 1.4;">${orderDateFormatted}</div>
                 </td>
-                <td width="25%" style="vertical-align: top; padding: 0 0 0 10px; text-align: left;">
+                <td width="33.33%" style="vertical-align: top; padding: 0 0 0 10px; text-align: left;">
                   <div style="font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px;">Payment:</div>
                   <div style="font-size: 13px; color: #fff; line-height: 1.4;">${order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Card'}</div>
+                  ${order.razorpayPaymentId ? `<div style="font-size: 11px; color: #a1a1aa; line-height: 1.4; margin-top: 4px; word-break: break-all;">ID: ${order.razorpayPaymentId}</div>` : ''}
+                </td>
+              </tr>
+            </table>
+
+            <!-- Address -->
+            <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 36px; border-collapse: collapse; border-top: 1px solid #e4e4e7; padding-top: 16px;">
+              <tr>
+                <td style="padding-top: 16px; text-align: left;">
+                  <div style="font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px;">Address:</div>
+                  <div style="font-size: 13px; color: #fff; line-height: 1.5; word-break: break-word;">${addressString}</div>
                 </td>
               </tr>
             </table>
@@ -343,7 +357,10 @@ async function sendOrderConfirmationEmail(email, order) {
   const addressString = [addr.houseNo, addr.street, addr.landmark, addr.city, addr.state, addr.pincode].filter(Boolean).join(', ');
 
   const html = getOrderConfirmationHtml(order);
-  const text = `Order Confirmed!\n\nThank you for shopping at ZUNUZ, ${customerName}. Your order #${order.id} has been placed.\n\nITEMS:\n${itemsText}\n\nSUB TOTAL: ₹${itemsSubtotal}\nSHIPPING FEE: ${deliveryFeeText}\nTOTAL: ₹${order.total}\n\nSHIPPING ADDRESS:\n${addressString}\n\nPAYMENT METHOD: ${order.paymentMethod}`;
+  const paymentLine = order.razorpayPaymentId
+    ? `PAYMENT METHOD: ${order.paymentMethod} (Payment ID: ${order.razorpayPaymentId})`
+    : `PAYMENT METHOD: ${order.paymentMethod}`;
+  const text = `Order Confirmed!\n\nThank you for shopping at ZUNUZ, ${customerName}. Your order #${order.id} has been placed.\n\nITEMS:\n${itemsText}\n\nSUB TOTAL: ₹${itemsSubtotal}\nSHIPPING FEE: ${deliveryFeeText}\nTOTAL: ₹${order.total}\n\nSHIPPING ADDRESS:\n${addressString}\n\n${paymentLine}`;
 
   return sendMailHelper({ to: email, subject, html, text });
 }
@@ -354,7 +371,7 @@ async function sendOrderConfirmationEmail(email, order) {
 async function sendOrderCancellationEmail(email, order) {
   const subject = `Order Cancelled #${order.id} - ZUNUZ`;
   const customerName = order.address?.name || order.customer?.name || 'Customer';
-  const imageBase = process.env.CLIENT_URL || 'http://localhost:5173';
+  const imageBase = CLIENT_URL;
 
   const html = `
     <div style="background-color: #131417; padding: 40px 20px; font-family: 'Grift', 'Space Grotesk', sans-serif; text-align: center;">

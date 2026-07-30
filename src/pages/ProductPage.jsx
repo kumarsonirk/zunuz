@@ -345,7 +345,7 @@ export default function ProductPage({
         {isLoadingProducts ? (
           <div className="text-zinc-500 text-xs tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>Loading...</div>
         ) : n === 0 ? (
-          <div className="text-zinc-500 text-xs tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>No items in this category yet.</div>
+          <div className="text-zinc-500 text-xs tracking-wider font-grift" style={{ fontFamily: "'Grift', sans-serif" }}>Coming soon.</div>
         ) : (
           <div
             key={activeTab}

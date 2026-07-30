@@ -37,6 +37,10 @@ router.put('/:id/status', auth, async (req, res) => {
       return res.status(400).json({ error: 'Cannot revert order status back to PENDING.' });
     }
 
+    if (status === 'CONFIRMED' && existing.paymentStatus === 'FAILED') {
+      return res.status(400).json({ error: 'Cannot confirm an order whose payment failed.' });
+    }
+
     // Stock is only actually reserved for COD orders (decremented at creation) or
     // paid Razorpay orders (decremented at payment verification) — not for a
     // Razorpay order still pending/failed payment.

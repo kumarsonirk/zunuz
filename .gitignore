@@ -13,6 +13,7 @@ dist-ssr
 *.local
 .env
 server/.env
+server/scripts/email-preview.html
 
 # Editor directories and files
 .vscode/*
