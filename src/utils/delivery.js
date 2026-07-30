@@ -4,10 +4,7 @@
 export const DELIVERY_FEE = 70;
 export const FREE_DELIVERY_THRESHOLD = 700; // itemsTotal >= this ⇒ free delivery
 
-// TEMPORARY: delivery fee disabled while testing Razorpay Live payments — set
-// back to true (and flip the identical flag in server/src/lib/stock.js) once
-// testing is done.
-const DELIVERY_FEE_ENABLED = false;
+const DELIVERY_FEE_ENABLED = true;
 
 export function computeDeliveryFee(itemsTotal) {
   if (!DELIVERY_FEE_ENABLED) return 0;
