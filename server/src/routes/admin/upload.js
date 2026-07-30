@@ -27,16 +27,20 @@ const upload = multer({
 router.post('/', auth, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   try {
-    const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`;
-    await sharp(req.file.buffer)
+    const base = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const resized = sharp(req.file.buffer)
       // Product photos never need to display wider than this — capping it
       // keeps a huge camera-original from bloating the file even after
-      // WebP compression. withoutEnlargement leaves smaller images untouched.
-      .resize({ width: 1600, withoutEnlargement: true })
-      .webp({ quality: 82 })
-      .toFile(path.join(uploadsDir, filename));
+      // compression. withoutEnlargement leaves smaller images untouched.
+      .resize({ width: 1600, withoutEnlargement: true });
+    await resized.clone().webp({ quality: 82 }).toFile(path.join(uploadsDir, `${base}.webp`));
+    // Also save a JPEG twin purely for order-confirmation emails — WebP has
+    // spotty support in email client image renderers (Gmail's image proxy,
+    // Outlook, etc.) even though it renders fine on the website itself, so
+    // the email template swaps to this file instead of the WebP one.
+    await resized.clone().jpeg({ quality: 82 }).toFile(path.join(uploadsDir, `${base}.jpg`));
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    res.json({ url: `${baseUrl}/uploads/${filename}` });
+    res.json({ url: `${baseUrl}/uploads/${base}.webp` });
   } catch (err) {
     console.error('Image conversion failed:', err);
     res.status(500).json({ error: 'Could not process image' });

@@ -195,9 +195,13 @@ function getOrderConfirmationHtml(order) {
     // Construct absolute product image URL — relative paths (e.g. seeded catalog
     // images like '/gold_knot_necklace.png') live in the frontend's public
     // assets, not the backend, so they resolve against CLIENT_URL (imageBase).
-    const productImage = item.product?.image
+    // Admin-uploaded photos are stored as .webp (fast for the website), but
+    // the upload endpoint also saves a .jpg twin alongside — swap to that
+    // here, since WebP support in email client image renderers is spotty.
+    const rawImage = item.product?.image
       ? (item.product.image.startsWith('http') ? item.product.image : `${imageBase}${item.product.image}`)
       : `${imageBase}/placeholder.png`;
+    const productImage = rawImage.endsWith('.webp') ? rawImage.replace(/\.webp$/, '.jpg') : rawImage;
 
     return `
       <tr style="border-bottom: 1px solid rgba(0, 0, 0, 0.06);">
