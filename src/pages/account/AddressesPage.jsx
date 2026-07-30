@@ -6,6 +6,22 @@ import { api } from '../../utils/api';
 const EMPTY = { label: 'Home', name: '', phone: '', email: '', houseNo: '', street: '', landmark: '', city: '', state: '', pincode: '', isDefault: false };
 
 const inp = { width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px 16px', color: '#F5F2EB', fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: "'Grift', sans-serif" };
+const inpError = { ...inp, border: '1px solid rgba(239,68,68,0.6)' };
+const errText = { color: '#EF4444', fontSize: '11px', marginTop: '4px' };
+
+function validateAddressForm(form) {
+  const errors = {};
+  if (!form.name.trim()) errors.name = 'Required';
+  if (!/^\d{10}$/.test(form.phone.trim())) errors.phone = 'Enter a valid 10-digit phone number';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = 'Enter a valid email address';
+  if (!form.houseNo.trim()) errors.houseNo = 'Required';
+  if (!form.street.trim()) errors.street = 'Required';
+  if (!form.landmark.trim()) errors.landmark = 'Required';
+  if (!form.city.trim()) errors.city = 'Required';
+  if (!form.state.trim()) errors.state = 'Required';
+  if (!/^\d{6}$/.test(form.pincode.trim())) errors.pincode = 'Pincode must be exactly 6 digits';
+  return errors;
+}
 
 const LABELS = ['Home', 'Work', 'Other'];
 
@@ -55,6 +71,7 @@ export default function AddressesPage({ onReopenBillSummary }) {
   const [modal, setModal] = useState(null); // null | 'add' | 'edit'
   const [editAddr, setEditAddr] = useState(null);
   const [form, setForm] = useState(EMPTY);
+  const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
@@ -67,7 +84,7 @@ export default function AddressesPage({ onReopenBillSummary }) {
 
   useEffect(() => { load(); }, []);
 
-  const openAdd = () => { setForm(EMPTY); setEditAddr(null); setModal('add'); };
+  const openAdd = () => { setForm(EMPTY); setErrors({}); setEditAddr(null); setModal('add'); };
   const openEdit = (addr) => {
     setEditAddr(addr);
     setForm({
@@ -75,10 +92,15 @@ export default function AddressesPage({ onReopenBillSummary }) {
       houseNo: addr.houseNo || '', street: addr.street, landmark: addr.landmark || '',
       city: addr.city, state: addr.state, pincode: addr.pincode, isDefault: addr.isDefault
     });
+    setErrors({});
     setModal('edit');
   };
 
   const handleSave = async () => {
+    const validationErrors = validateAddressForm(form);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
     setSaving(true);
     const wasAdd = modal === 'add';
     try {
@@ -152,19 +174,46 @@ export default function AddressesPage({ onReopenBillSummary }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Full Name" required style={inp} />
-                <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="Phone Number" required style={inp} />
+                <div>
+                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Full Name" style={errors.name ? inpError : inp} />
+                  {errors.name && <p style={errText}>{errors.name}</p>}
+                </div>
+                <div>
+                  <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="Phone Number" inputMode="numeric" maxLength={10} style={errors.phone ? inpError : inp} />
+                  {errors.phone && <p style={errText}>{errors.phone}</p>}
+                </div>
               </div>
-              <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="Email Address" required style={inp} />
+              <div>
+                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="Email Address" style={errors.email ? inpError : inp} />
+                {errors.email && <p style={errText}>{errors.email}</p>}
+              </div>
               <LabelPicker value={form.label} onChange={l => setForm(f => ({ ...f, label: l }))} />
-              <input value={form.houseNo} onChange={e => setForm(f => ({ ...f, houseNo: e.target.value }))} placeholder="House / Flat No." required style={inp} />
-              <input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder="Street Address" required style={inp} />
-              <input value={form.landmark} onChange={e => setForm(f => ({ ...f, landmark: e.target.value }))} placeholder="Landmark" required style={inp} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="City" required style={inp} />
-                <input value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} placeholder="State" required style={inp} />
+              <div>
+                <input value={form.houseNo} onChange={e => setForm(f => ({ ...f, houseNo: e.target.value }))} placeholder="House / Flat No." style={errors.houseNo ? inpError : inp} />
+                {errors.houseNo && <p style={errText}>{errors.houseNo}</p>}
               </div>
-              <input value={form.pincode} onChange={e => setForm(f => ({ ...f, pincode: e.target.value }))} placeholder="Pincode" required style={inp} />
+              <div>
+                <input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder="Street Address" style={errors.street ? inpError : inp} />
+                {errors.street && <p style={errText}>{errors.street}</p>}
+              </div>
+              <div>
+                <input value={form.landmark} onChange={e => setForm(f => ({ ...f, landmark: e.target.value }))} placeholder="Landmark" style={errors.landmark ? inpError : inp} />
+                {errors.landmark && <p style={errText}>{errors.landmark}</p>}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="City" style={errors.city ? inpError : inp} />
+                  {errors.city && <p style={errText}>{errors.city}</p>}
+                </div>
+                <div>
+                  <input value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} placeholder="State" style={errors.state ? inpError : inp} />
+                  {errors.state && <p style={errText}>{errors.state}</p>}
+                </div>
+              </div>
+              <div>
+                <input value={form.pincode} onChange={e => setForm(f => ({ ...f, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))} placeholder="Pincode" inputMode="numeric" maxLength={6} style={errors.pincode ? inpError : inp} />
+                {errors.pincode && <p style={errText}>{errors.pincode}</p>}
+              </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#A1A1AA', fontSize: '13px' }}>
                 <div onClick={() => setForm(f => ({ ...f, isDefault: !f.isDefault }))}
                   style={{ width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${form.isDefault ? '#FC4B4E' : 'rgba(255,255,255,0.2)'}`, background: form.isDefault ? '#FC4B4E' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer' }}>

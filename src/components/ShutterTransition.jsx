@@ -3,7 +3,6 @@ import { Br, m1 } from '../data/productData';
 
 export default function ShutterTransition({
   shutterActiveIndex,
-  shutterSpeed,
   showZunuzText,
   shutterEnding,
   shutterSlideUp
@@ -22,6 +21,7 @@ export default function ShutterTransition({
           <div className="relative w-[75vw] max-w-[300px] h-[55vh] max-h-[460px] border border-zinc-800/60 rounded bg-zinc-950 overflow-hidden z-10 animate-fade-in">
             {Br.map((src, index) => {
               const isActive = index === shutterActiveIndex;
+              const isFinalSettle = shutterEnding && index === Br.length - 1;
               return (
                 <img
                   key={src}
@@ -31,7 +31,18 @@ export default function ShutterTransition({
                   style={{
                     opacity: isActive ? 1 : 0,
                     transform: isActive ? m1[index] : "rotate(0deg) scale(0.95)",
-                    transition: `opacity ${shutterEnding && index === Br.length - 1 ? 1200 : shutterSpeed * 0.8}ms cubic-bezier(0.25, 0.46, 0.45, 0.94), transform ${shutterEnding && index === Br.length - 1 ? 1200 : shutterSpeed * 0.85}ms cubic-bezier(0.16, 1, 0.3, 1)`
+                    // During the rapid flash (a new frame every 70ms), a smooth
+                    // opacity crossfade needs the browser to paint mid-transition
+                    // frames on schedule — on a slower device it can't keep up,
+                    // and a dropped paint can land on a moment where the outgoing
+                    // and incoming photo are both still near-invisible, showing
+                    // as a black flash. A hard 0ms cut has no in-between opacity
+                    // value to get caught on — exactly one photo is ever visible.
+                    // Only the final hand-off to the settled ending photo still
+                    // gets a smooth 1200ms fade.
+                    transition: isFinalSettle
+                      ? 'opacity 1200ms cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 1200ms cubic-bezier(0.16, 1, 0.3, 1)'
+                      : 'none'
                   }}
                 />
               );

@@ -11,7 +11,7 @@ const CONTACT_ITEMS = [
   {
     icon: Phone,
     label: 'Call / WhatsApp',
-    value: '+91 XXXXXXXXXX',
+    value: '+91 8310057566',
     href: null,
   },
   {

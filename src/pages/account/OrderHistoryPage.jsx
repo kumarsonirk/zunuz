@@ -49,8 +49,8 @@ export default function OrderHistoryPage() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
               <div>
-                <p style={{ color: '#F5F2EB', fontSize: '14px', fontWeight: 500 }}>Order #{order.id}</p>
-                <p style={{ color: '#A1A1AA', fontSize: '12px', marginTop: '2px' }}>
+                <p style={{ color: '#F5F2EB', fontSize: '17px', fontWeight: 500 }}>Order #{order.id}</p>
+                <p style={{ color: '#A1A1AA', fontSize: '14px', marginTop: '2px' }}>
                   {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
               </div>
@@ -72,8 +72,8 @@ export default function OrderHistoryPage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-              <span style={{ color: '#A1A1AA', fontSize: '12px' }}>{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</span>
-              <span style={{ color: '#F5F2EB', fontSize: '14px', fontWeight: 600 }}><Price value={`₹${order.total?.toLocaleString()}`} /></span>
+              <span style={{ color: '#A1A1AA', fontSize: '14px' }}>{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</span>
+              <span style={{ color: '#F5F2EB', fontSize: '16px', fontWeight: 600 }}><Price value={`₹${order.total?.toLocaleString()}`} /></span>
             </div>
           </div>
         ))}
@@ -85,8 +85,8 @@ export default function OrderHistoryPage() {
           <div style={{ width: '100%', maxWidth: '512px', margin: '0 auto', background: '#1F2024', borderTop: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px 24px 0 0', padding: '24px', maxHeight: '85vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <h3 style={{ color: '#F5F2EB', fontSize: '16px', fontWeight: 500 }}>Order #{detail.id}</h3>
-                <p style={{ color: '#A1A1AA', fontSize: '12px', marginTop: '3px' }}>
+                <h3 style={{ color: '#F5F2EB', fontSize: '19px', fontWeight: 500 }}>Order #{detail.id}</h3>
+                <p style={{ color: '#A1A1AA', fontSize: '14px', marginTop: '3px' }}>
                   {new Date(detail.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
               </div>
@@ -99,35 +99,35 @@ export default function OrderHistoryPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Items */}
               <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px' }}>
-                <p style={{ color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '12px' }}>ITEMS</p>
+                <p style={{ color: '#71717A', fontSize: '13px', letterSpacing: '0.06em', marginBottom: '12px' }}>ITEMS</p>
                 {detail.items?.map(item => (
                   <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
                     <div style={{ width: '40px', height: '40px', background: '#fff', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
                       <img src={item.product?.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ color: '#F5F2EB', fontSize: '13px' }}>{item.product?.name}</p>
-                      <p style={{ color: '#71717A', fontSize: '11px' }}>Qty: {item.quantity} × <Price value={`₹${item.price}`} /></p>
+                      <p style={{ color: '#F5F2EB', fontSize: '15px' }}>{item.product?.name}</p>
+                      <p style={{ color: '#71717A', fontSize: '13px' }}>Qty: {item.quantity} × <Price value={`₹${item.price}`} /></p>
                     </div>
-                    <p style={{ color: '#F5F2EB', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${item.quantity * item.price}`} /></p>
+                    <p style={{ color: '#F5F2EB', fontSize: '15px', fontWeight: 600 }}><Price value={`₹${item.quantity * item.price}`} /></p>
                   </div>
                 ))}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '12px', paddingTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#A1A1AA', fontSize: '14px' }}>Total</span>
-                  <span style={{ color: '#F5F2EB', fontWeight: 700, fontSize: '15px' }}><Price value={`₹${detail.total?.toLocaleString()}`} /></span>
+                  <span style={{ color: '#A1A1AA', fontSize: '16px' }}>Total</span>
+                  <span style={{ color: '#F5F2EB', fontWeight: 700, fontSize: '17px' }}><Price value={`₹${detail.total?.toLocaleString()}`} /></span>
                 </div>
               </div>
 
               {/* Delivery */}
               {detail.address && (
                 <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px' }}>
-                  <p style={{ color: '#71717A', fontSize: '11px', letterSpacing: '0.06em', marginBottom: '8px' }}>DELIVERY ADDRESS</p>
+                  <p style={{ color: '#71717A', fontSize: '13px', letterSpacing: '0.06em', marginBottom: '8px' }}>DELIVERY ADDRESS</p>
                   {detail.address.name && (
-                    <p style={{ color: '#F5F2EB', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>
+                    <p style={{ color: '#F5F2EB', fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>
                       {detail.address.name}{detail.address.phone && ` · +91 ${detail.address.phone}`}
                     </p>
                   )}
-                  <p style={{ color: '#F5F2EB', fontSize: '13px', lineHeight: '1.6' }}>
+                  <p style={{ color: '#F5F2EB', fontSize: '15px', lineHeight: '1.6' }}>
                     {detail.address.houseNo ? `${detail.address.houseNo}, ` : ''}{detail.address.street}<br />
                     {detail.address.landmark ? `Near ${detail.address.landmark}, ` : ''}{detail.address.city}, {detail.address.state} — {detail.address.pincode}
                   </p>

@@ -3,12 +3,17 @@ import { Wallet, Truck } from 'lucide-react';
 
 // Razorpay Live mode is approved — online payments are re-enabled.
 const ONLINE_PAYMENTS_ENABLED = true;
+// TEMPORARY: Cash on Delivery hidden for the time being — set back to true
+// to bring it back.
+const COD_ENABLED = false;
 
 const ALL_OPTIONS = [
   { id: 'RAZORPAY', label: 'Pay Online', sub: 'UPI, Cards, Netbanking', Icon: Wallet },
   { id: 'COD', label: 'Cash on Delivery', sub: 'Pay when it arrives', Icon: Truck },
 ];
-const OPTIONS = ONLINE_PAYMENTS_ENABLED ? ALL_OPTIONS : ALL_OPTIONS.filter(o => o.id !== 'RAZORPAY');
+const OPTIONS = ALL_OPTIONS
+  .filter(o => o.id !== 'RAZORPAY' || ONLINE_PAYMENTS_ENABLED)
+  .filter(o => o.id !== 'COD' || COD_ENABLED);
 
 export default function PaymentMethodPicker({ value, onChange }) {
   return (
