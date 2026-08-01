@@ -85,7 +85,7 @@ export function buildInvoiceDoc(order) {
     addr.landmark ? `Near ${addr.landmark}` : '',
     [addr.city, addr.state, addr.pincode].filter(Boolean).join(', '),
   ].filter(Boolean);
-  doc.text(billToLines, margin, 52);
+  doc.text(billToLines, margin, 52, { lineHeightFactor: 1.5 });
 
   doc.setTextColor(INK);
   doc.text(`Invoice No. INV-${order.id}`, rightEdge, 46, { align: 'right' });
@@ -183,7 +183,7 @@ export function buildInvoiceDoc(order) {
     order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Payment (Razorpay)',
   ];
   if (order.razorpayPaymentId) paymentLines.push(`Payment ID: ${order.razorpayPaymentId}`);
-  doc.text(paymentLines, margin, footerY + 5.5);
+  doc.text(paymentLines, margin, footerY + 8, { lineHeightFactor: 1.5 });
 
   const footerLogoWidth = 26;
   const footerLogoHeight = footerLogoWidth * (81 / 410);
@@ -191,7 +191,7 @@ export function buildInvoiceDoc(order) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(footerLabelFontSize);
   doc.setTextColor(MUTED);
-  doc.text('support@zunuz.in', rightEdge, footerY + 5.5, { align: 'right' });
+  doc.text('support@zunuz.in', rightEdge, footerY + 8, { align: 'right' });
 
   return doc;
 }
