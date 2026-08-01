@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ShoppingBag, X, ChevronDown } from 'lucide-react';
+import { ShoppingBag, X, ChevronDown, Download } from 'lucide-react';
 import { api } from '../../utils/api';
 import Price from '../../components/Price';
+import { downloadInvoice } from '../../utils/invoice';
 
 const STATUSES = ['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 const STATUS_STYLE = {
@@ -141,6 +142,13 @@ export default function OrdersPage() {
                     </td>
                     <td style={{ padding: '14px 20px' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          onClick={() => downloadInvoice(order)}
+                          title="Download Invoice"
+                          style={{ background: 'none', border: 'none', color: 'var(--admin-text-muted)', cursor: 'pointer', display: 'flex', padding: '4px' }}
+                        >
+                          <Download size={15} strokeWidth={1.5} />
+                        </button>
                         {order.status === 'PENDING' && order.paymentStatus !== 'FAILED' && (
                           <button
                             onClick={() => updateStatus(order.id, 'CONFIRMED')}
@@ -234,6 +242,12 @@ export default function OrdersPage() {
                   <span style={{ color: 'var(--admin-text)', fontWeight: 700, fontSize: '15px' }}><Price value={`₹${detailOrder.total?.toLocaleString()}`} /></span>
                 </div>
               </div>
+              <button
+                onClick={() => downloadInvoice(detailOrder)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', height: '42px', borderRadius: '10px', border: '1px solid var(--admin-border-3)', background: 'var(--admin-surface-2)', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              >
+                <Download size={15} strokeWidth={1.5} /> Download Invoice
+              </button>
               <div>
                 <p style={{ color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>UPDATE STATUS</p>
                 {detailOrder.status === 'PENDING' && detailOrder.paymentStatus !== 'FAILED' && (

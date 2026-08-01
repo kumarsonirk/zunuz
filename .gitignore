@@ -14,6 +14,7 @@ dist-ssr
 .env
 server/.env
 server/scripts/email-preview.html
+scripts/invoice-preview.pdf
 
 # Editor directories and files
 .vscode/*

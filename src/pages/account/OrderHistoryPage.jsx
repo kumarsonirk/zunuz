@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { X, Package } from 'lucide-react';
+import { X, Package, Download } from 'lucide-react';
 import { api } from '../../utils/api';
 import Price from '../../components/Price';
+import { downloadInvoice } from '../../utils/invoice';
 
 const STATUS_STYLE = {
   PENDING:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  label: 'Pending Approval' },
@@ -73,7 +74,16 @@ export default function OrderHistoryPage() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
               <span style={{ color: '#A1A1AA', fontSize: '14px' }}>{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</span>
-              <span style={{ color: '#F5F2EB', fontSize: '16px', fontWeight: 600 }}><Price value={`₹${order.total?.toLocaleString()}`} /></span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <button
+                  onClick={e => { e.stopPropagation(); downloadInvoice(order); }}
+                  title="Download Invoice"
+                  style={{ background: 'none', border: 'none', color: '#A1A1AA', cursor: 'pointer', display: 'flex', padding: 0 }}
+                >
+                  <Download size={16} strokeWidth={1.5} />
+                </button>
+                <span style={{ color: '#F5F2EB', fontSize: '16px', fontWeight: 600 }}><Price value={`₹${order.total?.toLocaleString()}`} /></span>
+              </div>
             </div>
           </div>
         ))}
@@ -133,6 +143,13 @@ export default function OrderHistoryPage() {
                   </p>
                 </div>
               )}
+
+              <button
+                onClick={() => downloadInvoice(detail)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', height: '46px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#F5F2EB', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: "'Grift', sans-serif" }}
+              >
+                <Download size={16} strokeWidth={1.5} /> Download Invoice
+              </button>
             </div>
           </div>
         </div>
