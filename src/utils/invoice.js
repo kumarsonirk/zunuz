@@ -164,12 +164,18 @@ export function buildInvoiceDoc(order) {
   doc.setTextColor(INK);
   doc.text('Thank you!', margin, y);
 
-  // Payment details (bottom-left) + brand sign-off (bottom-right)
+  // Payment details (bottom-left) + brand sign-off (bottom-right) — the
+  // "PAYMENT DETAILS" label and the logo are centered on the same shared
+  // midline (same approach as the header logo/heading), instead of both
+  // anchored to footerY, which left the (much taller) logo sitting visibly
+  // higher than the label instead of level with it.
   const footerY = pageHeight - 34;
+  const footerLabelFontSize = 10;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
+  doc.setFontSize(footerLabelFontSize);
   doc.setTextColor(INK);
-  doc.text('PAYMENT DETAILS', margin, footerY);
+  const footerCapHeightMm = footerLabelFontSize * 0.352778 * 0.7;
+  doc.text('PAYMENT DETAILS', margin, footerY + footerCapHeightMm / 2);
 
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(MUTED);
@@ -181,9 +187,9 @@ export function buildInvoiceDoc(order) {
 
   const footerLogoWidth = 26;
   const footerLogoHeight = footerLogoWidth * (81 / 410);
-  doc.addImage(LOGO_DARK_PNG, 'PNG', rightEdge - footerLogoWidth, footerY - footerLogoHeight, footerLogoWidth, footerLogoHeight);
+  doc.addImage(LOGO_DARK_PNG, 'PNG', rightEdge - footerLogoWidth, footerY - footerLogoHeight / 2, footerLogoWidth, footerLogoHeight);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(12);
+  doc.setFontSize(footerLabelFontSize);
   doc.setTextColor(MUTED);
   doc.text('support@zunuz.in', rightEdge, footerY + 5.5, { align: 'right' });
 
