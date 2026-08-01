@@ -417,7 +417,7 @@ export default function ProductDetailsPage({
           {/* Rating Badge */}
           <div
             className="pointer-events-auto"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#FC4B4E', borderRadius: '6px', padding: '3px 7px' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#22C55E', borderRadius: '6px', padding: '3px 7px' }}
           >
             <span style={{ color: 'white', fontSize: '12px', fontWeight: 700, fontFamily: "'Grift', sans-serif" }}>
               {rating.toFixed(1)}

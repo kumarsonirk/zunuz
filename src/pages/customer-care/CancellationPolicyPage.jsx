@@ -1,4 +1,5 @@
 import React from 'react';
+import { Sparkles } from 'lucide-react';
 
 const SECTIONS = [
   {
@@ -66,9 +67,12 @@ export default function CancellationPolicyPage() {
               <p key={j} style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>{p}</p>
             ))}
             {section.list && (
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: 0, paddingLeft: '18px' }}>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0, padding: 0, listStyle: 'none' }}>
                 {section.list.map((item, j) => (
-                  <li key={j} style={{ fontSize: '15px', lineHeight: 1.6, color: '#A1A1AA' }}>{item}</li>
+                  <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '15px', lineHeight: 1.6, color: '#A1A1AA' }}>
+                    <Sparkles size={13} strokeWidth={1.5} color="#D4AF37" style={{ flexShrink: 0, marginTop: '3px' }} />
+                    <span>{item}</span>
+                  </li>
                 ))}
               </ul>
             )}

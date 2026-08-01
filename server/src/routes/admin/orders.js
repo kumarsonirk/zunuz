@@ -15,7 +15,8 @@ router.get('/', auth, async (req, res) => {
         include: {
           customer: { select: { name: true, email: true, phone: true } },
           address: true,
-          items: { include: { product: { select: { name: true, image: true } } } }
+          items: { include: { product: { select: { name: true, image: true } } } },
+          review: true
         },
         orderBy: { createdAt: 'desc' }
       }),

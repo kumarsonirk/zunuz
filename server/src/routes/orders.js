@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 
 const { sendOrderConfirmationEmail } = require('../lib/email');
 
-const ORDER_INCLUDE = { items: { include: { product: true } }, address: true, customer: { select: { name: true, email: true, phone: true } } };
+const ORDER_INCLUDE = { items: { include: { product: true } }, address: true, customer: { select: { name: true, email: true, phone: true } }, review: true };
 const MAX_QUANTITY_PER_ITEM = 10;
 
 // POST /api/orders  (place an order — COD confirms immediately, RAZORPAY needs verify-payment)
@@ -192,7 +192,7 @@ router.get('/', auth, async (req, res) => {
         customerId: req.customer.id,
         OR: [{ paymentMethod: 'COD' }, { paymentMethod: 'RAZORPAY', paymentStatus: 'PAID' }]
       },
-      include: { items: { include: { product: { select: { name: true, image: true } } } }, address: true },
+      include: { items: { include: { product: { select: { name: true, image: true } } } }, address: true, review: true },
       orderBy: { createdAt: 'desc' }
     });
     res.json(orders);
@@ -208,6 +208,33 @@ router.get('/:id', auth, async (req, res) => {
     });
     if (!order) return res.status(404).json({ error: 'Order not found' });
     res.json(order);
+  } catch { res.status(500).json({ error: 'Server error' }); }
+});
+
+// POST /api/orders/:id/review  (customer leaves a rating + feedback, delivered orders only)
+router.post('/:id/review', auth, async (req, res) => {
+  const { rating, comment } = req.body;
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Rating must be a whole number between 1 and 5.' });
+  }
+  try {
+    const order = await prisma.order.findFirst({
+      where: { id: Number(req.params.id), customerId: req.customer.id },
+      include: { review: true }
+    });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.status !== 'DELIVERED') return res.status(400).json({ error: 'You can only review orders once they are delivered.' });
+    if (order.review) return res.status(400).json({ error: 'You have already reviewed this order.' });
+
+    const review = await prisma.review.create({
+      data: {
+        orderId: order.id,
+        customerId: req.customer.id,
+        rating,
+        comment: comment?.trim() || null,
+      }
+    });
+    res.status(201).json(review);
   } catch { res.status(500).json({ error: 'Server error' }); }
 });
 

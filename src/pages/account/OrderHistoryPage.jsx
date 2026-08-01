@@ -1,8 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { X, Package, Download } from 'lucide-react';
+import { X, Package, Download, Star } from 'lucide-react';
 import { api } from '../../utils/api';
 import Price from '../../components/Price';
 import { downloadInvoice } from '../../utils/invoice';
+
+function StarRating({ value, onChange, size = 20 }) {
+  const interactive = !!onChange;
+  return (
+    <div style={{ display: 'flex', gap: '4px' }}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          onClick={interactive ? () => onChange(n) : undefined}
+          disabled={!interactive}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: interactive ? 'pointer' : 'default', display: 'flex' }}
+        >
+          <Star size={size} strokeWidth={1.5} color={n <= value ? '#D4AF37' : '#52525B'} fill={n <= value ? '#D4AF37' : 'none'} />
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const STATUS_STYLE = {
   PENDING:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  label: 'Pending Approval' },
@@ -21,10 +40,36 @@ export default function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState('');
 
   useEffect(() => {
     api.get('/orders').then(setOrders).catch(console.error).finally(() => setLoading(false));
   }, []);
+
+  const openDetail = (order) => {
+    setDetail(order);
+    setReviewRating(0);
+    setReviewComment('');
+    setReviewError('');
+  };
+
+  const submitReview = async () => {
+    if (reviewRating < 1) { setReviewError('Please select a star rating.'); return; }
+    setSubmittingReview(true);
+    setReviewError('');
+    try {
+      const review = await api.post(`/orders/${detail.id}/review`, { rating: reviewRating, comment: reviewComment });
+      setDetail(d => ({ ...d, review }));
+      setOrders(list => list.map(o => o.id === detail.id ? { ...o, review } : o));
+    } catch (e) {
+      setReviewError(e.message || 'Could not submit review.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
@@ -43,7 +88,7 @@ export default function OrderHistoryPage() {
           </div>
         ) : orders.map(order => (
           <div key={order.id}
-            onClick={() => setDetail(order)}
+            onClick={() => openDetail(order)}
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '16px', cursor: 'pointer' }}
             onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
             onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
@@ -71,6 +116,16 @@ export default function OrderHistoryPage() {
                 </div>
               )}
             </div>
+
+            {order.status === 'DELIVERED' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                {order.review ? (
+                  <StarRating value={order.review.rating} size={14} />
+                ) : (
+                  <span style={{ color: '#D4AF37', fontSize: '12px', fontWeight: 600 }}>Tap to rate this order</span>
+                )}
+              </div>
+            )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
               <span style={{ color: '#A1A1AA', fontSize: '14px' }}>{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</span>
@@ -141,6 +196,43 @@ export default function OrderHistoryPage() {
                     {detail.address.houseNo ? `${detail.address.houseNo}, ` : ''}{detail.address.street}<br />
                     {detail.address.landmark ? `Near ${detail.address.landmark}, ` : ''}{detail.address.city}, {detail.address.state} — {detail.address.pincode}
                   </p>
+                </div>
+              )}
+
+              {/* Review & Feedback (delivered orders only) */}
+              {detail.status === 'DELIVERED' && (
+                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px' }}>
+                  <p style={{ color: '#71717A', fontSize: '13px', letterSpacing: '0.06em', marginBottom: '10px' }}>
+                    {detail.review ? 'YOUR REVIEW' : 'RATE & REVIEW THIS ORDER'}
+                  </p>
+                  {detail.review ? (
+                    <>
+                      <StarRating value={detail.review.rating} size={18} />
+                      {detail.review.comment && (
+                        <p style={{ color: '#F5F2EB', fontSize: '14px', lineHeight: '1.6', marginTop: '10px' }}>{detail.review.comment}</p>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <StarRating value={reviewRating} onChange={setReviewRating} size={26} />
+                      <textarea
+                        value={reviewComment}
+                        onChange={e => setReviewComment(e.target.value)}
+                        placeholder="Share your experience with this order (optional)"
+                        rows={3}
+                        style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px 12px', color: '#F5F2EB', fontSize: '14px', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: "'Grift', sans-serif" }}
+                      />
+                      {reviewError && <p style={{ color: '#EF4444', fontSize: '12px' }}>{reviewError}</p>}
+                      <button
+                        onClick={submitReview}
+                        disabled={submittingReview}
+                        className="btn-buy-now"
+                        style={{ height: '42px', borderRadius: '10px', border: 'none', fontSize: '14px', fontWeight: 600, cursor: submittingReview ? 'not-allowed' : 'pointer', opacity: submittingReview ? 0.7 : 1 }}
+                      >
+                        {submittingReview ? 'Submitting...' : 'Submit Review'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

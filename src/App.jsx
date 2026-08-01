@@ -31,8 +31,6 @@ const ProfilePage = lazy(() => import('./pages/account/ProfilePage'));
 const AddressesPage = lazy(() => import('./pages/account/AddressesPage'));
 const OrderHistoryPage = lazy(() => import('./pages/account/OrderHistoryPage'));
 
-const ShineWithUsPage = lazy(() => import('./pages/ShineWithUsPage'));
-
 const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
 const DashboardPage = lazy(() => import('./pages/admin/DashboardPage'));
@@ -42,13 +40,6 @@ const CustomersPage = lazy(() => import('./pages/admin/CustomersPage'));
 const CustomerDetailPage = lazy(() => import('./pages/admin/CustomerDetailPage'));
 const CategoriesPage = lazy(() => import('./pages/admin/CategoriesPage'));
 const CampaignPage = lazy(() => import('./pages/admin/CampaignPage'));
-
-// TEMPORARY pre-launch lockdown: while true, every customer-facing route
-// (other than /shine-with-us) redirects there instead of rendering — the
-// admin panel stays reachable so the store can still be managed before
-// launch. Set this to false (and feel free to delete this flag entirely)
-// once the site is ready to go live.
-const LAUNCH_LOCKDOWN = false;
 
 function AdminGuard({ children }) {
   const token = localStorage.getItem('zunuz_admin_token');
@@ -80,9 +71,6 @@ export default function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        {/* ── Standalone Campaign Page ── */}
-        <Route path="/shine-with-us" element={<ShineWithUsPage />} />
-
         {/* ── Admin (no MainLayout, own sidebar) ── */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
@@ -98,10 +86,9 @@ export default function App() {
 
         {/* ── Customer-facing store (MainLayout) ── */}
         <Route path="/*" element={
-          LAUNCH_LOCKDOWN ? <Navigate to="/shine-with-us" replace /> :
-            <MainLayout state={state}>
-              <Suspense fallback={<LoadingFallback />}>
-                <Routes>
+          <MainLayout state={state}>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
                   <Route path="/" element={<CategorySelection onSelectCategory={state.handleSelectCategory} categories={state.categories} />} />
 
                   <Route path="/products" element={
@@ -163,8 +150,7 @@ export default function App() {
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
 
 
-                  {/* Customer Care & Campaign */}
-                  <Route path="/shine-with-us" element={<ShineWithUsPage />} />
+                  {/* Customer Care */}
                   <Route path="/customer-care" element={<CustomerCarePage />} />
                   <Route path="/customer-care/shipping-policy" element={<ShippingPolicyPage />} />
 
@@ -185,9 +171,9 @@ export default function App() {
                   <Route path="/account/help-center" element={<HelpCenterPage />} />
 
                   <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </Suspense>
-            </MainLayout>
+              </Routes>
+            </Suspense>
+          </MainLayout>
         } />
       </Routes>
     </Suspense>

@@ -1,8 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ShoppingBag, X, ChevronDown, Download } from 'lucide-react';
+import { ShoppingBag, X, ChevronDown, Download, Star } from 'lucide-react';
 import { api } from '../../utils/api';
 import Price from '../../components/Price';
 import { downloadInvoice } from '../../utils/invoice';
+
+function StarRating({ value, size = 16 }) {
+  return (
+    <div style={{ display: 'flex', gap: '2px' }}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <Star key={n} size={size} strokeWidth={1.5} color={n <= value ? '#D4AF37' : 'var(--admin-border-3)'} fill={n <= value ? '#D4AF37' : 'none'} />
+      ))}
+    </div>
+  );
+}
 
 const STATUSES = ['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 const STATUS_STYLE = {
@@ -136,7 +146,10 @@ export default function OrdersPage() {
                     <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{order.items?.length}</td>
                     <td style={{ padding: '14px 20px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${order.total?.toLocaleString()}`} /></td>
                     <td style={{ padding: '14px 20px' }}><PaymentBadge order={order} /></td>
-                    <td style={{ padding: '14px 20px' }}><StatusBadge status={order.status} /></td>
+                    <td style={{ padding: '14px 20px' }}>
+                      <StatusBadge status={order.status} />
+                      {order.review && <div style={{ marginTop: '6px' }}><StarRating value={order.review.rating} size={12} /></div>}
+                    </td>
                     <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '12px', whiteSpace: 'nowrap' }}>
                       {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                     </td>
@@ -242,6 +255,15 @@ export default function OrdersPage() {
                   <span style={{ color: 'var(--admin-text)', fontWeight: 700, fontSize: '15px' }}><Price value={`₹${detailOrder.total?.toLocaleString()}`} /></span>
                 </div>
               </div>
+              {detailOrder.review && (
+                <div style={{ background: 'var(--admin-surface-2)', borderRadius: '12px', padding: '16px' }}>
+                  <p style={{ color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '10px' }}>CUSTOMER REVIEW</p>
+                  <StarRating value={detailOrder.review.rating} />
+                  {detailOrder.review.comment && (
+                    <p style={{ color: 'var(--admin-text)', fontSize: '13px', lineHeight: '1.6', marginTop: '10px' }}>{detailOrder.review.comment}</p>
+                  )}
+                </div>
+              )}
               <button
                 onClick={() => downloadInvoice(detailOrder)}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', height: '42px', borderRadius: '10px', border: '1px solid var(--admin-border-3)', background: 'var(--admin-surface-2)', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}

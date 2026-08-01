@@ -29,6 +29,7 @@ model Customer {
   createdAt      DateTime  @default(now())
   addresses      Address[]
   orders         Order[]
+  reviews        Review[]
 }
 
 model OtpRequest {
@@ -115,6 +116,7 @@ model Order {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   items             OrderItem[]
+  review            Review?
 }
 
 enum OrderStatus {
@@ -144,6 +146,17 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
   price     Int
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  orderId    Int      @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+  rating     Int
+  comment    String?  @db.Text
+  createdAt  DateTime @default(now())
 }
 
 model CampaignSubmission {

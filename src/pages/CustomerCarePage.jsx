@@ -33,7 +33,6 @@ const Divider = () => (
 );
 
 const MENU = [
-  { icon: Sparkles, label: 'Shine with Us (Creators & Ambassadors)', path: '/shine-with-us' },
   { icon: Truck, label: 'Shipping Policy', path: '/customer-care/shipping-policy' },
   { icon: RotateCcw, label: 'Returns & Replacements', path: '/customer-care/returns-replacements' },
   { icon: XCircle, label: 'Cancellation Policy', path: '/customer-care/cancellation-policy' },
