@@ -7,6 +7,7 @@ import CategorySelection from './pages/CategorySelection';
 import ProductPage from './pages/ProductPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
 import CartPage from './pages/CartPage';
+import MaintenancePage from './pages/MaintenancePage';
 import { useAppState } from './hooks/useAppState';
 
 // Lazy-loaded pages for code splitting (admin, auth, account, customer care, legal)
@@ -40,6 +41,12 @@ const CustomersPage = lazy(() => import('./pages/admin/CustomersPage'));
 const CustomerDetailPage = lazy(() => import('./pages/admin/CustomerDetailPage'));
 const CategoriesPage = lazy(() => import('./pages/admin/CategoriesPage'));
 const CampaignPage = lazy(() => import('./pages/admin/CampaignPage'));
+
+// TEMPORARY: while true, every customer-facing route shows the maintenance
+// page instead of rendering — the admin panel stays reachable so the store
+// can still be managed. Set this to false (or delete it entirely) once
+// maintenance is over.
+const MAINTENANCE_MODE = true;
 
 function AdminGuard({ children }) {
   const token = localStorage.getItem('zunuz_admin_token');
@@ -86,6 +93,7 @@ export default function App() {
 
         {/* ── Customer-facing store (MainLayout) ── */}
         <Route path="/*" element={
+          MAINTENANCE_MODE ? <MaintenancePage /> :
           <MainLayout state={state}>
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
