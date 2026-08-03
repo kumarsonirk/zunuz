@@ -116,7 +116,7 @@ export default function App() {
                       : <Navigate to="/" replace />
                   } />
 
-                  <Route path="/products/:id" element={
+                  <Route path="/products/:slug" element={
                     state.selectedProduct
                       ? <ProductDetailsPage
                         product={state.selectedProduct}
@@ -132,9 +132,16 @@ export default function App() {
                         categories={state.categories}
                         onSelectCategory={state.handleSelectCategory}
                       />
-                      : state.productsLoaded
-                        ? <Navigate to="/products" replace />
-                        : <LoadingFallback />
+                      // No separate "productsLoaded ? redirect : loading" branch here —
+                      // that raced against useAppState's URL-sync effect (which resolves
+                      // the slug against productMap once it loads): the instant
+                      // productsLoaded flipped true but before the effect had set
+                      // selectedProduct in response, this would already redirect away,
+                      // occasionally winning that race even for a product that does
+                      // exist. The effect is the sole authority now — it either sets
+                      // selectedProduct or navigates to /products itself once it
+                      // actually confirms the product isn't found.
+                      : <LoadingFallback />
                   } />
 
                   <Route path="/cart" element={

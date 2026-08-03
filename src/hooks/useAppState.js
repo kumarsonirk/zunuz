@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import zr from '../utils/audio';
 import { Br, productData, wp } from '../data/productData';
-import { findProductById, findCategoryByProductId } from '../utils/productUtils';
+import { findProductBySlug, findCategoryByProductSlug } from '../utils/productUtils';
 
 export function useAppState() {
   const navigate = useNavigate();
@@ -11,11 +11,11 @@ export function useAppState() {
   const initialData = (() => {
     const path = window.location.pathname;
     if (path.startsWith('/products/')) {
-      const productId = path.slice('/products/'.length);
-      if (productId) {
-        const product = findProductById(productId);
+      const slugOrId = path.slice('/products/'.length);
+      if (slugOrId) {
+        const product = findProductBySlug(slugOrId);
         if (product) {
-          const category = findCategoryByProductId(productId);
+          const category = findCategoryByProductSlug(slugOrId);
           return { product, category: category || wp[0] };
         }
       }
@@ -119,6 +119,7 @@ export function useAppState() {
           if (imgs.length === 0 && p.image) imgs = [p.image];
           map[catSlug][subSlug].push({
             id: String(p.id),
+            slug: p.slug || null,
             name: p.name,
             price: `₹${Math.round(p.price).toLocaleString('en-IN')}`,
             likes: '0k',
@@ -217,6 +218,15 @@ export function useAppState() {
       isFirstMount.current = false;
       return;
     }
+    // This effect is for the user manually switching categories from the
+    // category-select screen — skip it while resolving a /products/:slug
+    // deep link, since the URL-sync effect below also sets selectedCategory
+    // (to match the linked product) in the very same pass that it sets
+    // selectedProduct, and this would otherwise immediately clear that
+    // product back out, breaking every fresh (no prior category) direct
+    // link to a product page — exactly the situation search engine crawlers
+    // and shared links are always in.
+    if (location.pathname.startsWith('/products/')) return;
     setActiveTab(subcategories[0]?.slug || "necklaces");
     setSelectedProduct(null);
     setTransitionState('none');
@@ -239,16 +249,16 @@ export function useAppState() {
     })();
 
     if (path.startsWith('/products/')) {
-      const productId = path.slice('/products/'.length);
+      const slugOrId = path.slice('/products/'.length);
       // Wait for the real product data before deciding a product "doesn't exist" —
       // otherwise a hard refresh on a real (DB-backed) product can incorrectly
       // redirect away just because only the offline mock fallback is available yet.
-      if (!productMap && !productsLoaded && !(selectedProduct && selectedProduct.id === productId)) {
+      if (!productMap && !productsLoaded && !(selectedProduct && (selectedProduct.slug === slugOrId || selectedProduct.id === slugOrId))) {
         return;
       }
-      const resolvedCategory = savedCategory || (productId ? findCategoryByProductId(productId, activeMap) : null) || (categories && categories[0]) || wp[0];
-      if (productId) {
-        const product = findProductById(productId, activeMap);
+      const resolvedCategory = savedCategory || (slugOrId ? findCategoryByProductSlug(slugOrId, activeMap) : null) || (categories && categories[0]) || wp[0];
+      if (slugOrId) {
+        const product = findProductBySlug(slugOrId, activeMap);
         if (product) {
           if (!savedCategory || savedCategory.id !== resolvedCategory.id) {
             try { localStorage.setItem('zunuz_selected_category', JSON.stringify(resolvedCategory)); } catch (e) {}
@@ -259,7 +269,7 @@ export function useAppState() {
             setSelectedProduct(product);
             setTransitionState('details');
           }
-        } else if (selectedProduct && selectedProduct.id === productId) {
+        } else if (selectedProduct && (selectedProduct.slug === slugOrId || selectedProduct.id === slugOrId)) {
           // selectedProduct was set directly (e.g., clicking a cart item) — trust it, don't redirect
           setTransitionState('details');
         } else {
@@ -441,7 +451,7 @@ export function useAppState() {
     // animations and is what causes the occasional glitch/jump.
     if (transitionState === 'animating_in' || transitionState === 'animating_out') return;
 
-    navigate(`/products/${product.id}`);
+    navigate(`/products/${product.slug || product.id}`);
     if (!rect) {
       setSelectedProduct(product);
       setTransitionState('details');

@@ -83,6 +83,12 @@ model Subcategory {
 model Product {
   id            Int         @id @default(autoincrement())
   name          String
+  // Nullable (despite being unique) so adding this column is always a safe,
+  // non-destructive `db push` against a table that already has rows — MySQL
+  // allows multiple NULLs under a unique index. Application code (create
+  // route + the backfill script for pre-existing products) always populates
+  // it in practice; a missing slug just means callers fall back to numeric id.
+  slug          String?     @unique
   price         Int
   stock         Int         @default(0)
   image         String

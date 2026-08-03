@@ -22,10 +22,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+// GET /api/products/:slugOrId — looks up by slug (the public URL), falling
+// back to the numeric id for products that don't have one yet or for any
+// already-shared link from before slugs existed.
+router.get('/:slugOrId', async (req, res) => {
+  const { slugOrId } = req.params;
+  const isNumeric = /^\d+$/.test(slugOrId);
   try {
-    const product = await prisma.product.findUnique({
-      where: { id: Number(req.params.id) },
+    const product = await prisma.product.findFirst({
+      where: { OR: [{ slug: slugOrId }, ...(isNumeric ? [{ id: Number(slugOrId) }] : [])] },
       include: { category: true, subcategory: true }
     });
     if (!product) return res.status(404).json({ error: 'Product not found' });

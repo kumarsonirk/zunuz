@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { PrismaClient } = require('@prisma/client');
 const auth = require('../../middleware/adminAuth');
+const { generateUniqueSlug } = require('../../lib/slug');
 
 const prisma = new PrismaClient();
 
@@ -23,9 +24,13 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials } = req.body;
   try {
+    // Auto-generated from the name, not admin-editable — kept stable once
+    // set (later name edits don't re-slugify) so shared/bookmarked product
+    // links and search-engine indexing don't break.
+    const slug = await generateUniqueSlug(prisma, name);
     const product = await prisma.product.create({
       data: {
-        name, price: Number(price), stock: Number(stock), image,
+        name, slug, price: Number(price), stock: Number(stock), image,
         images: images ? JSON.stringify(images) : '[]',
         categoryId: Number(categoryId), subcategoryId: Number(subcategoryId),
         isActive: isActive !== undefined ? isActive : true,
