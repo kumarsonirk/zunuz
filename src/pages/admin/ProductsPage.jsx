@@ -3,7 +3,7 @@ import { Plus, Search, Edit2, Trash2, X, Package, Upload, ImagePlus } from 'luci
 import { api } from '../../utils/api';
 import Price from '../../components/Price';
 
-const EMPTY_FORM = { name: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, tagline: '', description: '', materials: '' };
+const EMPTY_FORM = { name: '', slug: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, tagline: '', description: '', materials: '' };
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace('/api', '');
 
@@ -132,6 +132,19 @@ function AdditionalImagesUpload({ values, onChange }) {
 const inputStyle = { width: '100%', background: 'var(--admin-bg)', border: '1px solid var(--admin-border-3)', borderRadius: '10px', padding: '10px 14px', color: 'var(--admin-text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box' };
 const selectStyle = { ...inputStyle, cursor: 'pointer' };
 
+// Mirrors the backend's slugify() purely for the live "Add Product" preview
+// below — the real slug is always generated server-side on save (including
+// de-duplication for repeated names), this is just a preview of the shape.
+function slugifyPreview(text) {
+  return String(text)
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -171,7 +184,7 @@ export default function ProductsPage() {
     setEditProduct(p);
     let parsedImages = [];
     try { parsedImages = JSON.parse(p.images || '[]'); } catch {}
-    setForm({ name: p.name, price: p.price, stock: p.stock, image: p.image || '', images: parsedImages, categoryId: p.categoryId, subcategoryId: p.subcategoryId, isActive: p.isActive, tagline: p.tagline || '', description: p.description || '', materials: p.materials || '' });
+    setForm({ name: p.name, slug: p.slug || '', price: p.price, stock: p.stock, image: p.image || '', images: parsedImages, categoryId: p.categoryId, subcategoryId: p.subcategoryId, isActive: p.isActive, tagline: p.tagline || '', description: p.description || '', materials: p.materials || '' });
     setModal('edit');
   };
 
@@ -296,6 +309,23 @@ export default function ProductsPage() {
         <Modal title={modal === 'edit' ? 'Edit Product' : 'Add Product'} onClose={() => setModal(null)}>
           <Field label="PRODUCT NAME">
             <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Core Chain I" />
+          </Field>
+          <Field label="URL SLUG">
+            {modal === 'edit' ? (
+              <>
+                <input style={{ ...inputStyle, color: 'var(--admin-text-muted)', cursor: 'not-allowed' }} value={form.slug || '(none yet — run the slug backfill script)'} disabled readOnly />
+                <p style={{ color: 'var(--admin-text-faint)', fontSize: '11px', marginTop: '6px' }}>
+                  Auto-generated from the name when the product was created; stays fixed afterwards so existing links keep working.
+                </p>
+              </>
+            ) : (
+              <>
+                <input style={{ ...inputStyle, color: 'var(--admin-text-muted)', cursor: 'not-allowed' }} value={form.name ? slugifyPreview(form.name) : ''} placeholder="auto-generated from the name" disabled readOnly />
+                <p style={{ color: 'var(--admin-text-faint)', fontSize: '11px', marginTop: '6px' }}>
+                  Preview only — generated for real when you save (a repeated name gets -2, -3, etc. appended).
+                </p>
+              </>
+            )}
           </Field>
           <Field label="TAGLINE">
             <input style={inputStyle} value={form.tagline} onChange={e => setForm(f => ({ ...f, tagline: e.target.value }))} placeholder="e.g. The everyday shine." />
