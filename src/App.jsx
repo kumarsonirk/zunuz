@@ -46,7 +46,7 @@ const CampaignPage = lazy(() => import('./pages/admin/CampaignPage'));
 // page instead of rendering — the admin panel stays reachable so the store
 // can still be managed. Set this to false (or delete it entirely) once
 // maintenance is over.
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 
 function AdminGuard({ children }) {
   const token = localStorage.getItem('zunuz_admin_token');
