@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import zr from '../utils/audio';
 import Preloader from './Preloader';
 import ShutterTransition from './ShutterTransition';
-import ParticleBackground from './ParticleBackground';
 import Header from './Header';
 import CartToast from './CartToast';
 import CardMorphOverlay from './CardMorphOverlay';
 import BillSummaryDrawer from './BillSummaryDrawer';
+
+// Lazy-loaded so the ~500kB three.js chunk isn't fetched (and modulepreloaded
+// in index.html) on every single page load — it's purely a decorative
+// background canvas, not needed for first paint, and was measurably hurting
+// FCP/LCP by front-loading a huge unrelated chunk before any content renders.
+const ParticleBackground = lazy(() => import('./ParticleBackground'));
 
 export default function MainLayout({ children, state }) {
   const navigate = useNavigate();
@@ -36,7 +41,9 @@ export default function MainLayout({ children, state }) {
 
       {/* 3. Three.js Particles Canvas Background */}
       {state.showMainBackground && (
-        <ParticleBackground canvasRef={state.canvasRef} />
+        <Suspense fallback={null}>
+          <ParticleBackground canvasRef={state.canvasRef} />
+        </Suspense>
       )}
 
       {/* 4. Main Portfolio Layout */}
