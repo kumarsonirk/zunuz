@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME = 'ZUNUZ';
-const DEFAULT_DESCRIPTION = "Shop ZUNUZ's everyday fashion jewellery — necklaces, earrings, and bracelets crafted for lasting shine. Free delivery over ₹700, cash on delivery available.";
+const DEFAULT_DESCRIPTION = "Find your vibe with ZUNUZ — everyday jewelry for campus, office, and everywhere in between. Necklaces, earrings & bracelets. You like it, you buy it.";
 const DEFAULT_IMAGE = '/logo_white.png';
 // zunuz.in 308-redirects to www.zunuz.in in production (Vercel's configured
 // canonical host) — canonical/OG URLs must point at the domain that actually
