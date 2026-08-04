@@ -5,6 +5,7 @@ import { productData } from '../data/productData'; // fallback when API not load
 import zr from '../utils/audio';
 import Price from '../components/Price';
 import { sampleBottomColor } from '../utils/sampleImageColor';
+import Seo from '../components/Seo';
 
 function CardImage({ src, alt, style }) {
   const checkCached = (url) => {
@@ -303,6 +304,11 @@ export default function ProductPage({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative bg-[#1F2024]">
+      <Seo
+        title={selectedCategory?.title ? `${selectedCategory.title} Collection` : 'Shop'}
+        description={selectedCategory?.subtitle}
+        path="/products"
+      />
       {/* Category Tab Selector Bar */}
       <div className="flex w-full border-b border-zinc-900 sticky top-0 z-40 select-none bg-[#1F2024]" style={{ backgroundColor: '#1F2024', borderBottom: '1px solid rgba(24, 24, 27, 0.6)' }}>
         {(subcategories.length > 0

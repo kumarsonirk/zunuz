@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Phone, Clock } from 'lucide-react';
+import Seo from '../../components/Seo';
 
 const CONTACT_ITEMS = [
   {
@@ -25,6 +26,7 @@ const CONTACT_ITEMS = [
 export default function HelpCenterPage() {
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+      <Seo title="Help Center" path="/account/help-center" noindex />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, background: '#1F2024', zIndex: 1 }}>
         <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB', letterSpacing: '0.02em' }}>Help Center</h2>
       </div>

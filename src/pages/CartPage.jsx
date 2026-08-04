@@ -12,6 +12,7 @@ import OrderSuccessOverlay from '../components/OrderSuccessOverlay';
 import PaymentMethodPicker from '../components/PaymentMethodPicker';
 import Price from '../components/Price';
 import { computeDeliveryFee, amountToFreeDelivery } from '../utils/delivery';
+import Seo from '../components/Seo';
 
 export default function CartPage({
   cartItems,
@@ -134,6 +135,7 @@ export default function CartPage({
 
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] select-none overflow-hidden relative">
+      <Seo title="Your Cart" path="/cart" noindex />
       {/* Scrollable Middle Container */}
       <div
         className="flex-1 overflow-y-auto scrollbar-none"

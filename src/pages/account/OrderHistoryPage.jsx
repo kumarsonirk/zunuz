@@ -3,6 +3,7 @@ import { X, Package, Download, Star } from 'lucide-react';
 import { api } from '../../utils/api';
 import Price from '../../components/Price';
 import { downloadInvoice } from '../../utils/invoice';
+import Seo from '../../components/Seo';
 
 function StarRating({ value, onChange, size = 20 }) {
   const interactive = !!onChange;
@@ -73,6 +74,7 @@ export default function OrderHistoryPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+      <Seo title="Order History" path="/account/orders" noindex />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB' }}>My Orders</h2>
       </div>

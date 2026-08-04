@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Package, ShoppingBag, Users, Tag, Megaphone, LogOut, Menu, X, ChevronRight, Sun, Moon } from 'lucide-react';
+import Seo from '../../components/Seo';
 
 const NAV = [
   { to: '/admin',            label: 'Dashboard',  icon: LayoutDashboard, exact: true },
@@ -93,6 +94,7 @@ export default function AdminLayout() {
 
   return (
     <div data-theme={theme} style={{ display: 'flex', height: '100vh', background: 'var(--admin-bg)', fontFamily: "'Grift', sans-serif", overflow: 'hidden' }}>
+      <Seo title="Admin" path="/admin" noindex />
       {/* Desktop Sidebar */}
       <aside style={{ width: '240px', background: 'var(--admin-sidebar)', borderRight: '1px solid var(--admin-border-1)', flexShrink: 0, display: 'flex', flexDirection: 'column' }} className="hidden-mobile">
         <SidebarContent />

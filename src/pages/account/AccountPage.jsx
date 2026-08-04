@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, MapPin, ShoppingBag, ChevronRight, LogOut, FileText, Shield, Headphones, Phone } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import Seo from '../../components/Seo';
 
 const ROW = ({ icon: Icon, label, sublabel, onClick, danger }) => (
   <button
@@ -54,6 +55,7 @@ export default function AccountPage() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+        <Seo title="My Account" path="/account" noindex />
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 500 }}>Account</h2>
         </div>
@@ -64,6 +66,7 @@ export default function AccountPage() {
   if (!customer) {
     return (
       <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+        <Seo title="My Account" path="/account" noindex />
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 500 }}>Account</h2>
         </div>
@@ -88,6 +91,7 @@ export default function AccountPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+      <Seo title="My Account" path="/account" noindex />
       {/* Header */}
       <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
         <h2 style={{ fontSize: '18px', fontWeight: 500 }}>Account</h2>

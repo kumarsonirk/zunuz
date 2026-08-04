@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
+import Seo from '../../components/Seo';
 
 const SECTIONS = [
   {
@@ -95,6 +96,11 @@ const SECTIONS = [
 export default function ReturnsReplacementsPage() {
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+      <Seo
+        title="Returns & Replacements"
+        description="ZUNUZ's policy on returns, replacements, and refunds for damaged, defective, or incorrect jewelry orders."
+        path="/customer-care/returns-replacements"
+      />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, background: '#1F2024', zIndex: 1 }}>
         <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB', letterSpacing: '0.02em' }}>Returns, Replacements & Refunds</h2>
       </div>

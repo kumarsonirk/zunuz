@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../utils/api';
+import Seo from '../../components/Seo';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -27,6 +28,7 @@ export default function AdminLoginPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0D0E10', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Grift', sans-serif" }}>
+      <Seo title="Admin Login" path="/admin/login" noindex />
       <div style={{ width: '100%', maxWidth: '420px', padding: '0 24px' }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
+import Seo from '../../components/Seo';
 
 const SECTIONS = [
   {
@@ -60,6 +61,11 @@ const SECTIONS = [
 export default function ProductCarePage() {
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+      <Seo
+        title="Product Care Guide"
+        description="Tips for caring for, cleaning, and storing your ZUNUZ fashion jewelry to help keep it looking its best for longer."
+        path="/customer-care/product-care"
+      />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, background: '#1F2024', zIndex: 1 }}>
         <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB', letterSpacing: '0.02em' }}>Product Care Guide</h2>
       </div>

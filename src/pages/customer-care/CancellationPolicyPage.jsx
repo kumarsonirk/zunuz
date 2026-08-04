@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
+import Seo from '../../components/Seo';
 
 const SECTIONS = [
   {
@@ -53,6 +54,11 @@ const SECTIONS = [
 export default function CancellationPolicyPage() {
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+      <Seo
+        title="Cancellation Policy"
+        description="Find out how and when you can cancel a ZUNUZ order, and how refunds for cancelled orders are processed."
+        path="/customer-care/cancellation-policy"
+      />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, background: '#1F2024', zIndex: 1 }}>
         <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB', letterSpacing: '0.02em' }}>Cancellation Policy</h2>
       </div>

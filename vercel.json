@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "https://zunuz-production.up.railway.app/sitemap.xml" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

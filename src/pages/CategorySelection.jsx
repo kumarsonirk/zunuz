@@ -1,9 +1,11 @@
 import React from 'react';
 import { wp } from '../data/productData';
+import Seo from '../components/Seo';
 
 export default function CategorySelection({ onSelectCategory, categories = wp }) {
   return (
     <>
+      <Seo path="/" />
       <section className="flex-1 flex flex-col w-full bg-[#1F2024] divide-y divide-zinc-800 overflow-hidden">
         {categories.map((D) => (
           <div

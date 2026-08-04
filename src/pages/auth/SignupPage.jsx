@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
+import Seo from '../../components/Seo';
 
 export default function SignupPage({ onReopenBillSummary }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
@@ -65,6 +66,7 @@ export default function SignupPage({ onReopenBillSummary }) {
 
   return (
     <div className="flex-1 flex flex-col justify-center bg-[#1F2024] text-[#F5F2EB] overflow-y-auto" style={{ fontFamily: "'Grift', sans-serif" }}>
+      <Seo title="Sign Up" path="/signup" noindex />
       <div style={{ maxWidth: '420px', width: '100%', margin: '0 auto', padding: '32px 24px' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#F5F2EB' }}>Create account</h1>

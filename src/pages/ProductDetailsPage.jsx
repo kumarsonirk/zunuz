@@ -6,6 +6,8 @@ import zr from '../utils/audio';
 import ImageLightbox from '../components/ImageLightbox';
 import Price from '../components/Price';
 import { sampleCornerColor } from '../utils/sampleImageColor';
+import { Helmet } from 'react-helmet-async';
+import Seo from '../components/Seo';
 
 export default function ProductDetailsPage({
   product,
@@ -302,8 +304,37 @@ export default function ProductDetailsPage({
     return () => { cancelled = true; };
   }, [sliderProducts, lookColors]);
 
+  const productPath = `/products/${product.slug || product.id}`;
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: product.image,
+    description: effectiveTagline || effectiveDescription,
+    sku: String(product.id),
+    offers: {
+      '@type': 'Offer',
+      url: `https://www.zunuz.in${productPath}`,
+      priceCurrency: 'INR',
+      price: effectivePrice,
+      availability: effectiveStock === 0
+        ? 'https://schema.org/OutOfStock'
+        : 'https://schema.org/InStock',
+    },
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] select-none overflow-hidden relative">
+      <Seo
+        title={product.name}
+        description={effectiveTagline || effectiveDescription}
+        image={product.image}
+        path={productPath}
+        type="product"
+      />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(productJsonLd)}</script>
+      </Helmet>
       {/* Scrollable Middle Container */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto scrollbar-none pb-6">
 

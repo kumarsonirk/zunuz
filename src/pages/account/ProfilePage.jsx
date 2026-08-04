@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import Seo from '../../components/Seo';
 
 export default function ProfilePage() {
   const { customer, updateProfile } = useAuth();
@@ -31,6 +32,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+      <Seo title="My Profile" path="/account/profile" noindex />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB' }}>Edit Profile</h2>
       </div>
