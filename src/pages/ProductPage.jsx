@@ -11,6 +11,11 @@ function CardImage({ src, alt, style, onLoadedElement }) {
   const checkCached = (url) => {
     try {
       const img = new Image();
+      // Must match the crossOrigin mode of the actual rendered <img> below —
+      // the browser caches anonymous-mode and default-mode fetches of the
+      // same URL separately, so without this the probe would check a cache
+      // partition the real image never uses and always report a miss.
+      img.crossOrigin = 'anonymous';
       img.src = url;
       return img.complete;
     } catch {
@@ -47,6 +52,14 @@ function CardImage({ src, alt, style, onLoadedElement }) {
       src={src}
       alt={alt}
       decoding="sync"
+      // Product photos are served cross-origin (the Railway API host, not
+      // zunuz.in), which by default taints the canvas the moment we try to
+      // read pixels off this element for the color sample below — the read
+      // throws every single time regardless of the server's CORS headers,
+      // since those only matter once the browser actually requests the
+      // image in CORS mode. crossOrigin does that; the backend already
+      // allows zunuz.in/www.zunuz.in, so this doesn't change what loads.
+      crossOrigin="anonymous"
       onLoad={reportLoaded}
       className="absolute object-contain pointer-events-none"
       draggable="false"
