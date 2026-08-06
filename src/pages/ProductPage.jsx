@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData'; // fallback when API not loaded
 import zr from '../utils/audio';
 import Price from '../components/Price';
-import { sampleBottomColorFromElement } from '../utils/sampleImageColor';
+import { sampleBottomColor } from '../utils/sampleImageColor';
 import Seo from '../components/Seo';
 
-function CardImage({ src, alt, style, onLoadedElement }) {
+function CardImage({ src, alt, style }) {
   const checkCached = (url) => {
     try {
       const img = new Image();
@@ -28,16 +28,9 @@ function CardImage({ src, alt, style, onLoadedElement }) {
 
   const imgRef = useRef(null);
 
-  // Reports the now-decoded <img> element itself (not just a "loaded" flag)
-  // so the parent can sample its pixels directly, with no second fetch.
-  const reportLoaded = () => {
-    setLoaded(true);
-    if (imgRef.current) onLoadedElement?.(imgRef.current);
-  };
-
   useEffect(() => {
     if (imgRef.current && imgRef.current.complete) {
-      reportLoaded();
+      setLoaded(true);
     }
   }, [src]);
 
@@ -47,7 +40,7 @@ function CardImage({ src, alt, style, onLoadedElement }) {
       src={src}
       alt={alt}
       decoding="sync"
-      onLoad={reportLoaded}
+      onLoad={() => setLoaded(true)}
       className="absolute object-contain pointer-events-none"
       draggable="false"
       style={{
@@ -105,19 +98,20 @@ export default function ProductPage({
   const navigate = useNavigate();
   const isInCart = activeProduct ? cartItems.some(item => item.id === activeProduct.id) : false;
 
-  // Each card's photo is sampled for its bottom color directly off the
-  // already-loaded <img> element (see CardImage's onLoadedElement below),
-  // not by fetching the image a second time — that redundant fetch used to
-  // be the sampling mechanism, and on a slow connection it could take far
-  // longer than the visible photo (or never finish), leaving the text scrim
-  // stuck on its fallback indefinitely instead of just briefly.
-  const handleCardImageLoaded = (productId, imgEl) => {
-    setCardColors(prev => {
-      if (prev[productId]) return prev;
-      const sample = sampleBottomColorFromElement(imgEl);
-      return sample ? { ...prev, [productId]: sample } : prev;
+  // Sample each visible product photo's bottom color once, so the text scrim
+  // can be tinted to match it (see sampleBottomColor above) instead of using a
+  // fixed black overlay that looks like a smudge on light-background photos.
+  useEffect(() => {
+    let cancelled = false;
+    productsList.forEach((product) => {
+      if (!product?.image || cardColors[product.id]) return;
+      sampleBottomColor(product.image).then((sample) => {
+        if (cancelled || !sample) return;
+        setCardColors(prev => (prev[product.id] ? prev : { ...prev, [product.id]: sample }));
+      });
     });
-  };
+    return () => { cancelled = true; };
+  }, [productsList, cardColors]);
 
   const handleAddClick = () => {
     if (activeProduct && isInCart) {
@@ -486,14 +480,10 @@ export default function ProductPage({
               // it blends into dark photos and light photos alike instead of always
               // showing a dark smudge over light backgrounds.
               const colorSample = cardColors[product.id];
-              // sampleCornerColor reads pixels off a canvas, which some strict in-app
-              // browsers (Instagram's, notably) refuse for cross-origin images even
-              // with crossOrigin="anonymous" set — silently failing forever, not just
-              // briefly on first paint. Since most of this catalog's photography is
-              // shot on a dark backdrop, default to light text (safe on dark photos,
-              // which is the common case) rather than dark text, which goes invisible
-              // on a dark photo any time the sample never resolves.
-              const isLightPhoto = colorSample ? colorSample.luminance > 0.55 : false;
+              // Before the photo/sample is ready, the card is still showing its plain
+              // cream fallback background — default to dark text so it's actually
+              // readable then, instead of light cream-on-cream that looks blank.
+              const isLightPhoto = colorSample ? colorSample.luminance > 0.55 : true;
               const scrimRgb = colorSample ? `${colorSample.r}, ${colorSample.g}, ${colorSample.b}` : '0, 0, 0';
               const titleColor = isLightPhoto ? '#18181B' : '#F5F2EB';
               const taglineColor = isLightPhoto ? 'rgba(24,24,27,0.65)' : 'rgba(245,242,235,0.75)';
@@ -529,7 +519,6 @@ export default function ProductPage({
                     <CardImage
                       src={product.image}
                       alt={product.name}
-                      onLoadedElement={(imgEl) => handleCardImageLoaded(product.id, imgEl)}
                       style={{
                         width: '100%',
                         height: '105%',
@@ -548,7 +537,7 @@ export default function ProductPage({
                         </span>
                       </div>
                     )}
-                    {/* Card counter, top center — relies on titleColor (now safely defaulted, see isLightPhoto above) for contrast rather than a pill background */}
+                    {/* Card counter, top center — its own translucent pill so it stays legible regardless of photo color */}
                     <div
                       style={{
                         position: 'absolute',
@@ -571,11 +560,11 @@ export default function ProductPage({
                   </div>
 
                   {/* Scrim behind the bottom text, tinted to match this photo's own color so it stays legible over any photo, light or dark.
-                      Always visible (defaulting to a plain black gradient) rather than gated on the color sample resolving — that sample can
-                      fail permanently (see isLightPhoto above), and text with no scrim at all is worse than text with an untinted one. */}
+                      Stays invisible until the color is actually known, then fades in already-correct — avoids a black flash on light photos
+                      while we wait to find out the photo isn't dark. */}
                   <div
                     className="absolute bottom-0 left-0 right-0 pointer-events-none"
-                    style={{ height: '30%', background: `linear-gradient(to top, rgba(${scrimRgb}, 0.72), rgba(${scrimRgb}, 0))`, transition: 'background 0.4s ease' }}
+                    style={{ height: '30%', background: `linear-gradient(to top, rgba(${scrimRgb}, 0.72), rgba(${scrimRgb}, 0))`, opacity: colorSample ? 1 : 0, transition: 'background 0.4s ease, opacity 0.4s ease' }}
                   />
 
                   {/* Bottom Area: Title+Tagline on the left / Price on the right, counter centered below */}
