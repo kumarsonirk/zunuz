@@ -480,10 +480,14 @@ export default function ProductPage({
               // it blends into dark photos and light photos alike instead of always
               // showing a dark smudge over light backgrounds.
               const colorSample = cardColors[product.id];
-              // Before the photo/sample is ready, the card is still showing its plain
-              // cream fallback background — default to dark text so it's actually
-              // readable then, instead of light cream-on-cream that looks blank.
-              const isLightPhoto = colorSample ? colorSample.luminance > 0.55 : true;
+              // sampleCornerColor reads pixels off a canvas, which some strict in-app
+              // browsers (Instagram's, notably) refuse for cross-origin images even
+              // with crossOrigin="anonymous" set — silently failing forever, not just
+              // briefly on first paint. Since most of this catalog's photography is
+              // shot on a dark backdrop, default to light text (safe on dark photos,
+              // which is the common case) rather than dark text, which goes invisible
+              // on a dark photo any time the sample never resolves.
+              const isLightPhoto = colorSample ? colorSample.luminance > 0.55 : false;
               const scrimRgb = colorSample ? `${colorSample.r}, ${colorSample.g}, ${colorSample.b}` : '0, 0, 0';
               const titleColor = isLightPhoto ? '#18181B' : '#F5F2EB';
               const taglineColor = isLightPhoto ? 'rgba(24,24,27,0.65)' : 'rgba(245,242,235,0.75)';
@@ -537,7 +541,7 @@ export default function ProductPage({
                         </span>
                       </div>
                     )}
-                    {/* Card counter, top center — its own translucent pill so it stays legible regardless of photo color */}
+                    {/* Card counter, top center — relies on titleColor (now safely defaulted, see isLightPhoto above) for contrast rather than a pill background */}
                     <div
                       style={{
                         position: 'absolute',
@@ -560,11 +564,11 @@ export default function ProductPage({
                   </div>
 
                   {/* Scrim behind the bottom text, tinted to match this photo's own color so it stays legible over any photo, light or dark.
-                      Stays invisible until the color is actually known, then fades in already-correct — avoids a black flash on light photos
-                      while we wait to find out the photo isn't dark. */}
+                      Always visible (defaulting to a plain black gradient) rather than gated on the color sample resolving — that sample can
+                      fail permanently (see isLightPhoto above), and text with no scrim at all is worse than text with an untinted one. */}
                   <div
                     className="absolute bottom-0 left-0 right-0 pointer-events-none"
-                    style={{ height: '30%', background: `linear-gradient(to top, rgba(${scrimRgb}, 0.72), rgba(${scrimRgb}, 0))`, opacity: colorSample ? 1 : 0, transition: 'background 0.4s ease, opacity 0.4s ease' }}
+                    style={{ height: '30%', background: `linear-gradient(to top, rgba(${scrimRgb}, 0.72), rgba(${scrimRgb}, 0))`, transition: 'background 0.4s ease' }}
                   />
 
                   {/* Bottom Area: Title+Tagline on the left / Price on the right, counter centered below */}
