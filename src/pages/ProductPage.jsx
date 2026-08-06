@@ -75,6 +75,12 @@ export default function ProductPage({
   const isHorizontalSwipe = useRef(false);
   const animationRef = useRef(null);
   const [cardColors, setCardColors] = useState({});
+  // Tracks products whose color sample never arrived after a short grace period
+  // (e.g. Instagram's in-app browser, which blocks the canvas read outright) —
+  // only these get the black-gradient scrim fallback below. Everything else
+  // waits for its real sample before showing any scrim at all, so a light
+  // photo never flashes a black gradient before fading to its own tint.
+  const [scrimFallback, setScrimFallback] = useState({});
 
   // Reset tab, index, and pos when the category or tab changes
   useEffect(() => {
@@ -112,6 +118,15 @@ export default function ProductPage({
     });
     return () => { cancelled = true; };
   }, [productsList, cardColors]);
+
+  useEffect(() => {
+    const timers = productsList
+      .filter((product) => product?.id && !cardColors[product.id] && !scrimFallback[product.id])
+      .map((product) => setTimeout(() => {
+        setScrimFallback(prev => (prev[product.id] ? prev : { ...prev, [product.id]: true }));
+      }, 600));
+    return () => timers.forEach(clearTimeout);
+  }, [productsList, cardColors, scrimFallback]);
 
   const handleAddClick = () => {
     if (activeProduct && isInCart) {
@@ -563,11 +578,13 @@ export default function ProductPage({
                   </div>
 
                   {/* Scrim behind the bottom text, tinted to match this photo's own color so it stays legible over any photo, light or dark.
-                      Always visible (defaulting to a plain black gradient) rather than gated on the color sample resolving — that sample can
-                      fail permanently (see isLightPhoto above), and text with no scrim at all is worse than text with an untinted one. */}
+                      Hidden until the real sample resolves — showing the black default immediately
+                      would flash over light photos while we wait to find out they aren't dark. Only
+                      shown black by default once scrimFallback trips (sample never arrived, e.g. a
+                      browser that blocks the canvas read outright), so text still gets a backdrop there. */}
                   <div
                     className="absolute bottom-0 left-0 right-0 pointer-events-none"
-                    style={{ height: '30%', background: `linear-gradient(to top, rgba(${scrimRgb}, 0.72), rgba(${scrimRgb}, 0))`, transition: 'background 0.4s ease' }}
+                    style={{ height: '30%', background: `linear-gradient(to top, rgba(${scrimRgb}, 0.72), rgba(${scrimRgb}, 0))`, opacity: (colorSample || scrimFallback[product.id]) ? 1 : 0, transition: 'background 0.4s ease, opacity 0.4s ease' }}
                   />
 
                   {/* Bottom Area: Title+Tagline on the left / Price on the right, counter centered below */}
