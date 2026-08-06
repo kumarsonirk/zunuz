@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData'; // fallback when API not loaded
 import zr from '../utils/audio';
 import Price from '../components/Price';
-import { sampleBottomColor } from '../utils/sampleImageColor';
+import { sampleBottomColorFromElement } from '../utils/sampleImageColor';
 import Seo from '../components/Seo';
 
-function CardImage({ src, alt, style }) {
+function CardImage({ src, alt, style, onLoadedElement }) {
   const checkCached = (url) => {
     try {
       const img = new Image();
@@ -28,9 +28,16 @@ function CardImage({ src, alt, style }) {
 
   const imgRef = useRef(null);
 
+  // Reports the now-decoded <img> element itself (not just a "loaded" flag)
+  // so the parent can sample its pixels directly, with no second fetch.
+  const reportLoaded = () => {
+    setLoaded(true);
+    if (imgRef.current) onLoadedElement?.(imgRef.current);
+  };
+
   useEffect(() => {
     if (imgRef.current && imgRef.current.complete) {
-      setLoaded(true);
+      reportLoaded();
     }
   }, [src]);
 
@@ -40,7 +47,7 @@ function CardImage({ src, alt, style }) {
       src={src}
       alt={alt}
       decoding="sync"
-      onLoad={() => setLoaded(true)}
+      onLoad={reportLoaded}
       className="absolute object-contain pointer-events-none"
       draggable="false"
       style={{
@@ -98,20 +105,19 @@ export default function ProductPage({
   const navigate = useNavigate();
   const isInCart = activeProduct ? cartItems.some(item => item.id === activeProduct.id) : false;
 
-  // Sample each visible product photo's bottom color once, so the text scrim
-  // can be tinted to match it (see sampleBottomColor above) instead of using a
-  // fixed black overlay that looks like a smudge on light-background photos.
-  useEffect(() => {
-    let cancelled = false;
-    productsList.forEach((product) => {
-      if (!product?.image || cardColors[product.id]) return;
-      sampleBottomColor(product.image).then((sample) => {
-        if (cancelled || !sample) return;
-        setCardColors(prev => (prev[product.id] ? prev : { ...prev, [product.id]: sample }));
-      });
+  // Each card's photo is sampled for its bottom color directly off the
+  // already-loaded <img> element (see CardImage's onLoadedElement below),
+  // not by fetching the image a second time — that redundant fetch used to
+  // be the sampling mechanism, and on a slow connection it could take far
+  // longer than the visible photo (or never finish), leaving the text scrim
+  // stuck on its fallback indefinitely instead of just briefly.
+  const handleCardImageLoaded = (productId, imgEl) => {
+    setCardColors(prev => {
+      if (prev[productId]) return prev;
+      const sample = sampleBottomColorFromElement(imgEl);
+      return sample ? { ...prev, [productId]: sample } : prev;
     });
-    return () => { cancelled = true; };
-  }, [productsList, cardColors]);
+  };
 
   const handleAddClick = () => {
     if (activeProduct && isInCart) {
@@ -523,6 +529,7 @@ export default function ProductPage({
                     <CardImage
                       src={product.image}
                       alt={product.name}
+                      onLoadedElement={(imgEl) => handleCardImageLoaded(product.id, imgEl)}
                       style={{
                         width: '100%',
                         height: '105%',

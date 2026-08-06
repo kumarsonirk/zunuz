@@ -1,52 +1,33 @@
-// Samples the average color of a region of a photo via an offscreen image, so
-// UI around a product photo (scrims, thumbnail backgrounds) can be tinted to
-// match that specific photo instead of guessing one fixed color that only
-// happens to match some product photos and not others. Runs on a separate
-// Image (not the visible <img>), so a CORS hiccup here just skips the
-// adaptive color — it never breaks the actual photo.
-function sampleRegion(src, getRegion) {
-  return new Promise((resolve) => {
-    try {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        try {
-          const w = 16, h = 16;
-          const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          const { sx, sy, sw, sh } = getRegion(img.naturalWidth, img.naturalHeight);
-          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
-          const { data } = ctx.getImageData(0, 0, w, h);
-          let r = 0, g = 0, b = 0, count = 0;
-          for (let i = 0; i < data.length; i += 4) {
-            r += data[i]; g += data[i + 1]; b += data[i + 2];
-            count++;
-          }
-          r = Math.round(r / count);
-          g = Math.round(g / count);
-          b = Math.round(b / count);
-          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-          resolve({ r, g, b, luminance });
-        } catch {
-          resolve(null);
-        }
-      };
-      img.onerror = () => resolve(null);
-      img.src = src;
-    } catch {
-      resolve(null);
+// Samples a photo's average bottom-strip color directly from an already-
+// loaded <img> element rather than fetching src again via a fresh Image() —
+// that second fetch used to be the only way to sample colors, and on a slow
+// connection it could take far longer than the visible photo itself, or
+// never finish. The visible photo is already decoded in memory, so this is
+// synchronous and has nothing left to time out.
+export function sampleBottomColorFromElement(img) {
+  try {
+    const w = 16, h = 16;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    const sh = Math.max(1, Math.round(ih * 0.35));
+    ctx.drawImage(img, 0, ih - sh, iw, sh, 0, 0, w, h);
+    const { data } = ctx.getImageData(0, 0, w, h);
+    let r = 0, g = 0, b = 0, count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i]; g += data[i + 1]; b += data[i + 2];
+      count++;
     }
-  });
-}
-
-// Bottom strip — where a text scrim typically sits over a full photo.
-export function sampleBottomColor(src) {
-  return sampleRegion(src, (w, h) => {
-    const sh = Math.max(1, Math.round(h * 0.35));
-    return { sx: 0, sy: h - sh, sw: w, sh };
-  });
+    r = Math.round(r / count);
+    g = Math.round(g / count);
+    b = Math.round(b / count);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return { r, g, b, luminance };
+  } catch {
+    return null;
+  }
 }
 
 // All four corners, averaged — for small centered-product thumbnails
