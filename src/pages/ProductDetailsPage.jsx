@@ -1,5 +1,5 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { ShoppingCart, ArrowLeft, RotateCcw, Truck, ChevronRight, Star, ZoomIn, Sparkles } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, RotateCcw, Truck, ChevronRight, Star, ZoomIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { productData } from '../data/productData';
 import zr from '../utils/audio';
@@ -8,6 +8,7 @@ import Price from '../components/Price';
 import { sampleCornerColor } from '../utils/sampleImageColor';
 import { Helmet } from 'react-helmet-async';
 import Seo from '../components/Seo';
+import RichContent from '../components/RichContent';
 
 export default function ProductDetailsPage({
   product,
@@ -64,8 +65,17 @@ export default function ProductDetailsPage({
   // price changes later — always prefer the live productMap value when available.
   const effectivePrice = fullProduct?.price || product.price;
   const effectiveDescription = product.description || fullProduct?.description
-    || "Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle. Ideal for elevating daily ensembles or making a statement at special occasions.";
+    || "> Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle. Ideal for elevating daily ensembles or making a statement at special occasions.";
   const effectiveTagline = product.tagline || fullProduct?.tagline || null;
+
+  // Fallbacks preserve today's copy (as the old hardcoded MaterialsQualityContent/
+  // ProductCareContent components) for any product an admin hasn't filled these
+  // in for yet, so nothing goes blank on existing listings.
+  const effectiveProductDetails = product.productDetails || fullProduct?.productDetails || DEFAULT_PRODUCT_DETAILS;
+  const effectiveCareInstructions = product.careInstructions || fullProduct?.careInstructions || DEFAULT_CARE_INSTRUCTIONS;
+  // No fallback — brand new section with no prior copy, so it's simply hidden
+  // (see the accordion list below) until an admin writes something for it.
+  const effectiveWhyWorthIt = product.whyWorthIt || fullProduct?.whyWorthIt || null;
 
   // Deterministic per-product rating (stable across renders/reloads, not a real
   // Math.random() each time) — hashes the product id into a 4.0–5.0 range.
@@ -495,7 +505,7 @@ export default function ProductDetailsPage({
         <div className="px-6 border-t border-zinc-900/60" style={{ borderTop: '1px solid rgba(24, 24, 27, 0.4)' }}>
           <AccordionItem
             title="Description"
-            content={effectiveDescription}
+            content={<RichContent text={effectiveDescription} />}
             isOpen={openAccordion === 'Description'}
             onToggle={() => {
               setOpenAccordion(openAccordion === 'Description' ? null : 'Description');
@@ -503,23 +513,49 @@ export default function ProductDetailsPage({
             }}
           />
           <AccordionItem
-            title="Materials & Quality"
-            content={<MaterialsQualityContent />}
-            isOpen={openAccordion === 'Materials'}
+            title="Product Details"
+            content={<RichContent text={effectiveProductDetails} />}
+            isOpen={openAccordion === 'ProductDetails'}
             onToggle={() => {
-              setOpenAccordion(openAccordion === 'Materials' ? null : 'Materials');
+              setOpenAccordion(openAccordion === 'ProductDetails' ? null : 'ProductDetails');
               zr.playTick();
             }}
           />
+          {effectiveWhyWorthIt && (
+            <AccordionItem
+              title="Why It's Worth It"
+              content={<RichContent text={effectiveWhyWorthIt} />}
+              isOpen={openAccordion === 'WhyWorthIt'}
+              onToggle={() => {
+                setOpenAccordion(openAccordion === 'WhyWorthIt' ? null : 'WhyWorthIt');
+                zr.playTick();
+              }}
+            />
+          )}
           <AccordionItem
             title="Product Care"
-            content={<ProductCareContent />}
+            content={<RichContent text={effectiveCareInstructions} />}
             isOpen={openAccordion === 'ProductCare'}
             onToggle={() => {
               setOpenAccordion(openAccordion === 'ProductCare' ? null : 'ProductCare');
               zr.playTick();
             }}
           />
+        </div>
+
+        {/* Our Promise — same highlighted copy on every product, not admin-editable */}
+        <div className="px-6 pt-5 pb-1">
+          <div style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: '16px', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#F5F2EB', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
+              Our Promise
+            </h3>
+            <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#A1A1AA', margin: 0 }}>
+              Every ZUNUZ piece begins with one question.<br/>
+            Will someone genuinely want to wear this tomorrow?
+              If the answer isn't yes, we won't launch it.,
+              Because we believe the best jewellery isn't worn once.,
+              It's worn until it becomes part of your everyday.</p>
+          </div>
         </div>
 
         {/* Returns & Delivery capsule links */}
@@ -658,70 +694,26 @@ export default function ProductDetailsPage({
   );
 }
 
-// TEMPORARY: hardcoded in place of the backend-driven materials text while
-// that data isn't ready — swap back to `effectiveMaterials` once it is.
-function MaterialsQualityContent() {
-  const items = [
-    <>
-      <strong style={{ color: '#F5F2EB' }}>Premium 316L Stainless Steel</strong> or{' '}
-      <strong style={{ color: '#F5F2EB' }}>Premium Copper-Based Alloy</strong>
-    </>,
-    <>
-      <strong style={{ color: '#F5F2EB' }}>0.8 Micron 18K Gold Plating</strong> or{' '}
-      <strong style={{ color: '#F5F2EB' }}>Premium Silver Plating</strong>
-    </>,
-    <strong style={{ color: '#F5F2EB' }}>High-Quality Cubic Zirconia Stones</strong>,
-    <strong style={{ color: '#F5F2EB' }}>Hypoallergenic</strong>,
-    <strong style={{ color: '#F5F2EB' }}>Designed for Everyday Wear</strong>,
-  ];
+// Defaults shown until an admin fills in Product Details / Product Care for a
+// given product from the dashboard — written in the same "## heading / >
+// paragraph / plain line = bullet" markup RichContent parses, so they render
+// identically to admin-authored content (see src/components/RichContent.jsx).
+const DEFAULT_PRODUCT_DETAILS = `> At ZUNUZ, we use carefully selected materials to create jewellery that's made to be worn every day.
+Premium 316L Stainless Steel or Premium Copper-Based Alloy
+0.8 Micron 18K Gold Plating or Premium Silver Plating
+High-Quality Cubic Zirconia Stones
+Hypoallergenic
+Designed for Everyday Wear`;
 
-  return (
-    <>
-      <p style={{ margin: '0 0 12px 0' }}>
-        At ZUNUZ, we use carefully selected materials to create jewellery that's made to be worn every day.
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {items.map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <Sparkles size={15} strokeWidth={1.5} color="#D4AF37" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <span>{item}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-}
-
-function ProductCareContent() {
-  const items = [
-    'Wipe gently with a soft, dry cloth after each wear.',
-    'Avoid direct contact with perfumes, lotions, hairsprays, and harsh chemicals.',
-    'Remove your jewellery before swimming, showering, exercising, or cleaning.',
-    'Store each piece separately in jewellery box to help prevent scratches.',
-    'Avoid dropping, bending, or applying excessive force to delicate designs.',
-    'Wear with care to preserve the finish and brilliance.',
-  ];
-
-  return (
-    <>
-      <p style={{ margin: '0 0 12px 0' }}>
-        Every ZUNUZ piece is thoughtfully crafted for everyday style and lasting beauty. With a little care, your jewellery will keep its shine for years.
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {items.map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <Sparkles size={15} strokeWidth={1.5} color="#D4AF37" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <span>{item}</span>
-          </div>
-        ))}
-      </div>
-      <p style={{ margin: '16px 0 6px 0', fontWeight: 600, color: '#F5F2EB' }}>Important Note</p>
-      <p style={{ margin: 0 }}>
-        Our jewellery is designed for everyday use, but all plated jewellery naturally experiences gradual wear over time. Following the recommended care instructions will help maintain the beauty, shine, and finish of your ZUNUZ pieces for as long as possible.
-      </p>
-    </>
-  );
-}
+const DEFAULT_CARE_INSTRUCTIONS = `> Every ZUNUZ piece is thoughtfully crafted for everyday style and lasting beauty. With a little care, your jewellery will keep its shine for years.
+Wipe gently with a soft, dry cloth after each wear.
+Avoid direct contact with perfumes, lotions, hairsprays, and harsh chemicals.
+Remove your jewellery before swimming, showering, exercising, or cleaning.
+Store each piece separately in jewellery box to help prevent scratches.
+Avoid dropping, bending, or applying excessive force to delicate designs.
+Wear with care to preserve the finish and brilliance.
+## Important Note
+> Our jewellery is designed for everyday use, but all plated jewellery naturally experiences gradual wear over time. Following the recommended care instructions will help maintain the beauty, shine, and finish of your ZUNUZ pieces for as long as possible.`;
 
 // Inner Helper Accordion component
 function AccordionItem({ title, content, isOpen, onToggle }) {

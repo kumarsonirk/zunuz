@@ -128,7 +128,10 @@ export function useAppState() {
             images: imgs.length > 0 ? imgs : [p.image || '/gold_knot_necklace.webp'],
             tagline: p.tagline || null,
             description: p.description || null,
-            materials: p.materials || null
+            materials: p.materials || null,
+            productDetails: p.productDetails || null,
+            whyWorthIt: p.whyWorthIt || null,
+            careInstructions: p.careInstructions || null
           });
         });
         if (Object.keys(map).length > 0) setProductMap(map);

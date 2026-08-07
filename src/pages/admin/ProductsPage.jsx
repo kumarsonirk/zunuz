@@ -2,8 +2,11 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Package, Upload, ImagePlus } from 'lucide-react';
 import { api } from '../../utils/api';
 import Price from '../../components/Price';
+import RichContent from '../../components/RichContent';
 
-const EMPTY_FORM = { name: '', slug: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, tagline: '', description: '', materials: '' };
+const EMPTY_FORM = { name: '', slug: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, tagline: '', description: '', materials: '', productDetails: '', whyWorthIt: '', careInstructions: '' };
+
+const RICH_TEXT_HELP = 'Start a line with "## " for a bold heading, "> " for a plain paragraph, or just type plain text for a bullet point. Wrap *text* in single asterisks for italics.';
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace('/api', '');
 
@@ -40,6 +43,41 @@ function Field({ label, children }) {
       <label style={{ display: 'block', color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>{label}</label>
       {children}
     </div>
+  );
+}
+
+// Textarea + live preview for the 4 rich content fields (Description, Product
+// Details, Why It's Worth It, Product Care). There's no rich-text editor in
+// this app, so admins author plain text with a small line-prefix syntax (see
+// RICH_TEXT_HELP above) that RichContent parses — the preview renders through
+// that exact same component the storefront uses, so it's a true "what you see
+// is what ships" preview, not an approximation.
+function RichTextField({ label, value, onChange, placeholder }) {
+  const [showPreview, setShowPreview] = useState(false);
+  return (
+    <Field label={label}>
+      <textarea
+        style={{ ...inputStyle, resize: 'vertical', minHeight: '110px', fontFamily: 'inherit' }}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginTop: '6px' }}>
+        <p style={{ color: 'var(--admin-text-faint)', fontSize: '11px', margin: 0, lineHeight: 1.5 }}>{RICH_TEXT_HELP}</p>
+        <button
+          type="button"
+          onClick={() => setShowPreview(s => !s)}
+          style={{ background: 'none', border: 'none', color: '#FC4B4E', fontSize: '11px', fontWeight: 600, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}
+        >
+          {showPreview ? 'Hide preview' : 'Preview'}
+        </button>
+      </div>
+      {showPreview && (
+        <div style={{ marginTop: '8px', background: '#1F2024', border: '1px solid var(--admin-border-3)', borderRadius: '10px', padding: '14px 16px', fontSize: '14px', lineHeight: 1.6, color: '#A1A1AA', fontFamily: "'Grift', sans-serif" }}>
+          {value ? <RichContent text={value} /> : <span style={{ color: '#71717A' }}>Nothing to preview yet.</span>}
+        </div>
+      )}
+    </Field>
   );
 }
 
@@ -184,7 +222,7 @@ export default function ProductsPage() {
     setEditProduct(p);
     let parsedImages = [];
     try { parsedImages = JSON.parse(p.images || '[]'); } catch {}
-    setForm({ name: p.name, slug: p.slug || '', price: p.price, stock: p.stock, image: p.image || '', images: parsedImages, categoryId: p.categoryId, subcategoryId: p.subcategoryId, isActive: p.isActive, tagline: p.tagline || '', description: p.description || '', materials: p.materials || '' });
+    setForm({ name: p.name, slug: p.slug || '', price: p.price, stock: p.stock, image: p.image || '', images: parsedImages, categoryId: p.categoryId, subcategoryId: p.subcategoryId, isActive: p.isActive, tagline: p.tagline || '', description: p.description || '', materials: p.materials || '', productDetails: p.productDetails || '', whyWorthIt: p.whyWorthIt || '', careInstructions: p.careInstructions || '' });
     setModal('edit');
   };
 
@@ -362,14 +400,30 @@ export default function ProductsPage() {
             onChange={imgs => setForm(f => ({ ...f, images: imgs }))}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <Field label="DESCRIPTION">
-              <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: '72px', fontFamily: 'inherit' }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Exquisitely crafted, this piece features a high-polished finish..." />
-            </Field>
-            <Field label="MATERIALS">
-              <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: '72px', fontFamily: 'inherit' }} value={form.materials} onChange={e => setForm(f => ({ ...f, materials: e.target.value }))} placeholder="Made from premium 18K yellow gold plated sterling silver (925)..." />
-            </Field>
-          </div>
+          <RichTextField
+            label="DESCRIPTION"
+            value={form.description}
+            onChange={v => setForm(f => ({ ...f, description: v }))}
+            placeholder={'> Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle.'}
+          />
+          <RichTextField
+            label="PRODUCT DETAILS"
+            value={form.productDetails}
+            onChange={v => setForm(f => ({ ...f, productDetails: v }))}
+            placeholder={'> Made from premium 18K yellow gold plated sterling silver (925).\nHypoallergenic\nDesigned for everyday wear'}
+          />
+          <RichTextField
+            label="WHY IT'S WORTH IT"
+            value={form.whyWorthIt}
+            onChange={v => setForm(f => ({ ...f, whyWorthIt: v }))}
+            placeholder={'## Built to last\nEach piece is quality-checked by hand before it ships.'}
+          />
+          <RichTextField
+            label="PRODUCT CARE"
+            value={form.careInstructions}
+            onChange={v => setForm(f => ({ ...f, careInstructions: v }))}
+            placeholder={'Wipe gently with a soft, dry cloth after each wear.\nAvoid direct contact with perfumes and harsh chemicals.'}
+          />
 
           <Field label="STATUS">
             <select style={selectStyle} value={form.isActive ? 'true' : 'false'} onChange={e => setForm(f => ({ ...f, isActive: e.target.value === 'true' }))}>

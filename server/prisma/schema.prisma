@@ -98,6 +98,9 @@ model Product {
   tagline       String?
   description   String?     @db.Text
   materials     String?     @db.Text
+  productDetails   String?  @db.Text
+  whyWorthIt       String?  @db.Text
+  careInstructions String?  @db.Text
   category      Category    @relation(fields: [categoryId], references: [id])
   categoryId    Int
   subcategory   Subcategory @relation(fields: [subcategoryId], references: [id])

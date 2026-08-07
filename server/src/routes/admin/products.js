@@ -22,7 +22,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 router.post('/', auth, async (req, res) => {
-  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials } = req.body;
+  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials, productDetails, whyWorthIt, careInstructions } = req.body;
   try {
     // Auto-generated from the name, not admin-editable — kept stable once
     // set (later name edits don't re-slugify) so shared/bookmarked product
@@ -36,7 +36,10 @@ router.post('/', auth, async (req, res) => {
         isActive: isActive !== undefined ? isActive : true,
         tagline: tagline || null,
         description: description || null,
-        materials: materials || null
+        materials: materials || null,
+        productDetails: productDetails || null,
+        whyWorthIt: whyWorthIt || null,
+        careInstructions: careInstructions || null
       },
       include: { category: true, subcategory: true }
     });
@@ -45,7 +48,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 router.put('/:id', auth, async (req, res) => {
-  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials } = req.body;
+  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials, productDetails, whyWorthIt, careInstructions } = req.body;
   try {
     const product = await prisma.product.update({
       where: { id: Number(req.params.id) },
@@ -56,7 +59,10 @@ router.put('/:id', auth, async (req, res) => {
         isActive,
         tagline: tagline || null,
         description: description || null,
-        materials: materials || null
+        materials: materials || null,
+        productDetails: productDetails || null,
+        whyWorthIt: whyWorthIt || null,
+        careInstructions: careInstructions || null
       },
       include: { category: true, subcategory: true }
     });
