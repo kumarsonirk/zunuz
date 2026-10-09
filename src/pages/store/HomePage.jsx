@@ -7,7 +7,7 @@ import { ArrowRight, Check, Mail } from 'lucide-react';
 import { formatPrice } from '../../store/catalogConfig';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import useSmoothScroll from '../../hooks/useSmoothScroll';
-import { LandingHeader } from '../../components/landing/LandingIntro';
+import { LandingHeader, LandingLoader } from '../../components/landing/LandingIntro';
 import useHeroIntro from '../../components/landing/useHeroIntro';
 import { api } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -858,6 +858,7 @@ const POSTER_SLIDES = [
   },
   {
     key: 'first-order',
+    darkHeader: true, // white poster → dark logo/menu, no shade
     name: '50% off your first order',
     label: '50% off your first order — valid on first orders above ₹2,000. Shop now',
     to: '/jewellery',
@@ -932,6 +933,9 @@ function NavaratriCta() {
   );
 }
 
+// Set once the loading screen has played in this tab.
+const INTRO_KEY = 'zunuz_intro_seen';
+
 export default memo(HomePage);
 
 // Hide the newsletter box for a signed-in customer who's already on the
@@ -984,6 +988,8 @@ function HomePage() {
   // Slides: 0 brand hero, then the POSTER_SLIDES.
   const firstOrderSlide = 1; // first poster slide
   const totalSlides = firstOrderSlide + POSTER_SLIDES.length;
+  // Header logo/menu colour per slide: dark on the light (cream/white) slides.
+  const heroDarkInk = activeSlide === 0 || !!POSTER_SLIDES[activeSlide - firstOrderSlide]?.darkHeader;
   const slideNames = ['ZUNUZ Brand Hero', ...POSTER_SLIDES.map((p) => p.name)];
 
   const changeSlide = useCallback((nextIndex) => {
@@ -1144,7 +1150,16 @@ function HomePage() {
   const [posterSrc] = useState(() => (window.matchMedia('(orientation: portrait)').matches ? HERO_IMG_M : HERO_IMG));
   // No loading screen (same as the jewellery page): the photo fades in as
   // soon as it's decoded and the headline / text animate in right after.
-  useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc, withLoader: false });
+  // Branded loading screen only on the first visit in a browser tab
+  // (sessionStorage is per tab: a new tab, or reopening the site, shows it
+  // again; moving between pages or reloading in the same tab doesn't).
+  const [showLoader] = useState(() => {
+    try { return !sessionStorage.getItem(INTRO_KEY); } catch { return false; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem(INTRO_KEY, '1'); } catch { /* private mode */ }
+  }, []);
+  useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc, withLoader: showLoader });
 
   // Budget section:
   // - heading/subtitle fade up, then the eyes icon pops in and keeps
@@ -1642,6 +1657,7 @@ function HomePage() {
       </div>
 
 
+      {showLoader && <LandingLoader loaderRef={loaderRef} />}
       <div ref={scrollRef} className="absolute inset-0 overflow-y-auto overflow-x-hidden">
         <div ref={scrollContentRef}>
 
@@ -1659,7 +1675,7 @@ function HomePage() {
                 inside the hero (not fixed) so it scrolls away with it rather
                 than floating, white-on-cream, over the sections below. */}
             <div className="t3h-head absolute inset-x-0 top-0 z-10">
-              <LandingHeader />
+              <LandingHeader darkInk={heroDarkInk} />
             </div>
 
             {/* Size container (cqw/cqh) so the photo and copy scale off the
@@ -1679,8 +1695,6 @@ function HomePage() {
                   className="t3h-photo absolute inset-0 bg-[#F3E4D3] bg-[image:var(--hero-img)] bg-no-repeat bg-[length:max(100cqw,213.4cqh)_auto] bg-[position:40%_60%] portrait:bg-[image:var(--hero-img-m)] portrait:bg-[#F3E4D3] portrait:bg-[length:auto_max(calc(100cqh-var(--announce-h,0px)-44px),177.8cqw)] portrait:bg-[position:right_bottom]"
                   style={{ '--hero-img': `url("${HERO_IMG}")`, '--hero-img-m': `url("${HERO_IMG_M}")` }}
                 />
-                {/* Soft shade at the top so the white header stays readable on the cream poster */}
-                <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[clamp(110px,18vh,170px)] bg-[linear-gradient(to_bottom,rgba(17,17,16,0.5)_0%,rgba(17,17,16,0.18)_55%,transparent_100%)]" />
                 {/* Phones: soft dark fade at the bottom so the centred copy stays readable */}
                 <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-[42%] bg-[linear-gradient(to_top,rgba(17,17,16,0.62),rgba(17,17,16,0.28)_55%,transparent)] portrait:block" />
 
@@ -1745,8 +1759,10 @@ function HomePage() {
                       className={`absolute inset-0 size-full object-cover ${poster.mobilePos} ${poster.mobileShift || ''}`}
                     />
                   </picture>
-                  {/* Soft shade at the top so the white header stays readable */}
-                  <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[clamp(110px,18vh,170px)] bg-[linear-gradient(to_bottom,rgba(17,17,16,0.62)_0%,rgba(17,17,16,0.25)_55%,transparent_100%)]" />
+                  {/* Soft shade at the top so the white header reads (dark slides only;
+                      light slides switch the header to dark ink instead). */}
+                  {poster.darkHeader && <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[clamp(110px,16vh,160px)] bg-[linear-gradient(to_bottom,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.55)_50%,rgba(255,255,255,0)_100%)]" />}
+                  {!poster.darkHeader && <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[clamp(110px,18vh,170px)] bg-[linear-gradient(to_bottom,rgba(17,17,16,0.62)_0%,rgba(17,17,16,0.25)_55%,transparent_100%)]" />}
                   {poster.copy === 'top3' && <Top3Copy />}
                   {poster.copy === 'navaratri' && <NavaratriCta />}
                 </Link>

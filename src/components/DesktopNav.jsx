@@ -32,21 +32,23 @@ export function GlassLayer({ opacity = 1 }) {
 //                 photo (home / jewellery page tops).
 // `customer` (optional): when signed in, Log in / Sign up become an account
 // avatar (initials) that opens /account.
-export default function DesktopNav({ cartItems = [], onLogoClick, onCartClick, transparent = false, glass = 1, ink: inkOpacity = 1, customer = null }) {
+// darkInk: transparent bar (no glass) but dark logo/text — for light hero photos.
+export default function DesktopNav({ cartItems = [], onLogoClick, onCartClick, transparent = false, glass = 1, ink: inkOpacity = 1, customer = null, darkInk = false }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  const light = !transparent;
+  const solid = !transparent; // glass bar
+  const light = solid || darkInk; // dark logo + text
   const ink = light ? 'text-[#111110]' : 'text-[#F5F2EB]';
 
   return (
     <header
       style={{ '--ink-o': inkOpacity }}
-      className={`relative isolate flex items-center justify-between px-16 [&>:not([data-glass])]:opacity-(--ink-o) ${light
+      className={`relative isolate flex items-center justify-between px-16 [&>:not([data-glass])]:opacity-(--ink-o) ${solid
         ? 'border-b border-transparent py-[18px]'
         : 'bg-transparent py-6'}`}
     >
-      {light && <GlassLayer opacity={glass} />}
+      {solid && <GlassLayer opacity={glass} />}
       <img
         src={light ? '/logo_dark.png' : '/logo_white.png'}
         alt="Zunuz"

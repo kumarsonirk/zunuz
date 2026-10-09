@@ -450,9 +450,9 @@ function JewelleryPage() {
         <div ref={scrollContentRef}>
 
           {/* ── Hero ── full screen, header floating over the photo. */}
-          <section ref={heroRef} className="relative h-dvh overflow-hidden bg-[#F4E7DE]">
+          <section ref={heroRef} className="relative h-dvh overflow-hidden bg-[#F4E7DE] portrait:bg-[#EFE3D7]">
             <div className="t3h-head absolute inset-x-0 top-0 z-10">
-              <LandingHeader />
+              <LandingHeader darkInk /* dark logo/text on the cream photo */ />
             </div>
 
             {/* "Own it" photo (cream wall). Desktop: wide photo, woman on the
@@ -461,11 +461,15 @@ function JewelleryPage() {
             <div
               role="img"
               aria-label="Smiling woman in a black top wearing a gold necklace, bracelet and earrings"
-              className="t3h-photo absolute inset-0 bg-[#F4E7DE] bg-[image:var(--jw-img)] bg-no-repeat bg-cover bg-[position:70%_center] portrait:bg-[image:var(--jw-img-m)] portrait:bg-[length:auto_90%] portrait:bg-[position:center_bottom]"
+              className="t3h-photo absolute inset-0 bg-[#F4E7DE] portrait:bg-[#EFE3D7] bg-[image:var(--jw-img)] bg-no-repeat bg-cover bg-[position:70%_center] portrait:bg-[image:var(--jw-img-m)] portrait:bg-[length:auto_90%] portrait:bg-[position:center_bottom]"
               style={{ '--jw-img': `url("${JEWEL_HERO_IMG}")`, '--jw-img-m': `url("${JEWEL_HERO_IMG_M}")` }}
             />
-            {/* Soft shade at the top so the white header reads on the cream photo */}
-            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[clamp(110px,18vh,170px)] bg-[linear-gradient(to_bottom,rgba(17,17,16,0.5)_0%,rgba(17,17,16,0.18)_55%,transparent_100%)]" />
+            {/* Desktop: soft cream fade at the top (the wall colour) so the dark
+                header reads where it crosses her hair. */}
+            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[clamp(120px,17vh,170px)] bg-[linear-gradient(to_bottom,rgba(244,231,222,0.92)_0%,rgba(244,231,222,0.6)_50%,rgba(244,231,222,0)_100%)] portrait:hidden" />
+            {/* Phones: the photo fills the bottom 90%; the strip above is the
+                photo's own top colour (#EFE3D7) and this fade hides the join. */}
+            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-[10%] hidden h-[10%] bg-[linear-gradient(to_bottom,#EFE3D7,rgba(239,227,215,0))] portrait:block" />
 
             {/* Copy — left side, as in the design: script line, huge "OWN IT", sub-line. */}
             <div className="t3h-copy absolute inset-y-0 left-[4%] right-[42%] z-[1] flex flex-col justify-center pt-[clamp(60px,8vh,90px)] portrait:inset-y-auto portrait:top-[calc(clamp(80px,12vh,120px)+var(--announce-h,0px))] portrait:right-5 portrait:left-5 portrait:pt-0">

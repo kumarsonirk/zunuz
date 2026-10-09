@@ -21,7 +21,7 @@ const MOBILE_LINKS = [
 
 // Compact header for < 1024px (the desktop nav's links don't fit there):
 // logo · bag (with count) · menu button that drops down the links.
-function MobileLandingHeader({ transparent, glass = 1, ink: inkOpacity = 1, cartCount, navigate, customer }) {
+function MobileLandingHeader({ transparent, glass = 1, ink: inkOpacity = 1, cartCount, navigate, customer, darkInk = false }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
 
@@ -40,7 +40,8 @@ function MobileLandingHeader({ transparent, glass = 1, ink: inkOpacity = 1, cart
   const go = (path) => { setOpen(false); navigate(path); };
   // Over a photo the bar turns light while the menu is open so the panel reads.
   const solid = !transparent || open;
-  const ink = solid ? 'text-[#111110]' : 'text-[#F5F2EB]';
+  const dark = solid || darkInk; // darkInk: dark logo/icons over a light hero photo
+  const ink = dark ? 'text-[#111110]' : 'text-[#F5F2EB]';
 
   return (
     <div ref={wrapRef} className="relative">
@@ -51,7 +52,7 @@ function MobileLandingHeader({ transparent, glass = 1, ink: inkOpacity = 1, cart
         {/* menu open: always full glass so the panel reads */}
         {solid && <GlassLayer opacity={open ? 1 : glass} />}
         <img
-          src={solid ? '/logo_dark.png' : '/logo_white.png'}
+          src={dark ? '/logo_dark.png' : '/logo_white.png'}
           alt="Zunuz"
           onClick={() => go('/')}
           className="h-5 w-auto cursor-pointer object-contain"
@@ -157,7 +158,9 @@ function MobileLandingHeader({ transparent, glass = 1, ink: inkOpacity = 1, cart
 // small header re-renders.
 // `transparent` (default) floats over a hero photo; pass false on pages
 // with a light background (e.g. the product page) for the dark-ink bar.
-export function LandingHeader({ transparent = true }) {
+// darkInk: the top (clear) header uses dark logo/text — for light hero photos.
+// true = everywhere, "mobile" = only the phone header.
+export function LandingHeader({ transparent = true, darkInk = false }) {
   const navigate = useNavigate();
   // Live bag (shared cart store) + signed-in customer.
   const cartItems = useCart();
@@ -172,6 +175,7 @@ export function LandingHeader({ transparent = true }) {
   const bar = (clear, glass, ink) => (isDesktop ? (
     <DesktopNav
       transparent={clear}
+      darkInk={clear && darkInk === true}
       glass={glass}
       ink={ink}
       customer={customer}
@@ -180,7 +184,7 @@ export function LandingHeader({ transparent = true }) {
       onCartClick={() => navigate('/cart')}
     />
   ) : (
-    <MobileLandingHeader transparent={clear} glass={glass} ink={ink} cartCount={cartCount(cartItems)} navigate={navigate} customer={customer} />
+    <MobileLandingHeader transparent={clear} darkInk={clear && !!darkInk} glass={glass} ink={ink} cartCount={cartCount(cartItems)} navigate={navigate} customer={customer} />
   ));
   // Announcement strip (admin → Settings) sits above the header; it renders
   // nothing when switched off or dismissed. On the light pages the caller
