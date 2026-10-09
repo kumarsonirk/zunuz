@@ -27,7 +27,9 @@ export default function ProductCard({ product, className = '', imageAspect = 'as
   };
 
   return (
-    <div className={`flex flex-col rounded-[clamp(14px,1.4vw,18px)] bg-white p-[clamp(6px,0.7vw,9px)] shadow-[0_8px_24px_-16px_rgba(17,17,16,0.25)] ${className}`}>
+    // min-w-0: a long (truncated) name must not widen the card — in a swipe
+    // row that made cards, and so their 4:5 photos, different sizes.
+    <div className={`flex min-w-0 flex-col rounded-[clamp(14px,1.4vw,18px)] bg-white p-[clamp(6px,0.7vw,9px)] shadow-[0_8px_24px_-16px_rgba(17,17,16,0.25)] ${className}`}>
       <Link to={productPath(product)} className="group block text-[#111110] no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF3D8B]">
         {/* Photos may have baked-in rounded PNG corners — 110% hides them. */}
         <span className={`relative isolate block ${imageAspect} overflow-hidden rounded-[clamp(10px,1.1vw,14px)] bg-[#EFE8DA]`}>
