@@ -19,6 +19,17 @@ const parseImages = (raw) => {
   try { const v = JSON.parse(raw || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
 };
 
+// Price tier from the product's subcategory. Accepts any naming the admin
+// used — "199-plus", "199", "199+", "₹199+" — and maps it to the storefront's
+// tier slugs (catalogConfig TIERS). Non-tier subcategories (e.g. Festive Glow's
+// "earrings") give null.
+function tierSlugOf(sub) {
+  const raw = `${sub?.slug || ''} ${sub?.name || ''}`;
+  const m = raw.match(/(?:^|[^\d])(199|499|999)(?!\d)/);
+  const slug = m ? `${m[1]}-plus` : null;
+  return slug && TIERS.some((t) => t.slug === slug) ? slug : null;
+}
+
 export function normalizeProduct(p) {
   const extra = parseImages(p.images).filter((u) => u && u !== p.image);
   return {
@@ -39,7 +50,7 @@ export function normalizeProduct(p) {
     categoryName: p.category?.name || '',
     subcategorySlug: p.subcategory?.slug || null,
     subcategoryName: p.subcategory?.name || '',
-    tierSlug: p.subcategory?.slug || null,
+    tierSlug: tierSlugOf(p.subcategory),
     isActive: p.isActive !== false,
     createdAt: p.createdAt,
   };
