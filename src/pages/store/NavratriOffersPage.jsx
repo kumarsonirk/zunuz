@@ -607,13 +607,13 @@ function NavratriOffersPage() {
                         }`}
                       >
                         <Link to={productPath(product)} className="group block no-underline">
-                          <div className="relative aspect-square overflow-hidden rounded-[16px] bg-[#EFE8DA]">
+                          <div className="relative aspect-[4/5] overflow-hidden rounded-[16px] bg-[#EFE8DA]">
                             <img
                               src={product.image}
                               alt={product.name}
                               loading="lazy"
                               decoding="async"
-                              className="size-full scale-105 object-cover transition-transform duration-500 group-hover:scale-110"
+                              className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
                             {timesSelected > 0 && (
                               <span className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-full bg-[#1E8A4C] font-['Inter',sans-serif] text-[12px] font-bold text-white shadow-sm">

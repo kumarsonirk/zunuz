@@ -874,7 +874,7 @@ function ProductView({ product, related }) {
               linkText={product.categoryName ? `View all ${product.categoryName.toLowerCase()}` : 'View all'}
               linkHref={product.categorySlug ? categoryPath(product.categorySlug) : '/jewellery'}
               items={related}
-              imageAspect="aspect-square"
+              imageAspect="aspect-[4/5]"
               titleClassName="text-[length:clamp(28px,3.6vw,48px)] text-[#111110]"
               sectionClassName="pt-0 pb-[clamp(48px,7vw,96px)]"
             />

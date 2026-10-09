@@ -10,7 +10,8 @@ import { formatPrice, productPath } from '../../store/catalogConfig';
 // Out-of-stock products show a disabled "Sold out". `className` lets
 // sections add their own hook classes (e.g. entrance animations) and
 // layout (e.g. phone-strip sizing).
-export default function ProductCard({ product, className = '', imageAspect = 'aspect-square' }) {
+// Product photos are 4:5 (portrait) — the card matches so nothing is cropped.
+export default function ProductCard({ product, className = '', imageAspect = 'aspect-[4/5]' }) {
   const [added, setAdded] = useState(false);
   const timer = useRef(null);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -32,7 +33,7 @@ export default function ProductCard({ product, className = '', imageAspect = 'as
         <span className={`relative isolate block ${imageAspect} overflow-hidden rounded-[clamp(10px,1.1vw,14px)] bg-[#EFE8DA]`}>
           {product.image && (
             <img
-              className={`absolute inset-0 h-full w-full scale-110 object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.16] ${soldOut ? 'opacity-60 grayscale-[40%]' : ''}`}
+              className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05] ${soldOut ? 'opacity-60 grayscale-[40%]' : ''}`}
               src={product.image}
               alt={product.name}
               loading="lazy"

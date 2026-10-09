@@ -594,7 +594,7 @@ function JewelleryPage() {
                 linkText={`View all ${row.name.toLowerCase()}`}
                 linkHref={categoryPath(row.slug)}
                 items={row.items}
-                imageAspect="aspect-square"
+                imageAspect="aspect-[4/5]"
                 titleClassName="text-[length:clamp(28px,3.6vw,48px)] text-[#111110]"
                 sectionClassName="pt-[clamp(28px,4vw,56px)] pb-[clamp(12px,2vw,24px)]"
               />

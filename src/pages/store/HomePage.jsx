@@ -2087,7 +2087,7 @@ function HomePage() {
               linkText={edit499.linkLabel}
               linkHref="/shop?tier=199-plus"
               items={under499}
-              imageAspect="aspect-square"
+              imageAspect="aspect-[4/5]"
               /* tighter bottom when the ₹999 edit follows straight after */
               sectionClassName={under999.length > 0 ? 'pt-[clamp(48px,6vw,88px)] pb-[clamp(20px,2.5vw,36px)]' : undefined}
             />
@@ -2104,7 +2104,7 @@ function HomePage() {
               linkText="Shop under ₹999"
               linkHref="/shop?tier=499-plus"
               items={under999}
-              imageAspect="aspect-square"
+              imageAspect="aspect-[4/5]"
               sectionClassName="pt-[clamp(20px,2.5vw,36px)] pb-[clamp(64px,8vw,110px)]"
             />
           )}

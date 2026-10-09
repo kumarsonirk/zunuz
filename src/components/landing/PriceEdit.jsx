@@ -17,7 +17,7 @@ const DEFAULT_SECTION_CLASS = 'pt-[clamp(48px,6vw,88px)] pb-[clamp(64px,8vw,110p
 
 export default function PriceEdit({
   scrollRef, sectionRef, title, subtitle, linkText, linkHref = '/products', items,
-  imageAspect = 'aspect-square',
+  imageAspect = 'aspect-[4/5]',
   // Literal Tailwind classes (size + colour) for the title, and the
   // section's vertical padding — so pages can restyle without forking.
   titleClassName = DEFAULT_TITLE_CLASS,
