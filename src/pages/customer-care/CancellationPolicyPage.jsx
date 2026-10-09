@@ -1,6 +1,5 @@
-import React from 'react';
-import { Sparkles } from 'lucide-react';
 import Seo from '../../components/Seo';
+import PolicyLayout from '../../components/store/PolicyLayout';
 
 const SECTIONS = [
   {
@@ -12,23 +11,23 @@ const SECTIONS = [
   {
     heading: 'Order Cancellation',
     list: [
-      <>Orders can be cancelled within <strong style={{ color: '#F5F2EB', fontWeight: 600 }}>6 hours</strong> of being placed.</>,
+      <>Orders can be cancelled within <strong className="font-semibold text-[#111110]">6 hours</strong> of being placed.</>,
       'Once an order has been packed or shipped, it can no longer be cancelled.',
     ],
     footer: ['We begin processing orders quickly to ensure fast delivery, which is why cancellation is only possible within the above time frame.'],
   },
   {
     heading: 'How to Cancel',
-    body: [
-      'To request a cancellation, please contact our support team as soon as possible with your Order ID.',
-      "We'll review your request and let you know if your order is still eligible for cancellation.",
+    list: [
+      <>Go to <strong className="font-semibold text-[#111110]">My account → Orders</strong>, open the order and tap <strong className="font-semibold text-[#111110]">Cancel order</strong>. It’s instant — you’ll get a confirmation email.</>,
+      'Can’t see the button? Contact our support team as soon as possible with your Order ID and we’ll check whether it can still be cancelled.',
     ],
   },
   {
     heading: 'Refund for Cancelled Orders',
     body: [
-      'If your cancellation request is approved, your refund will be processed to the original payment method used while placing the order.',
-      <>For prepaid orders, refunds are generally processed within <strong style={{ color: '#F5F2EB', fontWeight: 600 }}>5–7 business days</strong>, depending on your bank or payment provider.</>,
+      'When a prepaid order is cancelled, the refund is started automatically to the original payment method used while placing the order.',
+      <>For prepaid orders, refunds are generally processed within <strong className="font-semibold text-[#111110]">5–7 business days</strong>, depending on your bank or payment provider.</>,
       'For Cash on Delivery (COD) orders, no refund is applicable if no payment has been made.',
     ],
   },
@@ -53,41 +52,12 @@ const SECTIONS = [
 
 export default function CancellationPolicyPage() {
   return (
-    <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+    <PolicyLayout eyebrow="Customer care" title="Cancellation Policy" accent="text-[#E8304F]" sections={SECTIONS}>
       <Seo
         title="Cancellation Policy"
         description="Find out how and when you can cancel a ZUNUZ order, and how refunds for cancelled orders are processed."
         path="/customer-care/cancellation-policy"
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, background: '#1F2024', zIndex: 1 }}>
-        <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB', letterSpacing: '0.02em' }}>Cancellation Policy</h2>
-      </div>
-
-      <div style={{ padding: '24px 20px 48px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
-        {SECTIONS.map((section, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#F5F2EB', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
-              {section.heading}
-            </h3>
-            {section.body?.map((p, j) => (
-              <p key={j} style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>{p}</p>
-            ))}
-            {section.list && (
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0, padding: 0, listStyle: 'none' }}>
-                {section.list.map((item, j) => (
-                  <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '15px', lineHeight: 1.6, color: '#A1A1AA' }}>
-                    <Sparkles size={13} strokeWidth={1.5} color="#D4AF37" style={{ flexShrink: 0, marginTop: '3px' }} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {section.footer?.map((p, j) => (
-              <p key={j} style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>{p}</p>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
+    </PolicyLayout>
   );
 }

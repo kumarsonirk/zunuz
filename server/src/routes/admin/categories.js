@@ -1,8 +1,7 @@
 const router = require('express').Router();
-const { PrismaClient } = require('@prisma/client');
 const auth = require('../../middleware/adminAuth');
 
-const prisma = new PrismaClient();
+const prisma = require('../../lib/prisma');
 
 function slugify(str) {
   return str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');

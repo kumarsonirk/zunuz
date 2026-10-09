@@ -1,52 +1,61 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Plus, Search, Edit2, Trash2, X, Package, Upload, ImagePlus } from 'lucide-react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { Plus, Edit2, Trash2, X, Package, ImagePlus, Loader2, PackageCheck, PackageX, AlertTriangle, AlertCircle, Download, Upload } from 'lucide-react';
+import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { api } from '../../utils/api';
+import { uploadAdminImage } from '../../utils/adminUpload';
 import Price from '../../components/Price';
 import RichContent from '../../components/RichContent';
+import {
+  PageHeader, StatRow, Button, IconButton, Badge, Field, Select, SearchInput,
+  EmptyState, SkeletonRows, Modal, ConfirmDialog, ImageUpload, Toggle,
+} from '../../components/admin/AdminUI';
+import { DISPLAY, inputCls, textareaCls, tableWrapCls, tableCls, thCls, tdCls, trCls } from '../../components/admin/adminStyles';
+import ProductImportModal from '../../components/admin/growth/ProductImportModal';
+import { downloadAdminFile } from '../../components/admin/growth/csv';
 
 const EMPTY_FORM = { name: '', slug: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, tagline: '', description: '', materials: '', productDetails: '', whyWorthIt: '', careInstructions: '' };
 
 const RICH_TEXT_HELP = 'Start a line with "## " for a bold heading, "> " for a plain paragraph, or just type plain text for a bullet point. Wrap *text* in single asterisks for italics.';
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace('/api', '');
+const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
-async function uploadImage(file) {
-  const formData = new FormData();
-  formData.append('image', file);
-  const token = localStorage.getItem('zunuz_admin_token');
-  const res = await fetch(`${API_BASE}/api/admin/upload`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData
-  });
-  if (!res.ok) throw new Error('Upload failed');
-  return (await res.json()).url;
+function parseImages(raw) {
+  try {
+    const arr = JSON.parse(raw || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    // Malformed JSON in the images column: treat as no additional images.
+    return [];
+  }
 }
 
-function Modal({ title, onClose, children }) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-      <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border-3)', borderRadius: '20px', width: '100%', maxWidth: '760px', maxHeight: '90vh', overflow: 'auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--admin-border-2)' }}>
-          <h2 style={{ color: 'var(--admin-text)', fontSize: '16px', fontWeight: 500 }}>{title}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--admin-text-muted)', cursor: 'pointer' }}><X size={18} /></button>
-        </div>
-        <div style={{ padding: '24px' }}>{children}</div>
-      </div>
-    </div>
-  );
+function stockTone(stock) {
+  if (stock === 0) return 'var(--tone-red)';
+  if (stock <= 5) return 'var(--tone-yellow)';
+  return 'var(--tone-green)';
 }
 
-function Field({ label, children }) {
+// Block label for form groups that aren't a single input (avoids wrapping
+// buttons/grids inside a <label>).
+function GroupLabel({ children, hint }) {
   return (
-    <div style={{ marginBottom: '16px' }}>
-      <label style={{ display: 'block', color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>{label}</label>
+    <p className="m-0 mb-1.5 text-[13px] font-semibold text-[var(--admin-text-muted)]">
       {children}
-    </div>
+      {hint && <span className="ml-1.5 font-normal text-[var(--admin-text-dim)]">{hint}</span>}
+    </p>
   );
 }
 
-// Textarea + live preview for the 4 rich content fields (Description, Product
+function FormSection({ title, children, delay = 0 }) {
+  return (
+    <section className="border-b border-[var(--admin-border-2)] py-5 first:pt-0 last:border-b-0 last:pb-0 animate-[jw-rise_0.5s_cubic-bezier(0.16,1,0.3,1)_both]" style={{ animationDelay: `${delay}ms` }}>
+      <h3 className={`m-0 mb-4 text-[15px] font-bold tracking-[0.02em] text-[var(--admin-text)] ${DISPLAY}`}>{title}</h3>
+      <div className="flex flex-col gap-4">{children}</div>
+    </section>
+  );
+}
+
+// Textarea + live preview for the rich content fields (Description, Product
 // Details, Why It's Worth It, Product Care). There's no rich-text editor in
 // this app, so admins author plain text with a small line-prefix syntax (see
 // RICH_TEXT_HELP above) that RichContent parses — the preview renders through
@@ -55,120 +64,75 @@ function Field({ label, children }) {
 function RichTextField({ label, value, onChange, placeholder }) {
   const [showPreview, setShowPreview] = useState(false);
   return (
-    <Field label={label}>
-      <textarea
-        style={{ ...inputStyle, resize: 'vertical', minHeight: '110px', fontFamily: 'inherit' }}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-      />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginTop: '6px' }}>
-        <p style={{ color: 'var(--admin-text-faint)', fontSize: '11px', margin: 0, lineHeight: 1.5 }}>{RICH_TEXT_HELP}</p>
+    <div>
+      <div className="mb-1.5 flex items-center justify-between gap-3">
+        <span className="text-[13px] font-semibold text-[var(--admin-text-muted)]">{label}</span>
         <button
           type="button"
           onClick={() => setShowPreview(s => !s)}
-          style={{ background: 'none', border: 'none', color: '#FC4B4E', fontSize: '11px', fontWeight: 600, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}
+          className="cursor-pointer rounded-[8px] border-0 bg-[var(--admin-accent-soft)] px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap text-[var(--admin-accent)] transition-[filter] hover:brightness-110"
         >
           {showPreview ? 'Hide preview' : 'Preview'}
         </button>
       </div>
+      <textarea
+        className={`${textareaCls} min-h-[110px] resize-y`}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+      <p className="m-0 mt-1.5 text-[12px] leading-normal text-[var(--admin-text-dim)]">{RICH_TEXT_HELP}</p>
       {showPreview && (
-        <div style={{ marginTop: '8px', background: '#1F2024', border: '1px solid var(--admin-border-3)', borderRadius: '10px', padding: '14px 16px', fontSize: '14px', lineHeight: 1.6, color: '#A1A1AA', fontFamily: "'Grift', sans-serif" }}>
-          {value ? <RichContent text={value} /> : <span style={{ color: '#71717A' }}>Nothing to preview yet.</span>}
+        <div className="mt-2 rounded-[12px] border border-[var(--admin-border-3)] bg-[var(--admin-surface-2)] px-4 py-3.5 font-['Inter',sans-serif] text-[14px] leading-relaxed text-[var(--admin-text-muted)] animate-[admin-fade_0.2s_ease-out_both]">
+          {value ? <RichContent text={value} /> : <span className="text-[var(--admin-text-dim)]">Nothing to preview yet.</span>}
         </div>
       )}
-    </Field>
-  );
-}
-
-function MainImageUpload({ value, onChange }) {
-  const [uploading, setUploading] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-  const inputRef = useRef(null);
-
-  const handle = async (file) => {
-    if (!file || !file.type.startsWith('image/')) return;
-    setUploading(true);
-    try { onChange(await uploadImage(file)); }
-    catch (e) { alert('Upload failed: ' + e.message); }
-    finally { setUploading(false); }
-  };
-
-  return (
-    <div style={{ marginBottom: '16px' }}>
-      <label style={{ display: 'block', color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>MAIN IMAGE</label>
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-        {value ? (
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <img src={value} alt="main" style={{ width: '90px', height: '90px', objectFit: 'contain', background: '#fff', borderRadius: '10px', border: '1px solid var(--admin-border-4)', display: 'block' }} />
-            <button onClick={() => onChange('')} style={{ position: 'absolute', top: '-7px', right: '-7px', width: '20px', height: '20px', borderRadius: '50%', background: '#EF4444', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-          </div>
-        ) : null}
-        <div
-          onClick={() => !uploading && inputRef.current?.click()}
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={e => { e.preventDefault(); setDragOver(false); handle(e.dataTransfer.files[0]); }}
-          style={{ flex: 1, minHeight: '90px', border: `1.5px dashed ${dragOver ? '#FC4B4E' : 'var(--admin-border-5)'}`, borderRadius: '10px', background: dragOver ? 'rgba(252,75,78,0.04)' : 'var(--admin-hover-1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: uploading ? 'not-allowed' : 'pointer', transition: 'border-color 0.2s, background 0.2s' }}
-        >
-          {uploading
-            ? <span style={{ color: 'var(--admin-text-muted)', fontSize: '13px' }}>Uploading…</span>
-            : <>
-                <Upload size={18} style={{ color: 'var(--admin-text-muted)' }} />
-                <span style={{ color: 'var(--admin-text-muted)', fontSize: '12px' }}>{value ? 'Replace image' : 'Upload or drag & drop'}</span>
-                <span style={{ color: 'var(--admin-text-faint)', fontSize: '11px' }}>PNG, JPG, WEBP up to 8 MB</span>
-              </>
-          }
-        </div>
-        <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handle(e.target.files[0])} />
-      </div>
     </div>
   );
 }
 
+// Gallery images: multi-select upload through the shared admin upload helper.
 function AdditionalImagesUpload({ values, onChange }) {
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
   const inputRef = useRef(null);
 
   const handleFiles = async (files) => {
-    if (!files.length) return;
-    setUploading(true);
+    if (!files || !files.length) return;
+    setUploading(true); setError('');
     try {
-      const urls = await Promise.all(Array.from(files).map(uploadImage));
+      const urls = await Promise.all(Array.from(files).map(uploadAdminImage));
       onChange([...values, ...urls]);
-    } catch (e) { alert('Upload failed: ' + e.message); }
+    } catch (e) { setError('Upload failed: ' + (e.message || 'unknown error')); }
     finally { setUploading(false); }
   };
 
   const remove = (i) => onChange(values.filter((_, idx) => idx !== i));
 
   return (
-    <div style={{ marginBottom: '16px' }}>
-      <label style={{ display: 'block', color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>
-        ADDITIONAL IMAGES <span style={{ color: 'var(--admin-text-faint)', textTransform: 'none', letterSpacing: 'normal' }}>— shown in product gallery</span>
-      </label>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+    <div>
+      <GroupLabel hint="— shown in product gallery">Additional images</GroupLabel>
+      <div className="flex flex-wrap gap-3">
         {values.map((url, i) => (
-          <div key={i} style={{ position: 'relative' }}>
-            <img src={url} alt={`img-${i}`} style={{ width: '76px', height: '76px', objectFit: 'contain', background: '#fff', borderRadius: '8px', border: '1px solid var(--admin-border-3)', display: 'block' }} />
-            <button onClick={() => remove(i)} style={{ position: 'absolute', top: '-7px', right: '-7px', width: '18px', height: '18px', borderRadius: '50%', background: '#EF4444', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <div key={`${url}-${i}`} className="relative size-[76px] shrink-0 animate-[admin-pop_0.3s_cubic-bezier(0.16,1,0.3,1)_both]">
+            <img src={url} alt={`Gallery image ${i + 1}`} className="h-full w-full rounded-[12px] border border-[var(--admin-border-4)] bg-[var(--admin-bg)] object-cover" />
+            <button type="button" aria-label="Remove image" onClick={() => remove(i)} className="absolute -top-2 -right-2 flex size-6 cursor-pointer items-center justify-center rounded-full border-2 border-[var(--admin-surface)] bg-[var(--tone-red)] text-white opacity-90 transition-transform hover:scale-110"><X size={12} strokeWidth={3} /></button>
           </div>
         ))}
         <button
+          type="button"
           onClick={() => !uploading && inputRef.current?.click()}
           disabled={uploading}
-          style={{ width: '76px', height: '76px', border: '1.5px dashed var(--admin-border-5)', borderRadius: '8px', background: 'var(--admin-hover-1)', color: 'var(--admin-text-muted)', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+          className="flex size-[76px] shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[12px] border-[1.5px] border-dashed border-[var(--admin-border-5)] bg-[var(--admin-hover-1)] text-[var(--admin-text-muted)] transition-colors hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent)] disabled:cursor-not-allowed"
         >
-          {uploading ? <span style={{ fontSize: '11px' }}>…</span> : <><ImagePlus size={18} /><span style={{ fontSize: '10px' }}>Add</span></>}
+          {uploading ? <Loader2 size={18} className="animate-spin text-[var(--admin-accent)]" /> : <><ImagePlus size={18} /><span className="text-[11px] font-medium">Add</span></>}
         </button>
-        <input ref={inputRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
+        <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => { handleFiles(e.target.files); e.target.value = ''; }} />
       </div>
+      {error && <p className="m-0 mt-1.5 text-[12px] font-semibold text-[var(--tone-red)]">{error}</p>}
     </div>
   );
 }
-
-const inputStyle = { width: '100%', background: 'var(--admin-bg)', border: '1px solid var(--admin-border-3)', borderRadius: '10px', padding: '10px 14px', color: 'var(--admin-text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box' };
-const selectStyle = { ...inputStyle, cursor: 'pointer' };
 
 // Mirrors the backend's slugify() purely for the live "Add Product" preview
 // below — the real slug is always generated server-side on save (including
@@ -187,150 +151,198 @@ export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  // Top-bar search lands here as ?search=… (the layout remounts the page
+  // when the query changes).
+  const [params] = useSearchParams();
+  // Import / export live under Reports (needs the 'reports' permission).
+  const { me } = useOutletContext() || {};
+  const canReports = !Array.isArray(me?.permissions) || me.permissions.includes('reports');
+  const [importOpen, setImportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [search, setSearch] = useState(() => params.get('search') || '');
   const [filterCat, setFilterCat] = useState('');
   const [filterSub, setFilterSub] = useState('');
   const [modal, setModal] = useState(null);
   const [editProduct, setEditProduct] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  // Bumped to re-fetch after a save / delete.
+  const [version, setVersion] = useState(0);
+  // Key of the query whose results are currently shown; loading is derived
+  // from it so no state is set synchronously inside the effect.
+  const queryKey = `${search}|${filterCat}|${filterSub}|${version}`;
+  const [loadedKey, setLoadedKey] = useState(null);
+  const loading = loadedKey !== queryKey;
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (search) params.set('search', search);
-      if (filterCat) params.set('category', filterCat);
-      if (filterSub) params.set('subcategory', filterSub);
-      const [prods, cats] = await Promise.all([
-        api.get(`/admin/products?${params}`, true),
-        api.get('/admin/categories', true)
-      ]);
-      setProducts(prods);
-      setCategories(cats.categories || []);
-      setSubcategories(cats.subcategories || []);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [search, filterCat, filterSub]);
+  useEffect(() => {
+    let cancelled = false;
+    const qs = new URLSearchParams();
+    if (search) qs.set('search', search);
+    if (filterCat) qs.set('category', filterCat);
+    if (filterSub) qs.set('subcategory', filterSub);
+    Promise.all([
+      api.get(`/admin/products?${qs}`, true),
+      api.get('/admin/categories', true)
+    ])
+      .then(([prods, cats]) => {
+        if (cancelled) return;
+        setProducts(prods);
+        setCategories(cats.categories || []);
+        setSubcategories(cats.subcategories || []);
+      })
+      .catch(e => { console.error(e); })
+      .finally(() => { if (!cancelled) setLoadedKey(queryKey); });
+    return () => { cancelled = true; };
+  }, [search, filterCat, filterSub, queryKey]);
 
-  useEffect(() => { load(); }, [load]);
+  const reload = () => setVersion(v => v + 1);
 
-  const openAdd = () => { setForm(EMPTY_FORM); setEditProduct(null); setModal('add'); };
+  const stats = useMemo(() => {
+    const total = products.length;
+    const active = products.filter(p => p.isActive).length;
+    const out = products.filter(p => p.stock === 0).length;
+    const low = products.filter(p => p.stock > 0 && p.stock <= 5).length;
+    return [
+      { label: 'Total', value: total.toLocaleString('en-IN'), icon: Package, sub: `${total - active} hidden`, tone: 'muted' },
+      { label: 'Active', value: active.toLocaleString('en-IN'), icon: PackageCheck, sub: 'Visible in store', tone: 'green' },
+      { label: 'Out of stock', value: out.toLocaleString('en-IN'), icon: PackageX, sub: out ? 'Needs restock' : 'All in stock', tone: out ? 'red' : 'muted' },
+      { label: 'Low stock', value: low.toLocaleString('en-IN'), icon: AlertTriangle, sub: '5 or fewer left', tone: low ? 'yellow' : 'muted' },
+    ];
+  }, [products]);
+
+  const hasFilters = Boolean(search || filterCat || filterSub);
+
+  const openAdd = () => { setForm(EMPTY_FORM); setEditProduct(null); setFormError(''); setModal('add'); };
   const openEdit = (p) => {
     setEditProduct(p);
-    let parsedImages = [];
-    try { parsedImages = JSON.parse(p.images || '[]'); } catch {}
+    const parsedImages = parseImages(p.images);
     setForm({ name: p.name, slug: p.slug || '', price: p.price, stock: p.stock, image: p.image || '', images: parsedImages, categoryId: p.categoryId, subcategoryId: p.subcategoryId, isActive: p.isActive, tagline: p.tagline || '', description: p.description || '', materials: p.materials || '', productDetails: p.productDetails || '', whyWorthIt: p.whyWorthIt || '', careInstructions: p.careInstructions || '' });
+    setFormError('');
     setModal('edit');
   };
+  // Stable so the shared Modal doesn't re-run its focus effect every keystroke.
+  const closeModal = useCallback(() => setModal(null), []);
+  const closeDelete = useCallback(() => setDeleteId(null), []);
+
+  const setField = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
 
   const handleSave = async () => {
-    if (!form.name || !form.price || !form.categoryId || !form.subcategoryId) { alert('Please fill in all required fields.'); return; }
+    if (!form.name || !form.price || !form.categoryId || !form.subcategoryId) { setFormError('Please fill in all required fields.'); return; }
     setSaving(true);
+    setFormError('');
     try {
       const payload = { ...form, price: Number(form.price), stock: Number(form.stock), images: Array.isArray(form.images) ? form.images : [] };
       if (modal === 'edit') await api.put(`/admin/products/${editProduct.id}`, payload, true);
       else await api.post('/admin/products', payload, true);
       setModal(null);
-      load();
-    } catch (e) { alert(e.message); }
+      reload();
+    } catch (e) { setFormError(e.message || 'Could not save the product.'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
+    setDeleting(true);
     try {
       await api.delete(`/admin/products/${deleteId}`, true);
       setDeleteId(null);
-      load();
+      reload();
     } catch (e) { alert(e.message); }
+    finally { setDeleting(false); }
   };
 
+  const addButton = <Button icon={Plus} onClick={openAdd}>Add product</Button>;
+  const exportProducts = () => {
+    setExporting(true);
+    downloadAdminFile('/admin/reports/export/products.csv', 'zunuz-products.csv').catch((e) => alert(e.message)).finally(() => setExporting(false));
+  };
+  const headerActions = (
+    <>
+      {canReports && <Button variant="secondary" size="sm" icon={Download} loading={exporting} onClick={exportProducts}>Export CSV</Button>}
+      {canReports && <Button variant="secondary" size="sm" icon={Upload} onClick={() => setImportOpen(true)}>Import CSV</Button>}
+      {addButton}
+    </>
+  );
+
   return (
-    <div style={{ maxWidth: '1200px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ color: 'var(--admin-text)', fontSize: '24px', fontWeight: 600 }}>Products</h1>
-          <p style={{ color: 'var(--admin-text-muted)', fontSize: '13px', marginTop: '4px' }}>{products.length} products total</p>
-        </div>
-        <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#FC4B4E', color: 'white', border: 'none', borderRadius: '10px', padding: '10px 18px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-          <Plus size={16} /> Add Product
-        </button>
-      </div>
+    <div className="max-w-[1200px]">
+      <PageHeader
+        title="Products"
+        subtitle={loading && !products.length ? 'Loading catalogue…' : `${products.length} product${products.length === 1 ? '' : 's'}${hasFilters ? ' matching filters' : ' total'}`}
+        actions={headerActions}
+      >
+        <StatRow items={stats} />
+      </PageHeader>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-          <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-muted)' }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." style={{ ...inputStyle, paddingLeft: '36px' }} />
-        </div>
-        <select value={filterCat} onChange={e => setFilterCat(e.target.value)} style={{ ...selectStyle, width: 'auto', minWidth: '140px' }}>
-          <option value="">All Categories</option>
+      <div className="mb-5 flex flex-wrap gap-3 animate-[jw-rise_0.5s_cubic-bezier(0.16,1,0.3,1)_both]" style={{ animationDelay: '200ms' }}>
+        <SearchInput className="min-w-[220px] flex-1" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products…" aria-label="Search products" />
+        <Select className="min-w-[170px] max-[640px]:flex-1" value={filterCat} onChange={e => setFilterCat(e.target.value)} aria-label="Filter by category">
+          <option value="">All categories</option>
           {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
-        </select>
-        <select value={filterSub} onChange={e => setFilterSub(e.target.value)} style={{ ...selectStyle, width: 'auto', minWidth: '140px' }}>
-          <option value="">All Types</option>
+        </Select>
+        <Select className="min-w-[170px] max-[640px]:flex-1" value={filterSub} onChange={e => setFilterSub(e.target.value)} aria-label="Filter by type">
+          <option value="">All types</option>
           {subcategories.map(s => <option key={s.id} value={s.slug}>{s.name}</option>)}
-        </select>
+        </Select>
       </div>
 
       {/* Table */}
-      <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border-2)', borderRadius: '16px', overflow: 'hidden' }}>
+      <div className={`${tableWrapCls} animate-[jw-rise_0.5s_cubic-bezier(0.16,1,0.3,1)_both]`} style={{ animationDelay: '260ms' }}>
         {loading ? (
-          <div style={{ padding: '60px', textAlign: 'center', color: 'var(--admin-text-muted)' }}>Loading...</div>
+          <SkeletonRows rows={6} />
         ) : products.length === 0 ? (
-          <div style={{ padding: '60px', textAlign: 'center' }}>
-            <Package size={40} style={{ color: 'var(--admin-text-faint)', marginBottom: '12px' }} />
-            <p style={{ color: 'var(--admin-text-muted)', fontSize: '14px' }}>No products found.</p>
-          </div>
+          hasFilters
+            ? <EmptyState icon={Package} title="No products match" text="Try a different search term or clear the category and type filters." />
+            : <EmptyState icon={Package} title="No products yet" text="Add your first product to start building the catalogue." action={addButton} />
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="overflow-x-auto">
+            <table className={`${tableCls} min-w-[880px]`}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--admin-border-1)' }}>
-                  {['Product', 'Category', 'Type', 'Price', 'Stock', 'Images', 'Status', 'Actions'].map(h => (
-                    <th key={h} style={{ padding: '12px 20px', textAlign: 'left', color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+                <tr>
+                  {['Product', 'Category', 'Type', 'Price', 'Stock', 'Images', 'Status', ''].map((h, i) => (
+                    <th key={h || i} className={`${thCls} ${i === 7 ? 'text-right' : ''}`}>{h || <span className="sr-only">Actions</span>}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {products.map((p, i) => {
-                  let additionalCount = 0;
-                  try { additionalCount = JSON.parse(p.images || '[]').length; } catch {}
+                  const additionalCount = parseImages(p.images).length;
                   return (
-                    <tr key={p.id} style={{ borderBottom: i < products.length - 1 ? '1px solid var(--admin-hover-2)' : 'none' }}
-                      onMouseOver={e => e.currentTarget.style.background = 'var(--admin-hover-1)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '14px 20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#fff', overflow: 'hidden', flexShrink: 0 }}>
+                    <tr key={p.id} className={`${trCls} animate-[jw-rise_0.5s_cubic-bezier(0.16,1,0.3,1)_both]`} style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
+                      <td className={tdCls}>
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-[var(--admin-border-2)] bg-[var(--admin-surface-2)]">
                             {p.image
-                              ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Package size={16} style={{ color: 'var(--admin-text-muted)' }} /></div>
+                              ? <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                              : <Package size={17} className="text-[var(--admin-text-dim)]" />
                             }
                           </div>
-                          <span style={{ color: 'var(--admin-text)', fontSize: '13px', fontWeight: 500 }}>{p.name}</span>
+                          <div className="min-w-0">
+                            <span className="block max-w-[260px] truncate font-semibold text-[var(--admin-text)]">{p.name}</span>
+                            {p.slug && <span className="block max-w-[260px] truncate text-[12px] text-[var(--admin-text-dim)]">/{p.slug}</span>}
+                          </div>
                         </div>
                       </td>
-                      <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{p.category?.name}</td>
-                      <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{p.subcategory?.name}</td>
-                      <td style={{ padding: '14px 20px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${p.price?.toLocaleString()}`} /></td>
-                      <td style={{ padding: '14px 20px' }}>
-                        <span style={{ color: p.stock === 0 ? '#EF4444' : p.stock <= 5 ? '#EF4444' : p.stock <= 15 ? '#F59E0B' : '#22C55E', fontSize: '13px', fontWeight: 500 }}>{p.stock}</span>
-                      </td>
-                      <td style={{ padding: '14px 20px' }}>
-                        <span style={{ color: 'var(--admin-text-muted)', fontSize: '12px' }}>1 + {additionalCount}</span>
-                      </td>
-                      <td style={{ padding: '14px 20px' }}>
-                        <span style={{ background: p.isActive ? 'rgba(34,197,94,0.12)' : 'rgba(113,113,122,0.12)', color: p.isActive ? '#22C55E' : 'var(--admin-text-muted)', borderRadius: '6px', padding: '3px 10px', fontSize: '11px', fontWeight: 600 }}>
-                          {p.isActive ? 'Active' : 'Inactive'}
+                      <td className={`${tdCls} whitespace-nowrap text-[var(--admin-text-muted)]`}>{p.category?.name}</td>
+                      <td className={`${tdCls} whitespace-nowrap text-[var(--admin-text-muted)]`}>{p.subcategory?.name}</td>
+                      <td className={`${tdCls} whitespace-nowrap font-semibold tabular-nums text-[var(--admin-text)]`}><Price value={inr(p.price)} /></td>
+                      <td className={tdCls}>
+                        <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums" style={{ color: stockTone(p.stock) }}>
+                          <span className="size-1.5 rounded-full" style={{ background: stockTone(p.stock) }} />
+                          {p.stock}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 20px' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button onClick={() => openEdit(p)} style={{ background: 'var(--admin-border-1)', border: 'none', borderRadius: '8px', padding: '7px', color: 'var(--admin-text-muted)', cursor: 'pointer', display: 'flex' }}><Edit2 size={14} /></button>
-                          <button onClick={() => setDeleteId(p.id)} style={{ background: 'rgba(239,68,68,0.08)', border: 'none', borderRadius: '8px', padding: '7px', color: '#EF4444', cursor: 'pointer', display: 'flex' }}><Trash2 size={14} /></button>
+                      <td className={`${tdCls} whitespace-nowrap text-[13px] tabular-nums text-[var(--admin-text-muted)]`}>1 + {additionalCount}</td>
+                      <td className={tdCls}>
+                        <Badge tone={p.isActive ? 'green' : 'muted'} dot>{p.isActive ? 'Active' : 'Hidden'}</Badge>
+                      </td>
+                      <td className={tdCls}>
+                        <div className="flex justify-end gap-2">
+                          <IconButton label={`Edit ${p.name}`} icon={Edit2} onClick={() => openEdit(p)} />
+                          <IconButton label={`Delete ${p.name}`} icon={Trash2} tone="danger" onClick={() => setDeleteId(p.id)} />
                         </div>
                       </td>
                     </tr>
@@ -343,113 +355,128 @@ export default function ProductsPage() {
       </div>
 
       {/* Add/Edit Modal */}
-      {modal && (
-        <Modal title={modal === 'edit' ? 'Edit Product' : 'Add Product'} onClose={() => setModal(null)}>
-          <Field label="PRODUCT NAME">
-            <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Core Chain I" />
+      <Modal
+        open={Boolean(modal)}
+        onClose={closeModal}
+        width={760}
+        title={modal === 'edit' ? 'Edit product' : 'Add product'}
+        subtitle={modal === 'edit' ? editProduct?.name : 'Fields marked * are required.'}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={closeModal}>Cancel</Button>
+            <Button onClick={handleSave} loading={saving}>
+              {saving ? 'Saving…' : modal === 'edit' ? 'Save changes' : 'Add product'}
+            </Button>
+          </>
+        )}
+      >
+        {formError && (
+          <div role="alert" className="mb-5 flex items-start gap-2.5 rounded-[12px] border border-[var(--tone-red)]/30 bg-[var(--tone-red)]/10 px-4 py-3 text-[14px] font-medium text-[var(--tone-red)] animate-[admin-fade_0.2s_ease-out_both]">
+            <AlertCircle size={17} className="mt-0.5 shrink-0" />
+            <span>{formError}</span>
+          </div>
+        )}
+
+        <FormSection title="Basics">
+          <Field label="Product name *">
+            <input className={inputCls} value={form.name} onChange={setField('name')} placeholder="e.g. Core Chain I" />
           </Field>
-          <Field label="URL SLUG">
-            {modal === 'edit' ? (
-              <>
-                <input style={{ ...inputStyle, color: 'var(--admin-text-muted)', cursor: 'not-allowed' }} value={form.slug || '(none yet — run the slug backfill script)'} disabled readOnly />
-                <p style={{ color: 'var(--admin-text-faint)', fontSize: '11px', marginTop: '6px' }}>
-                  Auto-generated from the name when the product was created; stays fixed afterwards so existing links keep working.
-                </p>
-              </>
-            ) : (
-              <>
-                <input style={{ ...inputStyle, color: 'var(--admin-text-muted)', cursor: 'not-allowed' }} value={form.name ? slugifyPreview(form.name) : ''} placeholder="auto-generated from the name" disabled readOnly />
-                <p style={{ color: 'var(--admin-text-faint)', fontSize: '11px', marginTop: '6px' }}>
-                  Preview only — generated for real when you save (a repeated name gets -2, -3, etc. appended).
-                </p>
-              </>
-            )}
-          </Field>
-          <Field label="TAGLINE">
-            <input style={inputStyle} value={form.tagline} onChange={e => setForm(f => ({ ...f, tagline: e.target.value }))} placeholder="e.g. The everyday shine." />
-          </Field>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <Field label="PRICE (Rs)">
-              <input style={inputStyle} type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="699" />
+          {modal === 'edit' ? (
+            <Field label="URL slug" hint="Auto-generated from the name when the product was created; stays fixed afterwards so existing links keep working.">
+              <input className={`${inputCls} cursor-not-allowed text-[var(--admin-text-muted)]`} value={form.slug || '(none yet — run the slug backfill script)'} disabled readOnly />
             </Field>
-            <Field label="STOCK">
-              <input style={inputStyle} type="number" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} placeholder="50" />
+          ) : (
+            <Field label="URL slug" hint="Preview only — generated for real when you save (a repeated name gets -2, -3, etc. appended).">
+              <input className={`${inputCls} cursor-not-allowed text-[var(--admin-text-muted)]`} value={form.name ? slugifyPreview(form.name) : ''} placeholder="auto-generated from the name" disabled readOnly />
+            </Field>
+          )}
+          <div className="grid grid-cols-2 gap-3 max-[480px]:grid-cols-1">
+            <Field label="Price (₹) *">
+              <input className={inputCls} type="number" value={form.price} onChange={setField('price')} placeholder="699" />
+            </Field>
+            <Field label="Stock">
+              <input className={inputCls} type="number" value={form.stock} onChange={setField('stock')} placeholder="50" />
             </Field>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <Field label="CATEGORY">
-              <select style={selectStyle} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
+          <div className="grid grid-cols-2 gap-3 max-[480px]:grid-cols-1">
+            <Field label="Category *">
+              <Select value={form.categoryId} onChange={setField('categoryId')}>
                 <option value="">Select…</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              </Select>
             </Field>
-            <Field label="TYPE">
-              <select style={selectStyle} value={form.subcategoryId} onChange={e => setForm(f => ({ ...f, subcategoryId: e.target.value }))}>
+            <Field label="Type *">
+              <Select value={form.subcategoryId} onChange={setField('subcategoryId')}>
                 <option value="">Select…</option>
                 {subcategories.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              </Select>
             </Field>
           </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[var(--admin-border-2)] bg-[var(--admin-surface-2)]/50 px-4 py-3">
+            <div>
+              <p className="m-0 text-[14px] font-semibold text-[var(--admin-text)]">Visible in store</p>
+              <p className="m-0 mt-0.5 text-[12px] text-[var(--admin-text-dim)]">Hidden products stay in the catalogue but aren't shown to shoppers.</p>
+            </div>
+            <Toggle checked={form.isActive} onChange={v => setForm(f => ({ ...f, isActive: v }))} label={form.isActive ? 'Active' : 'Hidden'} />
+          </div>
+        </FormSection>
 
-          <MainImageUpload
-            value={form.image}
-            onChange={url => setForm(f => ({ ...f, image: url }))}
-          />
+        <FormSection title="Images" delay={60}>
+          <div>
+            <GroupLabel>Main image</GroupLabel>
+            <ImageUpload value={form.image} onChange={url => setForm(f => ({ ...f, image: url }))} />
+          </div>
           <AdditionalImagesUpload
             values={form.images}
             onChange={imgs => setForm(f => ({ ...f, images: imgs }))}
           />
+        </FormSection>
 
+        <FormSection title="Content" delay={120}>
+          <Field label="Tagline">
+            <input className={inputCls} value={form.tagline} onChange={setField('tagline')} placeholder="e.g. The everyday shine." />
+          </Field>
           <RichTextField
-            label="DESCRIPTION"
+            label="Description"
             value={form.description}
             onChange={v => setForm(f => ({ ...f, description: v }))}
             placeholder={'> Exquisitely crafted, this piece features a high-polished finish designed to capture the light from every angle.'}
           />
+          <Field label="Materials">
+            <textarea className={`${textareaCls} min-h-[80px] resize-y`} value={form.materials} onChange={setField('materials')} placeholder="e.g. 18K gold plated sterling silver (925)" />
+          </Field>
           <RichTextField
-            label="PRODUCT DETAILS"
+            label="Product details"
             value={form.productDetails}
             onChange={v => setForm(f => ({ ...f, productDetails: v }))}
             placeholder={'> Made from premium 18K yellow gold plated sterling silver (925).\nHypoallergenic\nDesigned for everyday wear'}
           />
           <RichTextField
-            label="WHY IT'S WORTH IT"
+            label="Why it's worth it"
             value={form.whyWorthIt}
             onChange={v => setForm(f => ({ ...f, whyWorthIt: v }))}
             placeholder={'## Built to last\nEach piece is quality-checked by hand before it ships.'}
           />
           <RichTextField
-            label="PRODUCT CARE"
+            label="Product care"
             value={form.careInstructions}
             onChange={v => setForm(f => ({ ...f, careInstructions: v }))}
             placeholder={'Wipe gently with a soft, dry cloth after each wear.\nAvoid direct contact with perfumes and harsh chemicals.'}
           />
-
-          <Field label="STATUS">
-            <select style={selectStyle} value={form.isActive ? 'true' : 'false'} onChange={e => setForm(f => ({ ...f, isActive: e.target.value === 'true' }))}>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
-          </Field>
-          <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-            <button onClick={() => setModal(null)} style={{ flex: 1, background: 'var(--admin-border-1)', border: 'none', borderRadius: '10px', padding: '12px', color: 'var(--admin-text-muted)', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={handleSave} disabled={saving} style={{ flex: 1, background: '#FC4B4E', border: 'none', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '14px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-              {saving ? 'Saving…' : modal === 'edit' ? 'Save Changes' : 'Add Product'}
-            </button>
-          </div>
-        </Modal>
-      )}
+        </FormSection>
+      </Modal>
 
       {/* Delete Confirm */}
-      {deleteId && (
-        <Modal title="Delete Product" onClose={() => setDeleteId(null)}>
-          <p style={{ color: 'var(--admin-text-muted)', fontSize: '14px', marginBottom: '24px' }}>Are you sure you want to delete this product? This action cannot be undone.</p>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={() => setDeleteId(null)} style={{ flex: 1, background: 'var(--admin-border-1)', border: 'none', borderRadius: '10px', padding: '12px', color: 'var(--admin-text-muted)', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={handleDelete} style={{ flex: 1, background: '#EF4444', border: 'none', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
-          </div>
-        </Modal>
-      )}
+      <ConfirmDialog
+        open={Boolean(deleteId)}
+        onClose={closeDelete}
+        onConfirm={handleDelete}
+        busy={deleting}
+        title="Delete product?"
+        message="Are you sure you want to delete this product? This action cannot be undone."
+        confirmLabel="Delete"
+      />
+      {canReports && <ProductImportModal open={importOpen} onClose={() => setImportOpen(false)} onImported={(r) => { if (r.created || r.updated) reload(); }} />}
     </div>
   );
 }

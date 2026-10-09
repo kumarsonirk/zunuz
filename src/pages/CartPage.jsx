@@ -199,25 +199,11 @@ export default function CartPage({
                     </p>
                   </div>
 
-                  {/* Quantity selector pill — disabled for OOS items */}
-                  <div className="flex items-center w-[100px] h-[34px] rounded-lg bg-zinc-800/60 border border-zinc-700/40 overflow-hidden select-none" style={{ pointerEvents: isOOS ? 'none' : 'auto' }}>
-                    <button
-                      onClick={() => onUpdateQuantity(item.id, -1)}
-                      className="bg-gray-800 flex-1 h-full flex items-center justify-center text-zinc-400 hover:text-white font-medium hover:bg-zinc-700/30 transition-colors"
-                      style={{ border: 'none', cursor: 'pointer' }}
-                    >
-                      −
-                    </button>
-                    <span className="text-[13px] text-[#F5F2EB] font-bold w-[30px] text-center font-mono">
-                      {item.quantity}
+                  {/* Quantity display */}
+                  <div className="flex items-center px-3 py-1 rounded-lg bg-zinc-800/60 border border-zinc-700/40 select-none">
+                    <span className="text-[12px] text-zinc-300 font-semibold">
+                      Qty: 1
                     </span>
-                    <button
-                      onClick={() => onUpdateQuantity(item.id, 1)}
-                      className="bg-gray-800 flex-1 h-full flex items-center justify-center text-zinc-400 hover:text-white font-medium hover:bg-zinc-700/30 transition-colors"
-                      style={{border: 'none', cursor: 'pointer' }}
-                    >
-                      +
-                    </button>
                   </div>
                 </div>
 

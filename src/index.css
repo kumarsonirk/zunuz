@@ -375,6 +375,39 @@ html, body, #root, * {
   animation: card-fade-in 0.55s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
+/* Desktop product showcase — hero card + radial fan backdrop (ProductShowcaseDesktop.jsx).
+   Angle/position/filter are driven from React as inline styles (they depend on each
+   card's runtime offset from the active index), so these classes only supply the
+   transition — without it those inline style changes would jump instantly instead of
+   swinging smoothly along the arc. */
+.desktop-fan-pivot {
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+}
+
+/* "Our Promise" box (ProductDetailsPage.jsx) — a soft gold band sweeps left to
+   right on a loop. The gradient is wider than the box (background-size 200%)
+   so animating background-position slides the bright band across it instead
+   of just shifting flat color. */
+@keyframes goldenShine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.promise-golden-shine {
+  background: linear-gradient(100deg,
+    rgba(212, 175, 55, 0.05) 0%,
+    rgba(212, 175, 55, 0.05) 40%,
+    rgba(212, 175, 55, 0.28) 50%,
+    rgba(212, 175, 55, 0.05) 60%,
+    rgba(212, 175, 55, 0.05) 100%);
+  background-size: 250% 100%;
+  animation: goldenShine 4.5s linear infinite;
+}
+
+/* Height of the sticky storefront header (DesktopNav ≥ 1024px, the mobile
+   bar below) — sticky elements inside the pages offset by this. */
+:root { --store-header-h: 69px; }
+@media (min-width: 1024px) { :root { --store-header-h: 76px; } }
+
 .main-header {
   background-color: #1F2024;
   border-bottom: 1px solid rgba(24, 24, 27, 0.6);
@@ -464,42 +497,212 @@ html, body, #root, * {
    dark theme (unscoped, so pages outside the themed root — e.g. admin login —
    keep the original always-dark look). */
 :root {
-  --admin-bg: #0D0E10;
-  --admin-surface: #16181E;
-  --admin-sidebar: #111318;
-  --admin-surface-2: #1A1C23;
-  --admin-text: #F5F2EB;
+  /* Dark (default): near-black canvas, raised cards, ZUNUZ accents. */
+  --admin-bg: #0A0A0B;
+  --admin-surface: #151517;
+  --admin-sidebar: #0F0F11;
+  --admin-surface-2: #1C1C1F;
+  --admin-text: #F7F5F0;
   --admin-text-muted: #A1A1AA;
   --admin-text-dim: #71717A;
   --admin-text-faint: #3F3F46;
-  --admin-hover-1: rgba(255,255,255,0.02);
-  --admin-hover-2: rgba(255,255,255,0.03);
-  --admin-hover-3: rgba(255,255,255,0.04);
-  --admin-border-1: rgba(255,255,255,0.05);
-  --admin-border-2: rgba(255,255,255,0.06);
-  --admin-border-3: rgba(255,255,255,0.08);
-  --admin-border-4: rgba(255,255,255,0.1);
-  --admin-border-5: rgba(255,255,255,0.12);
+  --admin-hover-1: rgba(255,255,255,0.03);
+  --admin-hover-2: rgba(255,255,255,0.04);
+  --admin-hover-3: rgba(255,255,255,0.06);
+  --admin-border-1: rgba(255,255,255,0.06);
+  --admin-border-2: rgba(255,255,255,0.08);
+  --admin-border-3: rgba(255,255,255,0.1);
+  --admin-border-4: rgba(255,255,255,0.12);
+  --admin-border-5: rgba(255,255,255,0.15);
+  /* Brand accent + card sub-line tones (readable on each theme). */
+  --admin-accent: #FF3D8B;
+  --admin-accent-soft: rgba(255,61,139,0.12);
+  /* Selected sidebar item. */
+  --admin-active-text: #F6C915;
+  --admin-active-icon: #F6C915;
+  --admin-active-bg: rgba(246,201,21,0.09);
+  --tone-green: #34D27B;
+  --tone-yellow: #F6C915;
+  --tone-blue: #4C9BFF;
+  --tone-red: #FF5A6E;
+  --tone-pink: #FF5FA2;
+  --tone-purple: #B794FF;
 }
 
 [data-theme="light"] {
-  --admin-bg: #F0F0F3;
+  /* Light: the storefront's cream. */
+  --admin-bg: #FFF8EE;
   --admin-surface: #FFFFFF;
-  --admin-sidebar: #FFFFFF;
-  --admin-surface-2: #F5F5F7;
-  --admin-text: #18181B;
-  --admin-text-muted: #52525B;
-  --admin-text-dim: #71717A;
-  --admin-text-faint: #A1A1AA;
-  --admin-hover-1: rgba(0,0,0,0.02);
-  --admin-hover-2: rgba(0,0,0,0.035);
-  --admin-hover-3: rgba(0,0,0,0.05);
-  --admin-border-1: rgba(0,0,0,0.06);
-  --admin-border-2: rgba(0,0,0,0.08);
-  --admin-border-3: rgba(0,0,0,0.1);
-  --admin-border-4: rgba(0,0,0,0.12);
-  --admin-border-5: rgba(0,0,0,0.15);
+  --admin-sidebar: #FFFDF8;
+  --admin-surface-2: #FBF3E6;
+  --admin-text: #111110;
+  --admin-text-muted: #5F5B53;
+  --admin-text-dim: #7A756B;
+  --admin-text-faint: #B8B1A4;
+  --admin-hover-1: rgba(17,17,16,0.025);
+  --admin-hover-2: rgba(17,17,16,0.04);
+  --admin-hover-3: rgba(17,17,16,0.06);
+  --admin-border-1: rgba(17,17,16,0.07);
+  --admin-border-2: rgba(17,17,16,0.09);
+  --admin-border-3: rgba(17,17,16,0.11);
+  --admin-border-4: rgba(17,17,16,0.13);
+  --admin-border-5: rgba(17,17,16,0.16);
+  --admin-accent: #FF3D8B;
+  --admin-accent-soft: rgba(255,61,139,0.1);
+  --admin-active-text: #FFFFFF;
+  --admin-active-icon: #F6C915;
+  --admin-active-bg: #111110;
+  --tone-green: #1E8A4C;
+  --tone-yellow: #9A7300;
+  --tone-blue: #1A5BC4;
+  --tone-red: #D42A43;
+  --tone-pink: #E0287A;
+  --tone-purple: #6A3FC7;
 }
 
 
 
+
+/* Lenis smooth scroll (src/hooks/useSmoothScroll.js) handles the easing
+   itself — native smooth scrolling on top of it would double-smooth. */
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+/* Test3Page marquee strip → `animate-t3-marquee`. */
+@theme {
+  --animate-t3-marquee: t3-marquee 28s linear infinite;
+  @keyframes t3-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+}
+
+/* Test3Page background glows → `animate-t3-float-a/b/c` (slow idle drift). */
+@theme {
+  --animate-t3-float-a: t3-float-a 18s ease-in-out infinite;
+  --animate-t3-float-b: t3-float-b 22s ease-in-out infinite;
+  --animate-t3-float-c: t3-float-c 26s ease-in-out infinite;
+  @keyframes t3-float-a {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(8vw, 6vh) scale(1.12); }
+  }
+  @keyframes t3-float-b {
+    0%, 100% { transform: translate(0, 0) scale(1.05); }
+    50% { transform: translate(-10vw, -5vh) scale(0.92); }
+  }
+  @keyframes t3-float-c {
+    0%, 100% { transform: translate(0, 0) scale(0.95); }
+    50% { transform: translate(6vw, -8vh) scale(1.1); }
+  }
+}
+
+/* Test3Page brand-section image wall → `animate-t3-col-up/down`. Each column
+   renders its tiles twice, so moving by -50% loops seamlessly. */
+@theme {
+  --animate-t3-col-up: t3-col-up 40s linear infinite;
+  --animate-t3-col-down: t3-col-down 40s linear infinite;
+  @keyframes t3-col-up {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+  }
+  @keyframes t3-col-down {
+    from { transform: translateY(-50%); }
+    to { transform: translateY(0); }
+  }
+}
+
+/* Test3Page loading screen letter bob → `animate-t3-ld-bob`. CSS (not JS) so
+   it runs on the compositor and keeps moving smoothly even while the main
+   thread is busy mounting the page. */
+@theme {
+  --animate-t3-ld-bob: t3-ld-bob 1.1s ease-in-out infinite;
+  @keyframes t3-ld-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-0.08em); }
+  }
+}
+
+/* Category page hero photo: gentle idle float → `animate-cp-bob`. */
+@theme {
+  --animate-cp-bob: cp-bob 5s ease-in-out infinite;
+  @keyframes cp-bob {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-12px) rotate(2deg); }
+  }
+}
+
+/* Small entrance helpers used as animate-[jw-rise_…] / animate-[jw-pop_…] /
+   animate-[admin-slide_…] across the storefront, account and admin pages. */
+@keyframes jw-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes jw-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes admin-slide {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-[jw-"], [class*="animate-[admin-"] { animation: none !important; }
+}
+@keyframes admin-grow {
+  from { transform: scaleY(0); }
+  to { transform: none; }
+}
+@keyframes admin-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes admin-pop {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Festive floating dock animations */
+@keyframes festive-glow {
+  0%, 100% {
+    box-shadow: 0 10px 32px -8px rgba(17, 17, 16, 0.28), 0 0 0 1px rgba(232, 48, 79, 0.12);
+  }
+  50% {
+    box-shadow: 0 14px 40px -6px rgba(232, 48, 79, 0.32), 0 0 18px 2px rgba(232, 48, 79, 0.18);
+  }
+}
+@keyframes slot-invite {
+  0%, 100% {
+    transform: scale(1);
+    border-color: rgba(232, 48, 79, 0.45);
+    background-color: rgba(255, 240, 244, 0.6);
+  }
+  50% {
+    transform: scale(1.08);
+    border-color: rgba(232, 48, 79, 0.9);
+    background-color: rgba(255, 224, 234, 0.95);
+  }
+}
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-150%); }
+  100% { transform: translateX(150%); }
+}
+
+
+/* Homepage Navaratri slide: "Shop the collection →" sways left ↔ right. */
+@keyframes cta-sway {
+  0%, 100% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+}

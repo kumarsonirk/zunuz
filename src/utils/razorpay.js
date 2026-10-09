@@ -13,7 +13,8 @@ export function loadRazorpayScript() {
   return loadPromise;
 }
 
-export async function openRazorpayCheckout({ keyId, amount, razorpayOrderId, name, description, prefill, onSuccess, onDismiss }) {
+// `timeout` (seconds): the window closes when the server's stock hold ends.
+export async function openRazorpayCheckout({ keyId, amount, razorpayOrderId, name, description, prefill, timeout, onSuccess, onDismiss }) {
   await loadRazorpayScript();
   const rzp = new window.Razorpay({
     key: keyId,
@@ -26,6 +27,7 @@ export async function openRazorpayCheckout({ keyId, amount, razorpayOrderId, nam
     theme: { color: '#FC4B4E' },
     handler: (response) => onSuccess(response),
     modal: { ondismiss: () => onDismiss?.() },
+    ...(timeout ? { timeout } : {}),
   });
   rzp.open();
 }

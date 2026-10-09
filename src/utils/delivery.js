@@ -1,19 +1,20 @@
-// Mirrors server/src/lib/stock.js's identical constants — that copy is what
-// actually determines the charged amount; this one is purely for display, so
-// the checkout UI shows the same numbers the backend will actually charge.
-export const DELIVERY_FEE = 70;
-export const FREE_DELIVERY_THRESHOLD = 700; // itemsTotal >= this ⇒ free delivery
+import { SETTINGS } from '../store/settings';
 
-const DELIVERY_FEE_ENABLED = true;
+// Delivery charge, from the admin Settings page. The server
+// (server/src/lib/stock.js) computes the amount actually charged; this copy
+// is for display and is loaded before the app starts (see main.jsx).
+export const DELIVERY_FEE = SETTINGS.deliveryFee;
+export const FREE_DELIVERY_THRESHOLD = SETTINGS.freeDeliveryThreshold; // itemsTotal >= this ⇒ free delivery
 
 export function computeDeliveryFee(itemsTotal) {
-  if (!DELIVERY_FEE_ENABLED) return 0;
-  return itemsTotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+  if (!SETTINGS.deliveryFeeEnabled) return 0;
+  return itemsTotal >= SETTINGS.freeDeliveryThreshold ? 0 : SETTINGS.deliveryFee;
 }
 
-// Amount still needed to unlock free delivery, or null if already qualified.
+// Amount still needed to unlock free delivery, or null if already qualified
+// (or there's no delivery charge at all).
 export function amountToFreeDelivery(itemsTotal) {
-  if (!DELIVERY_FEE_ENABLED) return null;
-  const remaining = FREE_DELIVERY_THRESHOLD - itemsTotal;
+  if (!SETTINGS.deliveryFeeEnabled) return null;
+  const remaining = SETTINGS.freeDeliveryThreshold - itemsTotal;
   return remaining > 0 ? remaining : null;
 }

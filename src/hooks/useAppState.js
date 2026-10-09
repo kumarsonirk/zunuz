@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import zr from '../utils/audio';
 import { Br, productData, wp } from '../data/productData';
 import { findProductBySlug, findCategoryByProductSlug } from '../utils/productUtils';
+import { useCart, setCart } from '../store/cart';
+
+const LEGACY_URL_SYNC = false;
 
 export function useAppState() {
   const navigate = useNavigate();
@@ -30,26 +33,29 @@ export function useAppState() {
     return { product: null, category: null };
   })();
 
-  const hasSavedCategory = (() => {
-    if (initialData.category) return true;
-    try {
-      return !!localStorage.getItem('zunuz_selected_category');
-    } catch {
-      return false;
-    }
-  })();
+  // Skip the home intro (percentage counter + shutter flash) on standalone
+  // pages that never show it. It lives here at app level, so otherwise it
+  // ran on those pages too: ~130 state updates (each re-rendering App) and
+  // tick sounds over the first ~8s after load, which made scrolling stutter.
+  // Starts in the same "intro finished" state as a returning visitor, so
+  // navigating to the home page afterwards still works normally.
+  // The old preloader/shutter intro belonged to the previous storefront,
+  // which the new pages (src/pages/store) replaced — it never plays now. The
+  // state is kept in its "intro finished" form so MainLayout's remaining
+  // pages render normally.
+  const skipIntro = true;
 
-  const [showPreloader, setShowPreloader] = useState(!hasSavedCategory);
-  const [preloaderPercentage, setPreloaderPercentage] = useState(hasSavedCategory ? 100 : 0);
+  const [showPreloader, setShowPreloader] = useState(!skipIntro);
+  const [preloaderPercentage, setPreloaderPercentage] = useState(skipIntro ? 100 : 0);
   const [muted, setMuted] = useState(false);
   const [showShutter, setShowShutter] = useState(false);
   const [shutterActiveIndex, setShutterActiveIndex] = useState(0);
   const [shutterSpeed, setShutterSpeed] = useState(180);
   const [showZunuzText, setShowZunuzText] = useState(false);
-  const [showMainBackground, setShowMainBackground] = useState(hasSavedCategory);
+  const [showMainBackground, setShowMainBackground] = useState(skipIntro);
   const [shutterEnding, setShutterEnding] = useState(false);
   const [shutterSlideUp, setShutterSlideUp] = useState(false);
-  const [showMainContent, setShowMainContent] = useState(hasSavedCategory);
+  const [showMainContent, setShowMainContent] = useState(skipIntro);
   const [selectedCategory, setSelectedCategory] = useState(() => {
     if (initialData.category) {
       try {
@@ -65,21 +71,18 @@ export function useAppState() {
     }
   });
   
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem('zunuz_cart_items');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // The bag lives in the shared cart store (src/store/cart.js) so the new
+  // storefront pages and this app state always see the same items; it
+  // persists itself to localStorage `zunuz_cart_items`.
+  const cartItems = useCart();
+  const setCartItems = setCart;
   const canvasRef = useRef(null);
 
   const [productMap, setProductMap] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
-  // All top-level categories (Core/Trending/Complete Vibe) — shared by
-  // CategorySelection and ProductDetailsPage's "browse other categories"
-  // section, so both read from one fetch instead of each doing their own.
+  // All top-level categories (e.g. Core/Trending) — shared by CategorySelection
+  // and ProductDetailsPage's "browse other categories" section, so both read
+  // from one fetch instead of each doing their own.
   const [categories, setCategories] = useState(wp);
   // Flips true once the first products fetch settles (success or failure) — lets
   // consumers avoid rendering stale mock data before we even know if the real
@@ -210,11 +213,6 @@ export function useAppState() {
     }
   }, [selectedCategory]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('zunuz_cart_items', JSON.stringify(cartItems));
-    } catch (e) {}
-  }, [cartItems]);
 
   useEffect(() => {
     if (isFirstMount.current) {
@@ -239,8 +237,13 @@ export function useAppState() {
   useEffect(() => {
     const path = location.pathname;
 
+    // Legacy URL→state sync for the old storefront (/, /products, card-stack
+    // product details). The new storefront pages read the URL themselves, so
+    // this is switched off; kept only until the old pages are deleted.
+    if (!LEGACY_URL_SYNC) return;
+
     // Admin, auth, account, legal, customer-care, and campaign routes are handled by their own components
-    if (path.startsWith('/admin') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/forgot-password') || path.startsWith('/reset-password') || path.startsWith('/account') || path.startsWith('/terms') || path.startsWith('/privacy') || path.startsWith('/customer-care')) {
+    if (path.startsWith('/admin') || path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/forgot-password') || path.startsWith('/reset-password') || path.startsWith('/account') || path.startsWith('/terms') || path.startsWith('/privacy') || path.startsWith('/customer-care') || path.startsWith('/test') || path.startsWith('/jewel') || path.startsWith('/neckwear') || path.startsWith('/wristwear') || path.startsWith('/earwear') || path.startsWith('/lite_products')) {
       return;
     }
 
@@ -305,7 +308,7 @@ export function useAppState() {
 
   // Preloader Percentage Counter Loop
   useEffect(() => {
-    if (hasSavedCategory) return;
+    if (skipIntro) return;
     let timer;
     let cancelled = false;
 

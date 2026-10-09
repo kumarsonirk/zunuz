@@ -6,8 +6,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // Seed Admin
-  const adminHash = await bcrypt.hash('admin123', 10);
+  // Seed Admin — the password comes from SEED_ADMIN_PASSWORD (no built-in
+  // default: a known password on a live store is a full takeover). It only
+  // creates the admin if it doesn't exist; it never resets an existing one.
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD || '';
+  if (seedPassword.length < 12) {
+    throw new Error('Set SEED_ADMIN_PASSWORD (at least 12 characters) to seed the admin account.');
+  }
+  const adminHash = await bcrypt.hash(seedPassword, 10);
   await prisma.admin.upsert({
     where: { email: 'admin@zunuz.com' },
     update: {},

@@ -9,6 +9,7 @@ import { sampleCornerColor } from '../utils/sampleImageColor';
 import { Helmet } from 'react-helmet-async';
 import Seo from '../components/Seo';
 import RichContent from '../components/RichContent';
+import ProductReviews from '../components/ProductReviews';
 
 export default function ProductDetailsPage({
   product,
@@ -288,9 +289,51 @@ export default function ProductDetailsPage({
     return list;
   }, [currentCollection, product.id]);
 
-  // Other top-level categories (e.g. viewing a Core product shows Trending +
-  // Complete Vibe) — lets a shopper jump straight into another collection
-  // from wherever they currently are, rather than only from the home screen.
+  const mainNumericPrice = React.useMemo(() => {
+    const p = effectivePrice;
+    if (typeof p === 'number') return p;
+    return parseInt(String(p || '').replace(/[^0-9]/g, ''), 10) || 0;
+  }, [effectivePrice]);
+
+  const isMainProductAbove800 = mainNumericPrice > 800;
+
+  const getCompleteLookPricing = (lookProd) => {
+    const rawPrice = lookProd.price;
+
+    if (!isMainProductAbove800) {
+      return {
+        price: typeof rawPrice === 'number' ? `₹${rawPrice}` : rawPrice,
+        originalPrice: null,
+        discountAmount: null,
+      };
+    }
+
+    // Deterministic hashing based on product id
+    let hash = 0;
+    const str = String(lookProd.id || '0');
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+    }
+
+    // Final price target between ₹300 and ₹500
+    const priceTiers = [329, 349, 379, 399, 429, 449, 479, 499];
+    const finalPriceNum = priceTiers[hash % priceTiers.length];
+
+    // Discount between ₹50 and ₹100
+    const discountAmountNum = 50 + (hash % 51);
+    const originalPriceNum = finalPriceNum + discountAmountNum;
+
+    return {
+      price: `₹${finalPriceNum.toLocaleString('en-IN')}`,
+      originalPrice: `₹${originalPriceNum.toLocaleString('en-IN')}`,
+      discountAmount: `₹${discountAmountNum} OFF`,
+      numericPrice: finalPriceNum,
+    };
+  };
+
+  // Other top-level categories (e.g. viewing a Core product shows Trending)
+  // — lets a shopper jump straight into another collection from wherever
+  // they currently are, rather than only from the home screen.
   const otherCategories = React.useMemo(
     () => categories.filter(c => c.id !== category?.id),
     [categories, category]
@@ -545,18 +588,21 @@ export default function ProductDetailsPage({
 
         {/* Our Promise — same highlighted copy on every product, not admin-editable */}
         <div className="px-6 pt-5 pb-1">
-          <div style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.18)', borderRadius: '16px', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#F5F2EB', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
+          <div
+            className="promise-golden-shine"
+            style={{ border: '1px solid rgba(212,175,55,0.18)', borderRadius: '16px', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center', textAlign: 'center' }}
+          >
+            <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#D4AF37', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
               Our Promise
             </h3>
             <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#A1A1AA', margin: 0 }}>
-              Every ZUNUZ piece begins with one question.<br/>
-            Will someone genuinely want to wear this tomorrow?
-              If the answer isn't yes, we won't launch it.,
-              Because we believe the best jewellery isn't worn once.,
-              It's worn until it becomes part of your everyday.</p>
+              <strong style={{ color: '#F5F2EB', fontWeight: 700 }}>Every ZUNUZ piece begins with one question.</strong><br />
+              Will someone genuinely want to wear this tomorrow? If the answer isn't yes, we won't launch it. Because we believe the best jewellery isn't worn once. It's worn until it becomes part of your everyday.
+            </p>
           </div>
         </div>
+
+        <ProductReviews productId={product.id} />
 
         {/* Returns & Delivery capsule links */}
         <div className="px-6 pt-4 pb-1 flex gap-3">
@@ -584,42 +630,64 @@ export default function ProductDetailsPage({
         {/* "Complete Your Look" slider section */}
         {sliderProducts.length > 0 && (
           <div className="py-6 flex flex-col gap-4 select-none">
-            <h3 className="px-6 text-[18px] font-grift font-light text-[#F5F2EB] tracking-wide" style={{ fontFamily: "'Grift', sans-serif" }}>
-              Complete Your Look
-            </h3>
+            <div className="px-6 flex items-center justify-between">
+              <h3 className="text-[18px] font-grift font-light text-[#F5F2EB] tracking-wide" style={{ fontFamily: "'Grift', sans-serif" }}>
+                Complete Your Look
+              </h3>
+              {isMainProductAbove800 && (
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Special Add-On Offer
+                </span>
+              )}
+            </div>
             <div className="flex gap-4 overflow-x-auto px-6 pt-2 pb-2 scrollbar-none scroll-smooth">
-              {sliderProducts.map(lookProd => (
-                <div
-                  key={lookProd.id}
-                  onClick={() => {
-                    zr.playConfirm();
-                    onSelectProduct(lookProd);
-                  }}
-                  className="flex-shrink-0 w-[140px] rounded-[18px] bg-white border border-zinc-200 cursor-pointer hover:scale-103 transition-transform overflow-hidden"
-                  style={{ borderRadius: '18px', border: '1px solid #e4e4e7' }}
-                >
-                  <img
-                    src={lookProd.image}
-                    alt={lookProd.name}
-                    className="w-full aspect-square object-cover pointer-events-none"
-                    draggable="false"
-                    style={{
-                      backgroundColor: lookColors[lookProd.id]
-                        ? `rgb(${lookColors[lookProd.id].r}, ${lookColors[lookProd.id].g}, ${lookColors[lookProd.id].b})`
-                        : '#f8ebda',
-                      transition: 'background-color 0.4s ease'
+              {sliderProducts.map(lookProd => {
+                const lookPricing = getCompleteLookPricing(lookProd);
+                return (
+                  <div
+                    key={lookProd.id}
+                    onClick={() => {
+                      zr.playConfirm();
+                      onSelectProduct({ ...lookProd, price: lookPricing.price });
                     }}
-                  />
-                  <div className="flex items-center justify-between gap-2 px-3 py-2">
-                    <h4 className="text-[10px] font-grift text-zinc-900 truncate min-w-0" style={{ fontFamily: "'Grift', sans-serif" }}>
-                      {lookProd.name}
-                    </h4>
-                    <div className="text-[11px] font-grift text-zinc-900 flex-shrink-0" style={{ fontFamily: "'Grift', sans-serif" }}>
-                      <Price value={lookProd.price} />
+                    className="flex-shrink-0 w-[145px] rounded-[18px] bg-white border border-zinc-200 cursor-pointer hover:scale-103 transition-transform overflow-hidden relative shadow-md"
+                    style={{ borderRadius: '18px', border: '1px solid #e4e4e7' }}
+                  >
+                    {lookPricing.discountAmount && (
+                      <div className="absolute top-2 left-2 bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md z-10 shadow-sm">
+                        {lookPricing.discountAmount}
+                      </div>
+                    )}
+                    <img
+                      src={lookProd.image}
+                      alt={lookProd.name}
+                      className="w-full aspect-square object-cover pointer-events-none"
+                      draggable="false"
+                      style={{
+                        backgroundColor: lookColors[lookProd.id]
+                          ? `rgb(${lookColors[lookProd.id].r}, ${lookColors[lookProd.id].g}, ${lookColors[lookProd.id].b})`
+                          : '#f8ebda',
+                        transition: 'background-color 0.4s ease'
+                      }}
+                    />
+                    <div className="flex flex-col gap-0.5 px-3 py-2">
+                      <h4 className="text-[11px] font-grift text-zinc-900 truncate min-w-0 font-medium" style={{ fontFamily: "'Grift', sans-serif" }}>
+                        {lookProd.name}
+                      </h4>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[12px] font-bold text-zinc-900" style={{ fontFamily: "'Grift', sans-serif" }}>
+                          {lookPricing.price}
+                        </span>
+                        {lookPricing.originalPrice && (
+                          <span className="text-[10px] text-zinc-400 line-through">
+                            {lookPricing.originalPrice}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

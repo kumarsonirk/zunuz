@@ -1,4 +1,3 @@
-import React from 'react';
 
 // The app's display fonts (Grift/Qrokinex) render the ₹ glyph inconsistently,
 // so it always opts out to the browser's default font while the digits keep

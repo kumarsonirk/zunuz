@@ -1,9 +1,8 @@
 const router = require('express').Router();
-const { PrismaClient } = require('@prisma/client');
 const auth = require('../../middleware/adminAuth');
 const { generateUniqueSlug } = require('../../lib/slug');
 
-const prisma = new PrismaClient();
+const prisma = require('../../lib/prisma');
 
 router.get('/', auth, async (req, res) => {
   const { category, subcategory, search } = req.query;

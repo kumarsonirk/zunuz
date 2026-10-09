@@ -1,6 +1,5 @@
-import React from 'react';
-import { Sparkles } from 'lucide-react';
 import Seo from '../components/Seo';
+import PolicyLayout from '../components/store/PolicyLayout';
 
 const SECTIONS = [
   {
@@ -130,62 +129,12 @@ const SECTIONS = [
 
 export default function PrivacyPage() {
   return (
-    <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+    <PolicyLayout eyebrow="Legal" title="Privacy Policy" accent="text-[#7A4BD6]" sections={SECTIONS}>
       <Seo
         title="Privacy Policy"
         description="ZUNUZ's privacy policy explaining what personal information we collect, how it's used, and how it's protected."
         path="/privacy"
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, background: '#1F2024', zIndex: 1 }}>
-        <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB', letterSpacing: '0.02em' }}>Privacy Policy</h2>
-      </div>
-
-      <div style={{ padding: '24px 20px 48px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
-        {SECTIONS.map((section, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#F5F2EB', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>
-              {section.heading}
-            </h3>
-            {section.body?.map((p, j) => (
-              <p key={j} style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>{p}</p>
-            ))}
-            {section.list && (
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0, padding: 0, listStyle: 'none' }}>
-                {section.list.map((item, j) => (
-                  <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '15px', lineHeight: 1.6, color: '#A1A1AA' }}>
-                    <Sparkles size={13} strokeWidth={1.5} color="#D4AF37" style={{ flexShrink: 0, marginTop: '3px' }} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {section.footer?.map((p, j) => (
-              <p key={j} style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>{p}</p>
-            ))}
-            {section.subsections?.map((sub, k) => (
-              <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#F5F2EB', letterSpacing: '0.03em' }}>{sub.subheading}</h4>
-                {sub.body?.map((p, j) => (
-                  <p key={j} style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>{p}</p>
-                ))}
-                {sub.list && (
-                  <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0, padding: 0, listStyle: 'none' }}>
-                    {sub.list.map((item, j) => (
-                      <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '15px', lineHeight: 1.6, color: '#A1A1AA' }}>
-                        <Sparkles size={13} strokeWidth={1.5} color="#D4AF37" style={{ flexShrink: 0, marginTop: '3px' }} />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {sub.footer?.map((p, j) => (
-                  <p key={j} style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>{p}</p>
-                ))}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
+    </PolicyLayout>
   );
 }

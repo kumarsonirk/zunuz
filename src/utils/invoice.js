@@ -68,7 +68,8 @@ export function buildInvoiceDoc(order) {
   doc.text('I N V O I C E', rightEdge, headerMidY + capHeightMm / 2, { align: 'right' });
 
   // Billed-to (left) + invoice meta (right)
-  const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  // Invoices are issued on delivery (see canInvoice), so they carry the delivery date.
+  const orderDate = new Date(order.deliveredAt || order.updatedAt || order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   const addr = order.address || {};
 
   doc.setFont('helvetica', 'bold');
@@ -123,9 +124,12 @@ export function buildInvoiceDoc(order) {
     },
   });
 
-  // Right-aligned summary — subtotal / delivery / grand total.
+  // Right-aligned summary — subtotal / discount / delivery / credits / grand total.
+  // total = items − discount − credits + delivery, so delivery = total − items + discount + credits.
   const itemsSubtotal = (order.items || []).reduce((sum, item) => sum + item.quantity * item.price, 0);
-  const deliveryFee = order.total - itemsSubtotal;
+  const discount = order.discount || 0;
+  const creditsUsed = order.creditsUsed || 0;
+  const deliveryFee = order.total - itemsSubtotal + discount + creditsUsed;
   const labelX = rightEdge - 50;
 
   let y = doc.lastAutoTable.finalY + 10;
@@ -137,6 +141,22 @@ export function buildInvoiceDoc(order) {
   doc.setTextColor(MUTED);
   doc.text(rs(itemsSubtotal), rightEdge, y, { align: 'right' });
 
+  if (discount > 0) {
+    y += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(INK);
+    doc.text('Discount', labelX, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(MUTED);
+    doc.text(`- ${rs(discount)}`, rightEdge, y, { align: 'right' });
+    if (order.couponCode) {
+      y += 4.5;
+      doc.setFontSize(8);
+      doc.text(`Coupon ${order.couponCode}`, labelX, y);
+      doc.setFontSize(10);
+    }
+  }
+
   y += 7;
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(INK);
@@ -144,6 +164,16 @@ export function buildInvoiceDoc(order) {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(MUTED);
   doc.text(deliveryFee > 0 ? rs(deliveryFee) : 'Free', rightEdge, y, { align: 'right' });
+
+  if (creditsUsed > 0) {
+    y += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(INK);
+    doc.text('ZUNUZ Credits', labelX, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(MUTED);
+    doc.text(`- ${rs(creditsUsed)}`, rightEdge, y, { align: 'right' });
+  }
 
   y += 6;
   doc.setDrawColor(INK);
@@ -180,8 +210,10 @@ export function buildInvoiceDoc(order) {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(MUTED);
   const paymentLines = [
-    order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Payment (Razorpay)',
+    order.paymentMethod === 'CREDITS' ? 'Paid with ZUNUZ Credits'
+      : order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Payment (Razorpay)',
   ];
+  if (creditsUsed > 0 && order.paymentMethod !== 'CREDITS') paymentLines.push(`ZUNUZ Credits used: ${rs(creditsUsed)}`);
   if (order.razorpayPaymentId) paymentLines.push(`Payment ID: ${order.razorpayPaymentId}`);
   doc.text(paymentLines, margin, footerY + 8, { lineHeightFactor: 1.5 });
 
@@ -196,6 +228,10 @@ export function buildInvoiceDoc(order) {
   return doc;
 }
 
+// An invoice is only issued once the order has been delivered.
+export const canInvoice = (order) => order?.status === 'DELIVERED';
+
 export function downloadInvoice(order) {
+  if (!canInvoice(order)) return;
   buildInvoiceDoc(order).save(`Zunuz-Invoice-${order.id}.pdf`);
 }

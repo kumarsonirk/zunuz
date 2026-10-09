@@ -7,6 +7,22 @@
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Brand display font (Qrokinex) — preloaded so it's ready before first
+         use (e.g. the /test3 loading screen), instead of popping in late. -->
+    <link rel="preload" href="/font/Qrokinex.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- Every customer page is cream; paint the page cream from the very
+         first frame (the default dark body otherwise flashes before the app
+         mounts). Not on /admin (dark panel); App.jsx removes it if you move
+         into the admin. -->
+    <script>
+      if (location.pathname.indexOf('/admin') !== 0) {
+        document.documentElement.style.background = '#FFF8E7';
+        var t3s = document.createElement('style');
+        t3s.id = 't3-boot-bg'; // removed by BootBgCleanup (App.jsx) on /admin
+        t3s.textContent = 'body{background:#FFF8E7!important}';
+        document.head.appendChild(t3s);
+      }
+    </script>
     <title>ZUNUZ — Everyday Fashion Jewellery</title>
     <!-- Premium Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,17 +30,30 @@
     <!-- Loaded non-render-blocking: media="print" makes the browser fetch it
     without waiting to apply/parse it before first paint, then onload flips it
     to "all" once it's actually ready. noscript keeps it working with JS off. -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Syncopate:wght@700&family=Space+Grotesk:wght@300;500;700&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Syncopate:wght@700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Syncopate:wght@700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet"></noscript>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Syncopate:wght@700&family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Syncopate:wght@700&family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Syncopate:wght@700&family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"></noscript>
     <!-- Google Identity Services (Sign in with Google) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-M4RLS7RP');</script>
+    <!-- Google Tag Manager — not loaded on /test pages, the admin panel (GTM
+         scripts could read the admin's session) or pages whose URL carries a
+         one-time token (reset / verify links must never reach analytics). -->
+    <script>
+      (function() {
+        var path = window.location.pathname.toLowerCase();
+        var isTestPage = path.includes('/test') || /^\/(admin|reset-password|verify-email|unsubscribe)(\/|$)/.test(path);
+        if (isTestPage) {
+          window['ga-disable-GTM-M4RLS7RP'] = true;
+          console.log('[Analytics] Tracking disabled for test page:', window.location.pathname);
+        } else {
+          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','GTM-M4RLS7RP');
+        }
+      })();
+    </script>
     <!-- End Google Tag Manager -->
   </head>
   <body class="bg-[#1F2024] text-[#F5F2EB]">

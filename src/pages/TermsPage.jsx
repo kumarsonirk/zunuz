@@ -1,6 +1,5 @@
-import React from 'react';
-import { Sparkles } from 'lucide-react';
 import Seo from '../components/Seo';
+import PolicyLayout from '../components/store/PolicyLayout';
 
 const SECTIONS = [
   {
@@ -150,48 +149,13 @@ const SECTIONS = [
 
 export default function TermsPage() {
   return (
-    <div className="flex-1 flex flex-col bg-[#1F2024] text-[#F5F2EB] overflow-y-auto scrollbar-none" style={{ fontFamily: "'Grift', sans-serif" }}>
+    <PolicyLayout eyebrow="Legal" title="Terms & Conditions" accent="text-[#1A6FE8]" sections={SECTIONS}
+      closing={{ heading: 'Thank you', body: ['Thank you for choosing ZUNUZ.', "Every order means a lot to us, and we're committed to delivering not just great products, but also an honest, transparent, and enjoyable shopping experience.", 'If you ever need assistance, our support team is always happy to help.'] }}>
       <Seo
         title="Terms & Conditions"
         description="Read ZUNUZ's terms and conditions covering website use, product information, pricing, orders, shipping, and returns."
         path="/terms"
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, background: '#1F2024', zIndex: 1 }}>
-        <h2 style={{ fontSize: '17px', fontWeight: 500, color: '#F5F2EB', letterSpacing: '0.02em' }}>Terms & Conditions</h2>
-      </div>
-
-      <div style={{ padding: '24px 20px 48px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
-        {SECTIONS.map((section, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#F5F2EB', fontFamily: "'Grift', sans-serif", letterSpacing: '0.10em' }}>
-              {section.heading}
-            </h3>
-            {section.body?.map((p, j) => (
-              <p key={j} style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>{p}</p>
-            ))}
-            {section.list && (
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0, padding: 0, listStyle: 'none' }}>
-                {section.list.map((item, j) => (
-                  <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '15px', lineHeight: 1.6, color: '#A1A1AA' }}>
-                    <Sparkles size={13} strokeWidth={1.5} color="#D4AF37" style={{ flexShrink: 0, marginTop: '3px' }} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {section.footer?.map((p, j) => (
-              <p key={j} style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>{p}</p>
-            ))}
-          </div>
-        ))}
-
-        <div style={{ marginTop: '8px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#F5F2EB', fontFamily: "'Grift', sans-serif", letterSpacing: '0.04em' }}>Thank You</h3>
-          <p style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>Thank you for choosing ZUNUZ.</p>
-          <p style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>Every order means a lot to us, and we're committed to delivering not just great products, but also an honest, transparent, and enjoyable shopping experience.</p>
-          <p style={{ fontSize: '15px', lineHeight: 1.7, color: '#A1A1AA' }}>If you ever need assistance, our support team is always happy to help.</p>
-        </div>
-      </div>
-    </div>
+    </PolicyLayout>
   );
 }

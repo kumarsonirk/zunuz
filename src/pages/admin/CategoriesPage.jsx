@@ -1,70 +1,44 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Edit2, Trash2, X, Tag, Plus, Upload } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Edit2, Trash2, Tag, Plus, ImageOff, Store } from 'lucide-react';
 import { api } from '../../utils/api';
+import {
+  PageHeader, SectionTitle, Card, Button, IconButton, Badge, Field, EmptyState, Loading,
+  Modal, ConfirmDialog, ImageUpload,
+} from '../../components/admin/AdminUI';
+import { DISPLAY, inputCls } from '../../components/admin/adminStyles';
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace('/api', '');
+// Categories (/admin/categories): main categories as image cards, product
+// types (subcategories) as compact cards. Add / edit in a modal, delete via
+// a confirm dialog. Data: GET /admin/categories → { categories, subcategories }.
 
-async function uploadImage(file) {
-  const formData = new FormData();
-  formData.append('image', file);
-  const token = localStorage.getItem('zunuz_admin_token');
-  const res = await fetch(`${API_BASE}/api/admin/upload`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData
-  });
-  if (!res.ok) throw new Error('Upload failed');
-  return (await res.json()).url;
+// The live storefront only shows these three main categories.
+const STOREFRONT_SLUGS = ['necklaces', 'bracelets', 'earrings'];
+const rise = 'animate-[jw-rise_0.5s_cubic-bezier(0.16,1,0.3,1)_both]';
+const baseFor = (type) => (type === 'category' ? '/admin/categories/categories' : '/admin/categories/subcategories');
+
+function SlugChip({ children }) {
+  return (
+    <span className="inline-block max-w-full truncate rounded-[7px] border border-[var(--admin-border-2)] bg-[var(--admin-hover-2)] px-2 py-0.5 font-mono text-[11.5px] text-[var(--admin-text-dim)]">
+      {children}
+    </span>
+  );
 }
 
-function ImageUpload({ value, onChange }) {
-  const [uploading, setUploading] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-  const inputRef = useRef(null);
-
-  const handle = async (file) => {
-    if (!file || !file.type.startsWith('image/')) return;
-    setUploading(true);
-    try { onChange(await uploadImage(file)); }
-    catch (e) { alert('Upload failed: ' + e.message); }
-    finally { setUploading(false); }
-  };
-
+function ErrorNote({ children }) {
   return (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-      {value ? (
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <img src={value} alt="background" style={{ width: '90px', height: '90px', objectFit: 'cover', background: 'var(--admin-bg)', borderRadius: '10px', border: '1px solid var(--admin-border-4)', display: 'block' }} />
-          <button onClick={() => onChange('')} style={{ position: 'absolute', top: '-7px', right: '-7px', width: '20px', height: '20px', borderRadius: '50%', background: '#EF4444', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-        </div>
-      ) : null}
-      <div
-        onClick={() => !uploading && inputRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={e => { e.preventDefault(); setDragOver(false); handle(e.dataTransfer.files[0]); }}
-        style={{ flex: 1, minHeight: '90px', border: `1.5px dashed ${dragOver ? '#FC4B4E' : 'var(--admin-border-5)'}`, borderRadius: '10px', background: dragOver ? 'rgba(252,75,78,0.04)' : 'var(--admin-hover-1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: uploading ? 'not-allowed' : 'pointer', transition: 'border-color 0.2s, background 0.2s' }}
-      >
-        {uploading
-          ? <span style={{ color: 'var(--admin-text-muted)', fontSize: '13px' }}>Uploading…</span>
-          : <>
-              <Upload size={18} style={{ color: 'var(--admin-text-dim)' }} />
-              <span style={{ color: 'var(--admin-text-muted)', fontSize: '12px' }}>{value ? 'Replace image' : 'Upload or drag & drop'}</span>
-              <span style={{ color: 'var(--admin-text-faint)', fontSize: '11px' }}>PNG, JPG, WEBP up to 8 MB</span>
-            </>
-        }
-      </div>
-      <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handle(e.target.files[0])} />
-    </div>
+    <span role="alert" className="block rounded-[12px] border border-[var(--tone-red)]/30 bg-[var(--tone-red)]/10 px-3.5 py-2.5 text-[13px] font-medium text-[var(--tone-red)]">
+      {children}
+    </span>
   );
 }
 
 function FormModal({ item, type, onClose, onSave }) {
   const isEdit = !!item;
+  const isCategory = type === 'category';
   const [form, setForm] = useState(
-    type === 'category'
+    isCategory
       ? { name: item?.name || '', subtitle: item?.subtitle || '', image: item?.image || '' }
-      : { name: item?.name || '' }
+      : { name: item?.name || '' },
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -75,81 +49,40 @@ function FormModal({ item, type, onClose, onSave }) {
     try {
       await onSave(form);
       onClose();
-    } catch (e) { setError(e.message); }
-    finally { setSaving(false); }
+    } catch (e) { setError(e.message); } finally { setSaving(false); }
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-      <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border-3)', borderRadius: '20px', width: '100%', maxWidth: '420px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--admin-border-2)' }}>
-          <h2 style={{ color: 'var(--admin-text)', fontSize: '16px', fontWeight: 500 }}>{isEdit ? 'Edit' : 'Add'} {type === 'category' ? 'Category' : 'Subcategory'}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--admin-text-muted)', cursor: 'pointer' }}><X size={18} /></button>
-        </div>
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {error && (
-            <div style={{ background: 'rgba(252,75,78,0.1)', border: '1px solid rgba(252,75,78,0.3)', borderRadius: '10px', padding: '10px 14px', color: '#FC4B4E', fontSize: '13px' }}>{error}</div>
-          )}
-          <div>
-            <label style={{ display: 'block', color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>NAME</label>
-            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Necklaces"
-              style={{ width: '100%', background: 'var(--admin-bg)', border: '1px solid var(--admin-border-3)', borderRadius: '10px', padding: '10px 14px', color: 'var(--admin-text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-          {type === 'category' && (
-            <>
-              <div>
-                <label style={{ display: 'block', color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>SUBTITLE</label>
-                <input value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} placeholder="e.g. Best For College, Office & Everyday Wear"
-                  style={{ width: '100%', background: 'var(--admin-bg)', border: '1px solid var(--admin-border-3)', borderRadius: '10px', padding: '10px 14px', color: 'var(--admin-text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', marginBottom: '8px' }}>BACKGROUND IMAGE</label>
-                <ImageUpload value={form.image} onChange={url => setForm(f => ({ ...f, image: url }))} />
-              </div> 
-            </>
-          )}
-          <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-            <button onClick={onClose} style={{ flex: 1, background: 'var(--admin-border-1)', border: 'none', borderRadius: '10px', padding: '12px', color: 'var(--admin-text-muted)', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={handleSave} disabled={saving} style={{ flex: 1, background: '#FC4B4E', border: 'none', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '14px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
-              {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Add'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DeleteConfirmModal({ target, onClose, onConfirm }) {
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleDelete = async () => {
-    setDeleting(true);
-    setError('');
-    try { await onConfirm(); onClose(); }
-    catch (e) { setError(e.message); }
-    finally { setDeleting(false); }
-  };
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-      <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border-3)', borderRadius: '20px', width: '100%', maxWidth: '380px', padding: '24px' }}>
-        <h3 style={{ color: 'var(--admin-text)', fontSize: '16px', fontWeight: 500, marginBottom: '10px' }}>Delete {target.type === 'category' ? 'Category' : 'Subcategory'}</h3>
-        <p style={{ color: 'var(--admin-text-muted)', fontSize: '13px', marginBottom: error ? '12px' : '20px' }}>
-          Are you sure you want to delete "{target.name}"? This cannot be undone.
-        </p>
-        {error && (
-          <div style={{ background: 'rgba(252,75,78,0.1)', border: '1px solid rgba(252,75,78,0.3)', borderRadius: '10px', padding: '10px 14px', color: '#FC4B4E', fontSize: '13px', marginBottom: '20px' }}>{error}</div>
+    <Modal
+      open
+      onClose={onClose}
+      width={480}
+      title={`${isEdit ? 'Edit' : 'Add'} ${isCategory ? 'category' : 'product type'}`}
+      subtitle={isCategory ? 'Name, tagline and the card background image.' : 'Product types are shared across all main categories.'}
+      footer={(
+        <>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button loading={saving} onClick={handleSave}>{isEdit ? 'Save changes' : 'Add'}</Button>
+        </>
+      )}
+    >
+      <div className="flex flex-col gap-4">
+        {error && <ErrorNote>{error}</ErrorNote>}
+        <Field label="Name">
+          <input className={inputCls} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder={isCategory ? 'e.g. Necklaces' : 'e.g. Chains'} autoFocus />
+        </Field>
+        {isCategory && (
+          <>
+            <Field label="Subtitle">
+              <input className={inputCls} value={form.subtitle} onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))} placeholder="e.g. Best For College, Office & Everyday Wear" />
+            </Field>
+            <Field label="Background image">
+              <ImageUpload value={form.image} onChange={(url) => setForm((f) => ({ ...f, image: url }))} />
+            </Field>
+          </>
         )}
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={onClose} style={{ flex: 1, background: 'var(--admin-border-1)', border: 'none', borderRadius: '10px', padding: '12px', color: 'var(--admin-text-muted)', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
-          <button onClick={handleDelete} disabled={deleting} style={{ flex: 1, background: '#EF4444', border: 'none', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '14px', fontWeight: 600, cursor: deleting ? 'not-allowed' : 'pointer' }}>
-            {deleting ? 'Deleting...' : 'Delete'}
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -158,127 +91,148 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null); // { item: obj|null, type: 'category'|'subcategory' }
   const [deleteTarget, setDeleteTarget] = useState(null); // { id, type, name }
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const d = await api.get('/admin/categories', true);
-      setData(d);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
+  const load = () => api.get('/admin/categories', true).then(setData).catch((e) => console.error(e));
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let alive = true;
+    api.get('/admin/categories', true)
+      .then((d) => { if (alive) setData(d); })
+      .catch((e) => console.error(e))
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, []);
 
   const handleSave = async (form) => {
     const { item, type } = modal;
-    const base = type === 'category' ? '/admin/categories/categories' : '/admin/categories/subcategories';
+    const base = baseFor(type);
     if (item) await api.put(`${base}/${item.id}`, form, true);
     else await api.post(base, form, true);
     load();
   };
 
+  const closeDelete = () => { setDeleteTarget(null); setDeleteError(''); };
   const handleDelete = async () => {
     const { id, type } = deleteTarget;
-    const base = type === 'category' ? '/admin/categories/categories' : '/admin/categories/subcategories';
-    await api.delete(`${base}/${id}`, true);
-    load();
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await api.delete(`${baseFor(type)}/${id}`, true);
+      closeDelete();
+      load();
+    } catch (e) { setDeleteError(e.message); } finally { setDeleting(false); }
   };
 
-  if (loading) return <div style={{ color: 'var(--admin-text-muted)', padding: '40px', textAlign: 'center' }}>Loading...</div>;
+  if (loading) return <Loading label="Loading categories…" />;
+
+  const { categories, subcategories } = data;
 
   return (
-    <div style={{ maxWidth: '900px' }}>
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ color: 'var(--admin-text)', fontSize: '24px', fontWeight: 600 }}>Categories</h1>
-        <p style={{ color: 'var(--admin-text-muted)', fontSize: '13px', marginTop: '4px' }}>Manage your product categories and types.</p>
-      </div>
+    <div className="mx-auto max-w-[1480px]">
+      <PageHeader title="Categories" subtitle="Manage your main categories and the product types shared across them." />
 
-      {/* Main Categories */}
-      <div style={{ marginBottom: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <h2 style={{ color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.1em' }}>MAIN CATEGORIES</h2>
-          <button onClick={() => setModal({ item: null, type: 'category' })}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(252,75,78,0.1)', border: 'none', borderRadius: '8px', padding: '6px 12px', color: '#FC4B4E', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-            <Plus size={14} /> Add Category
-          </button>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {data.categories.length === 0 ? (
-            <p style={{ color: 'var(--admin-text-muted)', fontSize: '13px' }}>No categories yet.</p>
-          ) : data.categories.map(cat => (
-            <div key={cat.id} style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border-2)', borderRadius: '14px', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, background: 'var(--admin-bg)' }}>
-                <img src={cat.image} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                  <h3 style={{ color: 'var(--admin-text)', fontSize: '15px', fontWeight: 600 }}>{cat.name}</h3>
-                  <span style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E', borderRadius: '5px', padding: '2px 8px', fontSize: '10px', fontWeight: 600 }}>{cat._count?.products || 0} products</span>
-                </div>
-                <p style={{ color: 'var(--admin-text-muted)', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.subtitle}</p>
-                <p style={{ color: 'var(--admin-text-dim)', fontSize: '11px', marginTop: '2px', fontFamily: 'monospace' }}>slug: {cat.slug}</p>
-              </div>
-              <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                <button onClick={() => setModal({ item: cat, type: 'category' })}
-                  style={{ background: 'var(--admin-border-1)', border: 'none', borderRadius: '8px', padding: '8px', color: 'var(--admin-text-muted)', cursor: 'pointer', display: 'flex' }}>
-                  <Edit2 size={15} />
-                </button>
-                <button onClick={() => setDeleteTarget({ id: cat.id, type: 'category', name: cat.name })}
-                  style={{ background: 'rgba(239,68,68,0.08)', border: 'none', borderRadius: '8px', padding: '8px', color: '#EF4444', cursor: 'pointer', display: 'flex' }}>
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Main categories */}
+      <section className="mb-10">
+        <SectionTitle
+          title="Main categories"
+          hint={`${categories.length} ${categories.length === 1 ? 'category' : 'categories'} · the storefront shows Necklaces, Bracelets and Earrings`}
+          actions={<Button icon={Plus} onClick={() => setModal({ item: null, type: 'category' })}>Add category</Button>}
+        />
+        {categories.length === 0 ? (
+          <Card><EmptyState icon={Tag} title="No categories yet" text="Add your first main category to start organising products." /></Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {categories.map((cat, i) => {
+              const live = STOREFRONT_SLUGS.includes(cat.slug);
+              const count = cat._count?.products || 0;
+              return (
+                <Card key={cat.id} className={`group flex flex-col overflow-hidden p-0 transition-colors hover:border-[var(--admin-border-4)] ${rise}`} style={{ animationDelay: `${i * 60}ms` }}>
+                  <div className="relative aspect-[4/3] overflow-hidden bg-[var(--admin-bg)]">
+                    {cat.image ? (
+                      <img src={cat.image} alt={cat.name} className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[var(--admin-text-dim)]"><ImageOff size={30} strokeWidth={1.4} /></div>
+                    )}
+                    {live && (
+                      <span className="absolute top-3 left-3 rounded-full bg-[var(--admin-surface)] shadow-sm">
+                        <Badge tone="green" dot>Storefront</Badge>
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-2 p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className={`m-0 min-w-0 truncate text-[20px] leading-tight font-bold text-[var(--admin-text)] ${DISPLAY}`}>{cat.name}</h3>
+                      <Badge tone={count ? 'pink' : 'muted'}>{count} {count === 1 ? 'product' : 'products'}</Badge>
+                    </div>
+                    <p className="m-0 line-clamp-2 text-[14px] text-[var(--admin-text-muted)]">{cat.subtitle || <span className="text-[var(--admin-text-dim)]">No subtitle</span>}</p>
+                    <div className="mt-auto flex items-center justify-between gap-3 pt-2">
+                      <SlugChip>/{cat.slug}</SlugChip>
+                      <div className="flex shrink-0 gap-2">
+                        <IconButton label={`Edit ${cat.name}`} icon={Edit2} onClick={() => setModal({ item: cat, type: 'category' })} />
+                        <IconButton label={`Delete ${cat.name}`} icon={Trash2} tone="danger" onClick={() => setDeleteTarget({ id: cat.id, type: 'category', name: cat.name })} />
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-      {/* Subcategories */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-          <h2 style={{ color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.1em' }}>PRODUCT TYPES (SUBCATEGORIES)</h2>
-          <button onClick={() => setModal({ item: null, type: 'subcategory' })}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(252,75,78,0.1)', border: 'none', borderRadius: '8px', padding: '6px 12px', color: '#FC4B4E', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-            <Plus size={14} /> Add Subcategory
-          </button>
-        </div>
-        <p style={{ color: 'var(--admin-text-dim)', fontSize: '12px', marginBottom: '12px' }}>These types are shared across all main categories.</p>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {data.subcategories.length === 0 ? (
-            <p style={{ color: 'var(--admin-text-muted)', fontSize: '13px' }}>No subcategories yet.</p>
-          ) : data.subcategories.map(sub => (
-            <div key={sub.id} style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border-2)', borderRadius: '14px', padding: '18px 20px', flex: '1', minWidth: '200px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(252,75,78,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Tag size={18} style={{ color: '#FC4B4E' }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ color: 'var(--admin-text)', fontSize: '14px', fontWeight: 600 }}>{sub.name}</h3>
-                <p style={{ color: 'var(--admin-text-muted)', fontSize: '12px', marginTop: '2px' }}>{sub._count?.products || 0} products total</p>
-                <p style={{ color: 'var(--admin-text-dim)', fontSize: '11px', fontFamily: 'monospace', marginTop: '2px' }}>/{sub.slug}</p>
-              </div>
-              <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                <button onClick={() => setModal({ item: sub, type: 'subcategory' })}
-                  style={{ background: 'var(--admin-border-1)', border: 'none', borderRadius: '8px', padding: '7px', color: 'var(--admin-text-muted)', cursor: 'pointer', display: 'flex' }}>
-                  <Edit2 size={14} />
-                </button>
-                <button onClick={() => setDeleteTarget({ id: sub.id, type: 'subcategory', name: sub.name })}
-                  style={{ background: 'rgba(239,68,68,0.08)', border: 'none', borderRadius: '8px', padding: '7px', color: '#EF4444', cursor: 'pointer', display: 'flex' }}>
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Product types */}
+      <section>
+        <SectionTitle
+          title="Product types (subcategories)"
+          hint="Shared across all main categories."
+          actions={<Button variant="secondary" icon={Plus} onClick={() => setModal({ item: null, type: 'subcategory' })}>Add product type</Button>}
+        />
+        {subcategories.length === 0 ? (
+          <Card><EmptyState icon={Store} title="No product types yet" text="Product types like Chains or Studs can be used under any main category." /></Card>
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-3">
+            {subcategories.map((sub, i) => {
+              const count = sub._count?.products || 0;
+              return (
+                <Card key={sub.id} className={`flex items-center gap-3.5 p-4 transition-colors hover:border-[var(--admin-border-4)] ${rise}`} style={{ animationDelay: `${i * 40}ms` }}>
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--admin-accent-soft)] text-[var(--admin-accent)]">
+                    <Tag size={18} strokeWidth={1.8} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className={`m-0 truncate text-[16px] font-bold text-[var(--admin-text)] ${DISPLAY}`}>{sub.name}</h3>
+                    <p className="m-0 mt-0.5 text-[13px] whitespace-nowrap text-[var(--admin-text-muted)]">{count} {count === 1 ? 'product' : 'products'}</p>
+                    <div className="mt-1.5 flex"><SlugChip>/{sub.slug}</SlugChip></div>
+                  </div>
+                  <div className="flex shrink-0 flex-col gap-1.5">
+                    <IconButton label={`Edit ${sub.name}`} icon={Edit2} onClick={() => setModal({ item: sub, type: 'subcategory' })} />
+                    <IconButton label={`Delete ${sub.name}`} icon={Trash2} tone="danger" onClick={() => setDeleteTarget({ id: sub.id, type: 'subcategory', name: sub.name })} />
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       {modal && (
-        <FormModal item={modal.item} type={modal.type} onClose={() => setModal(null)} onSave={handleSave} />
+        <FormModal key={`${modal.type}-${modal.item?.id ?? 'new'}`} item={modal.item} type={modal.type} onClose={() => setModal(null)} onSave={handleSave} />
       )}
 
-      {deleteTarget && (
-        <DeleteConfirmModal target={deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} />
-      )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={`Delete ${deleteTarget?.type === 'category' ? 'category' : 'product type'}`}
+        message={(
+          <>
+            Are you sure you want to delete <strong className="text-[var(--admin-text)]">“{deleteTarget?.name}”</strong>? This cannot be undone.
+            {deleteError && <span className="mt-3 block"><ErrorNote>{deleteError}</ErrorNote></span>}
+          </>
+        )}
+        busy={deleting}
+        onConfirm={handleDelete}
+        onClose={closeDelete}
+      />
     </div>
   );
 }

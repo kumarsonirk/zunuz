@@ -8,13 +8,50 @@ datasource db {
 }
 
 model Admin {
-  id             Int       @id @default(autoincrement())
-  email          String    @unique
+  id             Int        @id @default(autoincrement())
+  email          String     @unique
   passwordHash   String
   name           String
-  failedAttempts Int       @default(0)
+  failedAttempts Int        @default(0)
   lockedUntil    DateTime?
-  createdAt      DateTime  @default(now())
+  // Null role = full access (accounts created before roles existed).
+  roleId         Int?
+  role           AdminRole? @relation(fields: [roleId], references: [id])
+  isActive       Boolean    @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime   @default(now())
+}
+
+// What an admin may see/change. permissions = JSON array of keys
+// (see server/src/lib/adminPermissions.js). isSystem = "Super Admin":
+// every permission, can't be edited or deleted.
+model AdminRole {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(60)
+  description String?  @db.VarChar(255)
+  permissions String   @db.Text
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  admins      Admin[]
+}
+
+// Audit trail of admin actions. Admin name/email are copied in so entries
+// survive the admin being deleted.
+model AdminActivity {
+  id         Int      @id @default(autoincrement())
+  adminId    Int?
+  adminName  String   @db.VarChar(120)
+  adminEmail String   @db.VarChar(255)
+  action     String   @db.VarChar(30)
+  section    String   @db.VarChar(40)
+  entityId   String?  @db.VarChar(60)
+  summary    String   @db.VarChar(500)
+  ip         String?  @db.VarChar(64)
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([adminId])
 }
 
 model Customer {
@@ -26,10 +63,23 @@ model Customer {
   googleId       String?   @unique
   failedAttempts Int       @default(0)
   lockedUntil    DateTime?
+  // Email ownership proven (verification link or Google). Coupons need it.
+  emailVerified  Boolean   @default(false)
+  // Bumped on password change/reset — older login tokens stop working.
+  tokenVersion   Int       @default(0)
+  // Refer & Earn: this customer's own code, and who referred them (if anyone).
+  referralCode   String?   @unique @db.VarChar(16)
+  referredById   Int?
   createdAt      DateTime  @default(now())
   addresses      Address[]
   orders         Order[]
   reviews        Review[]
+  productReviews ProductReview[]
+  // Admin-only notes / tags (e.g. "VIP").
+  adminNote      String?   @db.Text
+  tags           String?   @db.VarChar(255)
+  returnRequests ReturnRequest[]
+  couponRedemptions CouponRedemption[]
 }
 
 model OtpRequest {
@@ -107,6 +157,7 @@ model Product {
   subcategoryId Int
   createdAt     DateTime    @default(now())
   orderItems    OrderItem[]
+  productReviews ProductReview[]
 }
 
 model Order {
@@ -126,6 +177,37 @@ model Order {
   updatedAt         DateTime      @updatedAt
   items             OrderItem[]
   review            Review?
+  // Fulfilment (tracking + refunds), discounts, admin-only notes.
+  courier           String?       @db.VarChar(80)
+  trackingNumber    String?       @db.VarChar(120)
+  trackingUrl       String?       @db.VarChar(500)
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  refundStatus      String?       @db.VarChar(20) // PENDING | PROCESSED | FAILED
+  refundId          String?       @db.VarChar(100)
+  refundAmount      Int?
+  refundedAt        DateTime?
+  refundError       String?       @db.Text
+  couponCode        String?       @db.VarChar(40)
+  discount          Int           @default(0)
+  adminNote         String?       @db.Text
+  reminderSentAt    DateTime?
+  // Online checkout holds its stock while the payment window is open
+  // (lib/holds.js): true = stock taken but not yet paid for.
+  stockHeld         Boolean       @default(false)
+  // ZUNUZ Credits applied to this order (₹). total is what's left to pay.
+  creditsUsed       Int           @default(0)
+  // Cancellation: who (CUSTOMER from My orders, or ADMIN), when and why.
+  cancelledAt       DateTime?
+  cancelledBy       String?       @db.VarChar(20)
+  cancelReason      String?       @db.VarChar(300)
+  couponRedemption  CouponRedemption?
+  returnRequests    ReturnRequest[]
+
+  // Every-minute stock-hold sweep / "held by others" check, and the unpaid
+  // checkouts that reserve a coupon (lib/holds.js, lib/coupons.js).
+  @@index([stockHeld, paymentStatus, createdAt])
+  @@index([couponCode, paymentStatus, createdAt])
 }
 
 enum OrderStatus {
@@ -139,6 +221,7 @@ enum OrderStatus {
 enum PaymentMethod {
   COD
   RAZORPAY
+  CREDITS // fully paid with ZUNUZ Credits (nothing left to pay)
 }
 
 enum PaymentStatus {
@@ -157,6 +240,9 @@ model OrderItem {
   price     Int
 }
 
+// Order-satisfaction rating — one per delivered order, submitted from
+// OrderHistoryPage.jsx. Distinct from ProductReview below (a per-product
+// review shoppers see on the product page); left untouched.
 model Review {
   id         Int      @id @default(autoincrement())
   orderId    Int      @unique
@@ -166,6 +252,25 @@ model Review {
   rating     Int
   comment    String?  @db.Text
   createdAt  DateTime @default(now())
+}
+
+// Per-product review, visible to every shopper on that product's page. Login
+// required to submit, one per customer per product (enforced by the unique
+// constraint below, not just the UI), never editable once created.
+model ProductReview {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+  rating     Int
+  comment    String?  @db.Text
+  image      String?
+  // false while waiting for admin approval (when review moderation is on).
+  isApproved Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@unique([productId, customerId])
 }
 
 model CampaignSubmission {
@@ -179,3 +284,181 @@ model CampaignSubmission {
   updatedAt DateTime @updatedAt
 }
 
+
+// One row per storefront page load (admin pages are never tracked).
+// visitorId is a random anonymous id kept in the visitor's browser.
+model PageView {
+  id        Int      @id @default(autoincrement())
+  path      String   @db.VarChar(255)
+  visitorId String   @db.VarChar(64)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Every system email attempt (see src/lib/email.js).
+// type: WELCOME | PASSWORD_RESET | ORDER_CONFIRMATION | ORDER_CANCELLATION
+// status: SENT | FAILED | SIMULATED (no Resend key — logged to console only)
+model EmailLog {
+  id         Int      @id @default(autoincrement())
+  type       String   @db.VarChar(40)
+  to         String   @db.VarChar(255)
+  status     String   @db.VarChar(20)
+  error      String?  @db.Text
+  orderId    Int?
+  providerId String?  @db.VarChar(100)
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([orderId])
+}
+
+// Store-wide settings edited on the admin Settings page (key → JSON value).
+// Defaults live in src/lib/settings.js; only changed keys are stored.
+model StoreSetting {
+  key       String   @id @db.VarChar(60)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+// Discount codes (admin Coupons page; applied at checkout by the server).
+// type: PERCENT (value = %) | FLAT (value = ₹).
+model Coupon {
+  id               Int      @id @default(autoincrement())
+  code             String   @unique @db.VarChar(40)
+  description      String?  @db.VarChar(255)
+  type             String   @db.VarChar(10)
+  value            Int
+  minOrder         Int      @default(0)
+  maxDiscount      Int?
+  startsAt         DateTime?
+  expiresAt        DateTime?
+  usageLimit       Int?
+  perCustomerLimit Int?     @default(1)
+  usedCount        Int      @default(0)
+  isActive         Boolean  @default(true)
+  // Listed to shoppers on the bag page ("Offers for you") — on by default;
+  // switch it off for private codes (influencer, support).
+  isPublic         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  redemptions      CouponRedemption[]
+}
+
+model CouponRedemption {
+  id         Int      @id @default(autoincrement())
+  couponId   Int
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  orderId    Int      @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  discount   Int
+  createdAt  DateTime @default(now())
+
+  @@index([couponId])
+  @@index([customerId])
+}
+
+// Deliverable pincodes (admin Pincodes page). Only enforced when the
+// "pincodeRestriction" setting is on.
+model Pincode {
+  pincode      String   @id @db.VarChar(6)
+  city         String?  @db.VarChar(80)
+  state        String?  @db.VarChar(80)
+  codAvailable Boolean  @default(true)
+  etaDays      String?  @db.VarChar(20)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+// Customer "report a problem" on a delivered order (damaged / wrong item).
+// type: REPLACEMENT | REFUND; status: PENDING | APPROVED | REJECTED | COMPLETED.
+model ReturnRequest {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId  Int
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type        String   @db.VarChar(20)
+  reason      String   @db.VarChar(120)
+  description String?  @db.Text
+  media       String   @db.Text
+  status      String   @default("PENDING") @db.VarChar(20)
+  adminNote   String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
+// Editable storefront content (homepage hero, banners, budget cards…),
+// key → JSON. Defaults live in the storefront code.
+model ContentBlock {
+  key       String   @id @db.VarChar(60)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+// Newsletter sign-ups ("Be first in line for the good stuff." on the home
+// page). One row per email; unsubscribing keeps the row (status + time) so
+// the address is never mailed again by mistake. unsubToken goes in every
+// email's one-click unsubscribe link.
+model NewsletterSubscriber {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique @db.VarChar(255)
+  status         String    @default("SUBSCRIBED") @db.VarChar(20) // SUBSCRIBED | UNSUBSCRIBED
+  source         String?   @db.VarChar(40) // where they joined, e.g. "home"
+  customerId     Int?      // linked when a signed-in customer joins (or the email matches an account)
+  unsubToken     String    @unique @db.VarChar(64)
+  welcomeSentAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  unsubscribedAt DateTime?
+
+  @@index([status, createdAt])
+}
+
+// Refer & Earn: one row per referred friend. The referrer is credited once
+// the friend's first qualifying order is delivered and its return window has
+// passed (lib/referrals.js). status: JOINED | REWARDED | REJECTED
+model Referral {
+  id           Int       @id @default(autoincrement())
+  referrerId   Int
+  refereeId    Int       @unique
+  status       String    @default("JOINED") @db.VarChar(20)
+  orderId      Int?      // the friend's order that earned the reward
+  reward       Int       @default(0)
+  friendBonus  Int       @default(0) // ₹ credited to the friend on joining
+  rejectReason String?   @db.VarChar(255)
+  rewardedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([referrerId, status])
+  @@index([status, createdAt])
+}
+
+// ZUNUZ Credits ledger. Positive rows are credit earned (remaining = how much
+// of it is still unspent; spending uses the oldest first); negative rows are
+// spends / expiries / reversals. Balance = sum(remaining) of positive rows
+// not yet expired. Credits can't be withdrawn or transferred.
+// type: REFERRAL_REWARD | FRIEND_BONUS | SPENT | RETURNED | ADJUSTMENT | EXPIRED | REVERSED
+model CreditTransaction {
+  id          Int       @id @default(autoincrement())
+  customerId  Int
+  amount      Int
+  remaining   Int       @default(0)
+  type        String    @db.VarChar(24)
+  note        String?   @db.VarChar(255)
+  orderId     Int?
+  referralId  Int?
+  adminId     Int?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([customerId, createdAt])
+  @@index([orderId])
+  @@index([expiresAt, remaining])
+}

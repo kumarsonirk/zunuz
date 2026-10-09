@@ -26,3 +26,5 @@ scripts/invoice-preview.pdf
 *.njsproj
 *.sln
 *.sw?
+
+server/uploads/

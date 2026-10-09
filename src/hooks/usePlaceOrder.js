@@ -8,13 +8,22 @@ export default function usePlaceOrder(customer) {
   const [placedOrder, setPlacedOrder] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const placeOrder = async ({ addressId, items, paymentMethod }) => {
+  // couponCode is optional; the server re-validates it and computes the
+  // discounted total (Razorpay is charged that amount). useCredits applies
+  // the customer's ZUNUZ Credits instead (never both — the server 400s).
+  // When credits cover the whole order the server places it straight away
+  // (paymentMethod 'CREDITS', same response shape as COD).
+  const placeOrder = async ({ addressId, items, paymentMethod, couponCode, useCredits = false }) => {
     setPlacing(true);
     setOrderError('');
     try {
-      const res = await api.post('/orders', { addressId, items, paymentMethod });
+      const res = await api.post('/orders', {
+        addressId, items, paymentMethod,
+        ...(couponCode && !useCredits ? { couponCode } : {}),
+        ...(useCredits ? { useCredits: true } : {}),
+      });
 
-      if (paymentMethod === 'COD') {
+      if (paymentMethod === 'COD' || res?.paymentMethod === 'CREDITS' || (!res?.razorpayOrderId && res?.id)) {
         setPlacedOrder(res);
         setShowSuccess(true);
         setPlacing(false);
@@ -26,6 +35,7 @@ export default function usePlaceOrder(customer) {
         keyId: res.keyId,
         amount: res.amount,
         razorpayOrderId: res.razorpayOrderId,
+        timeout: res.holdSeconds,
         name: 'Zunuz',
         description: `Order #${res.order.id}`,
         prefill: {
@@ -50,6 +60,7 @@ export default function usePlaceOrder(customer) {
         },
         onDismiss: () => {
           api.post(`/orders/${res.order.id}/cancel-payment`, {}).catch(() => {});
+          setOrderError('Payment was cancelled — nothing was charged. Your bag is saved, so you can try again.');
           setPlacing(false);
         },
       });

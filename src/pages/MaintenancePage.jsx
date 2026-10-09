@@ -1,36 +1,17 @@
-import React from 'react';
+import { SETTINGS } from '../store/settings';
 
+// Shown on every customer page while maintenance mode is on (admin Settings).
 export default function MaintenancePage() {
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#1F2024',
-        color: '#F5F2EB',
-        padding: '32px',
-        textAlign: 'center',
-        fontFamily: "'Grift', sans-serif",
-      }}
-    >
-      <img
-        src="/logo_white.png"
-        alt="ZUNUZ"
-        style={{ width: '160px', height: 'auto', marginBottom: '32px' }}
-      />
-      <h1 style={{ fontSize: '22px', fontWeight: 600, marginBottom: '12px', letterSpacing: '0.02em' }}>
-        We'll be right back
-      </h1>
-      <p style={{ fontSize: '15px', color: '#A1A1AA', lineHeight: 1.6, maxWidth: '380px' }}>
-        ZUNUZ is currently undergoing scheduled maintenance. We're working hard to improve your experience and will be back online shortly.
-      </p>
-      <p style={{ fontSize: '13px', color: '#71717A', marginTop: '24px' }}>
-        Thank you for your patience.
-      </p>
+    <div className="flex min-h-dvh w-full flex-col items-center justify-center bg-[#FFF8EE] px-6 text-center font-['Bricolage_Grotesque','Inter',sans-serif] text-[#111110]">
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 bg-[radial-gradient(50%_40%_at_20%_10%,#FFE0EA_0%,transparent_70%),radial-gradient(45%_40%_at_90%_80%,#FFF0B8_0%,transparent_70%)]" />
+      <div className="relative flex flex-col items-center animate-[jw-rise_0.7s_cubic-bezier(0.16,1,0.3,1)_both]">
+        <span className="bg-[linear-gradient(90deg,#FF3D8B,#F6C915)] bg-clip-text font-['Qrokinex','Syncopate',sans-serif] text-[clamp(44px,9vw,84px)] leading-none text-transparent">ZUNUZ</span>
+        <span aria-hidden="true" className="mt-8 text-[48px] animate-cp-bob">✨</span>
+        <h1 className="m-0 mt-4 text-[length:clamp(30px,5vw,48px)] font-extrabold tracking-[-0.02em]">We'll be right back</h1>
+        <p className="m-0 mt-3 max-w-[460px] font-['Inter',sans-serif] text-[17px] leading-relaxed text-[#111110]/70">{SETTINGS.maintenanceMessage}</p>
+        <a href={`mailto:${SETTINGS.supportEmail}`} className="mt-7 rounded-full bg-[#111110] px-6 py-3 font-['Inter',sans-serif] text-[15px] font-semibold text-white no-underline transition-colors hover:bg-[#FF3D8B]">Contact us</a>
+      </div>
     </div>
   );
 }

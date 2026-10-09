@@ -1,4 +1,3 @@
-import React from 'react';
 import { Sparkles } from 'lucide-react';
 
 // Lightweight authoring format for admin-editable text fields (description,

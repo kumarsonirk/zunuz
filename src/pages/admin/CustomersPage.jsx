@@ -1,91 +1,116 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search } from 'lucide-react';
+import { Users, ChevronRight, StickyNote } from 'lucide-react';
 import { api } from '../../utils/api';
-import Price from '../../components/Price';
+import { PageHeader, SearchInput, Select, EmptyState, SkeletonRows } from '../../components/admin/AdminUI';
+import { TagChip } from '../../components/admin/growth/CustomerTags';
+import { tableWrapCls, tableCls, thCls, tdCls, trCls } from '../../components/admin/adminStyles';
+
+const inr = (n) => `₹${Math.round(n || 0).toLocaleString('en-IN')}`;
 
 export default function CustomersPage() {
   const navigate = useNavigate();
-  const [customers, setCustomers] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
+  const [tag, setTag] = useState('');
+  const [allTags, setAllTags] = useState([]);
+  const [res, setRes] = useState({ key: null, customers: [], total: 0, pages: 1 });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ page });
-      if (search) params.set('search', search);
-      const data = await api.get(`/admin/customers?${params}`, true);
-      setCustomers(data.customers || []);
-      setTotal(data.total || 0);
-      setPages(data.pages || 1);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [search, page]);
+  const queryKey = `${search}\u0000${page}\u0000${tag}`;
+  const loading = res.key !== queryKey;
+  const { customers, total, pages } = res;
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let alive = true;
+    const params = new URLSearchParams({ page });
+    if (search) params.set('search', search);
+    if (tag) params.set('tag', tag);
+    api.get(`/admin/customers?${params}`, true)
+      .then((data) => {
+        if (alive) setRes({ key: queryKey, customers: data.customers || [], total: data.total || 0, pages: data.pages || 1 });
+      })
+      .catch((e) => {
+        console.error(e);
+        if (alive) setRes((r) => ({ ...r, key: queryKey }));
+      });
+    return () => { alive = false; };
+  }, [search, page, tag, queryKey]);
+
+  useEffect(() => {
+    let alive = true;
+    api.get('/admin/customers/tags', true).then((t) => { if (alive) setAllTags(Array.isArray(t) ? t : []); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  // First load shows skeletons; later searches keep the old rows dimmed.
+  const firstLoad = loading && res.key === null;
 
   return (
-    <div style={{ maxWidth: '1200px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ color: 'var(--admin-text)', fontSize: '24px', fontWeight: 600 }}>Customers</h1>
-        <p style={{ color: 'var(--admin-text-muted)', fontSize: '13px', marginTop: '4px' }}>{total} registered customers</p>
+    <div className="mx-auto max-w-[1480px]">
+      <PageHeader title="Customers" subtitle={`${total} registered customer${total === 1 ? '' : 's'}`} />
+
+      <div className="mb-5 flex flex-wrap gap-3">
+        <SearchInput
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          placeholder="Search by name, email or phone..."
+          aria-label="Search customers"
+          className="min-w-[220px] flex-1 max-w-[420px]"
+        />
+        {(allTags.length > 0 || tag) && (
+          <Select value={tag} onChange={(e) => { setTag(e.target.value); setPage(1); }} aria-label="Filter by tag" className="min-w-[190px] max-[640px]:flex-1">
+            <option value="">All tags</option>
+            {allTags.map((t) => <option key={t.tag} value={t.tag}>{t.tag} ({t.count})</option>)}
+          </Select>
+        )}
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-        <div style={{ position: 'relative', flex: 1, maxWidth: '360px' }}>
-          <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-muted)' }} />
-          <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search by name or email..."
-            style={{ width: '100%', background: 'var(--admin-surface)', border: '1px solid var(--admin-border-2)', borderRadius: '10px', padding: '10px 14px 10px 36px', color: 'var(--admin-text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
-        </div>
-      </div>
-
-      <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border-2)', borderRadius: '16px', overflow: 'hidden' }}>
-        {loading ? (
-          <div style={{ padding: '60px', textAlign: 'center', color: 'var(--admin-text-muted)' }}>Loading...</div>
+      <div className={`${tableWrapCls} animate-[jw-rise_0.5s_cubic-bezier(0.16,1,0.3,1)_both]`}>
+        {firstLoad ? (
+          <SkeletonRows rows={6} />
         ) : customers.length === 0 ? (
-          <div style={{ padding: '60px', textAlign: 'center' }}>
-            <Users size={40} style={{ color: 'var(--admin-text-faint)', marginBottom: '12px' }} />
-            <p style={{ color: 'var(--admin-text-muted)', fontSize: '14px' }}>No customers found.</p>
-          </div>
+          loading ? <SkeletonRows rows={6} /> : (
+            <EmptyState icon={Users} title="No customers found" text={search || tag ? `Nothing matches${search ? ` “${search}”` : ''}${tag ? ` with the tag “${tag}”` : ''}.` : 'Customers appear here after they sign up.'} />
+          )
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className={`overflow-x-auto transition-opacity duration-300 ${loading ? 'opacity-60' : 'opacity-100'}`}>
+            <table className={tableCls}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--admin-border-1)' }}>
-                  {['Customer', 'Phone', 'Orders', 'Total Spent', 'Addresses', 'Joined'].map(h => (
-                    <th key={h} style={{ padding: '12px 20px', textAlign: 'left', color: 'var(--admin-text-muted)', fontSize: '12px', letterSpacing: '0.08em', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
+                <tr>
+                  {['Customer', 'Phone', 'Orders', 'Total Spent', 'Addresses', 'Joined', ''].map((h, i) => <th key={h || i} className={thCls}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
-                {customers.map((c, i) => {
-                  const spent = (c.orders || []).filter(o => o.status !== 'CANCELLED').reduce((s, o) => s + o.total, 0);
+                {customers.map((c) => {
+                  const spent = (c.orders || []).filter((o) => o.status !== 'CANCELLED').reduce((s, o) => s + o.total, 0);
                   return (
-                    <tr key={c.id} style={{ borderBottom: i < customers.length - 1 ? '1px solid var(--admin-hover-2)' : 'none', cursor: 'pointer' }}
-                      onMouseOver={e => e.currentTarget.style.background = 'var(--admin-hover-1)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                      onClick={() => navigate(`/admin/customers/${c.id}`)}>
-                      <td style={{ padding: '14px 20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #FC4B4E22, #3B82F622)', border: '1px solid var(--admin-border-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--admin-text-muted)', fontSize: '13px', fontWeight: 600, flexShrink: 0 }}>
-                            {c.name[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <div style={{ color: 'var(--admin-text)', fontSize: '13px', fontWeight: 500 }}>{c.name}</div>
-                            <div style={{ color: 'var(--admin-text-muted)', fontSize: '12px' }}>{c.email}</div>
-                          </div>
+                    <tr key={c.id} className={`${trCls} group/row cursor-pointer`} onClick={() => navigate(`/admin/customers/${c.id}`)}>
+                      <td className={tdCls}>
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--admin-accent-soft)] text-[15px] font-bold text-[var(--admin-accent)]">
+                            {c.name?.[0]?.toUpperCase()}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block max-w-[240px] truncate font-medium text-[var(--admin-text)]">{c.name}</span>
+                            <span className="block max-w-[240px] truncate text-[12px] text-[var(--admin-text-muted)]">{c.email}</span>
+                            {(c.tags?.length > 0 || c.adminNote) && (
+                              <span className="mt-1 flex max-w-[280px] flex-wrap items-center gap-1">
+                                {c.tags?.map((t) => <TagChip key={t} tag={t} size="sm" />)}
+                                {c.adminNote && <span title={c.adminNote} aria-label="Has internal notes" className="inline-flex text-[var(--admin-text-dim)]"><StickyNote size={13} /></span>}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       </td>
-                      <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{c.phone || '—'}</td>
-                      <td style={{ padding: '14px 20px', color: 'var(--admin-text)', fontSize: '13px', fontWeight: 500 }}>{c._count?.orders || 0}</td>
-                      <td style={{ padding: '14px 20px', color: '#22C55E', fontSize: '13px', fontWeight: 600 }}><Price value={`₹${spent.toLocaleString()}`} /></td>
-                      <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>{c._count?.addresses || 0}</td>
-                      <td style={{ padding: '14px 20px', color: 'var(--admin-text-muted)', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                      <td className={`${tdCls} whitespace-nowrap text-[var(--admin-text-muted)]`}>{c.phone || '—'}</td>
+                      <td className={`${tdCls} font-semibold text-[var(--admin-text)] tabular-nums`}>{c._count?.orders || 0}</td>
+                      <td className={`${tdCls} font-semibold whitespace-nowrap text-[var(--tone-green)] tabular-nums`}>{inr(spent)}</td>
+                      <td className={`${tdCls} text-[var(--admin-text-muted)] tabular-nums`}>{c._count?.addresses || 0}</td>
+                      <td className={`${tdCls} whitespace-nowrap text-[13px] text-[var(--admin-text-muted)]`}>
                         {new Date(c.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td className={`${tdCls} w-10 text-right`}>
+                        <ChevronRight size={18} className="inline-block text-[var(--admin-text-dim)] transition-[color,translate] duration-200 group-hover/row:translate-x-0.5 group-hover/row:text-[var(--admin-accent)]" />
                       </td>
                     </tr>
                   );
@@ -97,11 +122,19 @@ export default function CustomersPage() {
       </div>
 
       {pages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
-          {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
-            <button key={p} onClick={() => setPage(p)} style={{ width: '36px', height: '36px', borderRadius: '8px', border: 'none', background: page === p ? '#FC4B4E' : 'var(--admin-border-2)', color: page === p ? 'white' : 'var(--admin-text-muted)', cursor: 'pointer', fontSize: '13px' }}>{p}</button>
+        <nav aria-label="Pagination" className="mt-5 flex flex-wrap justify-center gap-2">
+          {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              type="button"
+              aria-current={page === p ? 'page' : undefined}
+              onClick={() => setPage(p)}
+              className={`size-9 cursor-pointer rounded-[10px] border-0 text-[13px] font-semibold tabular-nums transition-colors ${page === p ? 'bg-[var(--admin-accent)] text-white' : 'bg-[var(--admin-hover-3)] text-[var(--admin-text-muted)] hover:text-[var(--admin-text)]'}`}
+            >
+              {p}
+            </button>
           ))}
-        </div>
+        </nav>
       )}
     </div>
   );

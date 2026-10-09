@@ -39,7 +39,8 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
     // Outlook, etc.) even though it renders fine on the website itself, so
     // the email template swaps to this file instead of the WebP one.
     await resized.clone().jpeg({ quality: 82 }).toFile(path.join(uploadsDir, `${base}.jpg`));
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    // Configured public API address when set (never trust the Host header).
+    const baseUrl = String(process.env.API_PUBLIC_URL || '').replace(/\/+$/, '') || `${req.protocol}://${req.get('host')}`;
     res.json({ url: `${baseUrl}/uploads/${base}.webp` });
   } catch (err) {
     console.error('Image conversion failed:', err);

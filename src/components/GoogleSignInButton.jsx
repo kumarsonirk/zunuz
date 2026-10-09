@@ -1,13 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 // Renders Google's own "Sign in with Google" button via Google Identity Services
 // (script loaded in index.html) and forwards the resulting ID token credential.
 // The button itself renders inside a Google-controlled iframe, so its fill/hover
-// can't be restyled directly — instead we wrap it in a card with its own
-// background that's visible before hover, and a distinct shade on hover.
+// can't be restyled directly — it's Google's light "outline" pill (to sit on
+// the cream storefront), sized to the column it's in, inside a soft wrapper
+// that lifts on hover.
 export default function GoogleSignInButton({ onCredential, text = 'continue_with' }) {
   const buttonRef = useRef(null);
-  const [hovered, setHovered] = useState(false);
 
   // The caller (Login/Signup pages) defines its onCredential handler inline,
   // so it's a new function reference on every keystroke-driven re-render.
@@ -27,12 +27,14 @@ export default function GoogleSignInButton({ onCredential, text = 'continue_with
         client_id: clientId,
         callback: (response) => onCredentialRef.current(response.credential),
       });
+      // GIS takes a fixed pixel width (200–400) — fit the column.
+      const width = Math.max(200, Math.min(400, Math.floor(buttonRef.current.parentElement.clientWidth - 8)));
       window.google.accounts.id.renderButton(buttonRef.current, {
         type: 'standard',
-        theme: 'filled_black',
+        theme: 'outline',
         size: 'large',
         shape: 'pill',
-        width: 336,
+        width,
         text,
       });
     };
@@ -57,29 +59,14 @@ export default function GoogleSignInButton({ onCredential, text = 'continue_with
       }
     }, 200);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
 
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   if (!clientId) return null;
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <div
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{
-          borderRadius: '999px',
-          padding: '4px',
-          background: hovered ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          transition: 'background 0.15s ease',
-          minHeight: '44px',
-          minWidth: '336px',
-        }}
-      >
-        <div ref={buttonRef} />
-      </div>
+    <div className="flex min-h-[48px] w-full justify-center rounded-full bg-white p-1 shadow-[0_10px_24px_-18px_rgba(17,17,16,0.5)] transition-[translate,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-18px_rgba(17,17,16,0.55)]">
+      <div ref={buttonRef} />
     </div>
   );
 }

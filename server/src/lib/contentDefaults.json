@@ -1,0 +1,102 @@
+{
+  "home.hero": {
+    "headline": [
+      "MOOD.",
+      "FIT.",
+      "RULES."
+    ],
+    "tagline": "Clothes + jewellery for every version of you.",
+    "priceLine": "Jewellery from ₹199",
+    "buttonLabel": "Shop Now",
+    "buttonLink": "/jewellery",
+    "image": "/poster2.png",
+    "mobileImage": "/poster1_mobile.jpeg"
+  },
+  "home.heroNavratri": {
+    "badge": "NAVRATRI SPECIAL DHAMAKA",
+    "headline": [
+      "PICK ANY 3",
+      "FOR JUST",
+      "₹999 ONLY."
+    ],
+    "tagline": "Handpicked jewellery worth up to ₹2,097 — celebrate Navratri with ZUNUZ!",
+    "priceLine": "Exclusive items between ₹499 to ₹699",
+    "buttonLabel": "Shop Navratri Offers",
+    "buttonLink": "/navratri-offers",
+    "image": "/main_banner1.jpg",
+    "mobileImage": "/poster1_mobile.jpeg"
+  },
+  "home.marquee": {
+    "text": [
+      "Clothes + jewellery for every version of you."
+    ]
+  },
+  "shared.budget": {
+    "heading": "How much are we spending today?",
+    "subheading": "Jewellery, by budget.",
+    "card1Image": "/jewel1.webp",
+    "card1Copy": "Just a little something Small everyday jewellery Hoops + chain, café selfie",
+    "card2Image": "/jewel2.webp",
+    "card2Copy": "The \"add to cart\" zone Everyday favourites Statement earrings, mirror shot",
+    "card3Image": "/jewel3.webp",
+    "card3Copy": "Okayyy, we see you Statement pieces Night-out layered set",
+    "linkLabel": "Shop jewellery"
+  },
+  "home.brand": {
+    "headline": "For every version of you.",
+    "line1": "You're a student. A professional. A best friend. A dreamer. A night-out girl.",
+    "line2": "A coffee-run girl. Sometimes all before lunch.",
+    "buttonLabel": "Meet the brand",
+    "buttonLink": "/jewellery"
+  },
+  "home.vibeBanner": {
+    "text": "wear your vibe",
+    "image": "/vibe_banner.webp"
+  },
+  "home.under499": {
+    "title": "The under ₹499 edit",
+    "subtitle": "Cute doesn't have to cost a lot.",
+    "linkLabel": "Shop under ₹499"
+  },
+  "home.posterBanner": {
+    "text": "made for every you",
+    "image": "/poster3.png"
+  },
+  "home.follow": {
+    "description": "Daily fit checks, styling ideas and new drops, straight from our feed.",
+    "note": "Clothes + jewellery for every version of you"
+  },
+  "home.faq": {
+    "heading": "FAQs",
+    "lead": "Okay but… you probably have",
+    "script": "questions.",
+    "stuckTitle": "Still stuck?",
+    "stuckText": "We reply faster than your group chat."
+  },
+  "home.newsletter": {
+    "heading": "Be first in line for the",
+    "script": "good stuff.",
+    "subtext": "New drops, early access and members-only offers. Two emails a month, max.",
+    "buttonLabel": "Join the list",
+    "doneTitle": "You're on the list.",
+    "doneText": "First dibs on the next drop are coming your way."
+  },
+  "jewellery.hero": {
+    "headline": [
+      "The",
+      "jewellery edit."
+    ],
+    "tagline": "Small pieces, big energy. Stack it your way, from ₹199.",
+    "primaryLabel": "Shop all jewellery",
+    "primaryLink": "/shop",
+    "secondaryLabel": "Under ₹499",
+    "secondaryLink": "/shop?tier=199-plus",
+    "image": "/poster1.png"
+  },
+  "jewellery.trending": {
+    "heading": "Trending now.",
+    "caption": "The pieces everyone's stacking this week — hover one to peek.",
+    "buttonLabel": "Shop trending",
+    "buttonLink": "/shop"
+  }
+}

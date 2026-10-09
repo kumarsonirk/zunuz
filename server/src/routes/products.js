@@ -1,7 +1,6 @@
 const router = require('express').Router();
-const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 // GET /api/products?category=core&subcategory=necklaces
 router.get('/', async (req, res) => {

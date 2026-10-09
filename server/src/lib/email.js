@@ -3,7 +3,31 @@
 // anti-spam measure, but plain HTTPS to api.resend.com is never blocked.
 const { RESEND_API_KEY, RESEND_FROM } = process.env;
 
+const prisma = require('./prisma');
+
+// Record every attempt in EmailLog for the admin Statistics page. Never
+// throws — logging must not break sending.
+function logEmail(meta, to, status, extra = {}) {
+  if (!meta?.type) return;
+  prisma.emailLog.create({
+    data: {
+      type: meta.type,
+      to: String(to).slice(0, 255),
+      status,
+      orderId: meta.orderId ?? null,
+      error: extra.error ? String(extra.error).slice(0, 2000) : null,
+      providerId: extra.providerId ? String(extra.providerId).slice(0, 100) : null,
+    },
+  }).catch((e) => console.error('EmailLog write failed:', e.message));
+}
+
 const isConfigured = !!RESEND_API_KEY;
+
+// HTML-escape every customer/admin-controlled value (names, addresses,
+// product names, coupon codes…) before it goes into an email body.
+const esc = (v) => String(v ?? '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 // CLIENT_URL supports a comma-separated list for CORS (multiple allowed
 // origins) — emails only ever link to one place, so use just the first
@@ -17,7 +41,7 @@ if (!isConfigured) {
 /**
  * Helper to send email or log to console
  */
-async function sendMailHelper(options) {
+async function sendMailHelper(options, meta) {
   if (isConfigured) {
     try {
       const res = await fetch('https://api.resend.com/emails', {
@@ -32,14 +56,17 @@ async function sendMailHelper(options) {
           subject: options.subject,
           html: options.html,
           text: options.text,
+          ...(options.headers ? { headers: options.headers } : {}), // e.g. List-Unsubscribe
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || `Resend API error (${res.status})`);
       console.log(`✉️ Email sent successfully to ${options.to}. MessageID: ${data.id}`);
+      logEmail(meta, options.to, 'SENT', { providerId: data.id });
       return data;
     } catch (error) {
       console.error(`❌ Failed to send email to ${options.to}:`, error);
+      logEmail(meta, options.to, 'FAILED', { error: error?.message || error });
       // Don't throw so that the application doesn't crash on email failure
       return null;
     }
@@ -49,9 +76,14 @@ async function sendMailHelper(options) {
     console.log(`✉️  [SIMULATED EMAIL SENT]`);
     console.log(`TO:      ${options.to}`);
     console.log(`SUBJECT: ${options.subject}`);
-    console.log(`BODY:`);
-    console.log(options.text || options.html);
+    // Never print bodies on the live server: they can hold password-reset
+    // and verification links (anyone reading the logs could use them).
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`BODY:`);
+      console.log(options.text || options.html);
+    }
     console.log('======================================================\n');
+    logEmail(meta, options.to, 'SIMULATED');
     return { messageId: 'simulated-id' };
   }
 }
@@ -80,7 +112,7 @@ function getWelcomeEmailHtml(name) {
           <td style="padding: 48px 32px 32px 32px; background-color: #fff; text-align: center;">
             <h1 style="font-family: 'Grift', 'Space Grotesk', sans-serif; font-size: 24px; font-weight: bold; color: #1f2024; margin: 0 0 12px 0; letter-spacing: 0.05em;">Welcome to the ZUNUZ Family! 💎</h1>
             <p style="font-size: 15px; color: #1f2024; line-height: 1.6; margin: 0 0 24px 0; max-width: 440px; margin-left: auto; margin-right: auto;">
-              Hi, ${formattedName}! We're excited to have you here. Explore exclusive jewellery, made with precision, passion, and elegance.
+              Hi, ${esc(formattedName)}! We're excited to have you here. Explore exclusive jewellery, made with precision, passion, and elegance.
             </p>
             <table cellpadding="0" cellspacing="0" style="margin: 0 auto 32px auto; border-collapse: collapse;">
               <tr>
@@ -134,7 +166,7 @@ async function sendWelcomeEmail(email, name) {
   const html = getWelcomeEmailHtml(formattedName);
   const text = `Welcome to ZUNUZ, ${formattedName}!\n\nWe are thrilled to welcome you to our community. Thank you for creating an account with us.\n\nStart shopping by visiting: ${CLIENT_URL}/login`;
 
-  return sendMailHelper({ to: email, subject, html, text });
+  return sendMailHelper({ to: email, subject, html, text }, { type: 'WELCOME' });
 }
 
 
@@ -149,13 +181,13 @@ async function sendPasswordResetEmail(email, name, resetLink) {
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1F2024; background-color: #F9F9FA; border-radius: 12px; border: 1px solid #EDEDF0;">
       <h2 style="color: #FC4B4E; margin-bottom: 20px; font-weight: 700;">Password Reset Request</h2>
       <p style="font-size: 15px; line-height: 1.6; color: #3F3F46;">
-        Hello ${formattedName},
+        Hello ${esc(formattedName)},
       </p>
       <p style="font-size: 15px; line-height: 1.6; color: #3F3F46;">
         We received a request to reset the password for your ZUNUZ account. Click the button below to set a new password:
       </p>
       <div style="margin: 30px 0; text-align: center;">
-        <a href="${resetLink}" style="background-color: #FC4B4E; color: #FFFFFF; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block;">
+        <a href="${esc(resetLink)}" style="background-color: #FC4B4E; color: #FFFFFF; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; display: inline-block;">
           Reset Password
         </a>
       </div>
@@ -164,7 +196,7 @@ async function sendPasswordResetEmail(email, name, resetLink) {
       </p>
       <p style="font-size: 13px; color: #A1A1AA; word-break: break-all; margin-top: 20px;">
         If the button above does not work, copy and paste this URL into your browser:<br/>
-        <a href="${resetLink}" style="color: #FC4B4E; text-decoration: underline;">${resetLink}</a>
+        <a href="${esc(resetLink)}" style="color: #FC4B4E; text-decoration: underline;">${esc(resetLink)}</a>
       </p>
       <hr style="border: 0; border-top: 1px solid #E4E4E7; margin: 30px 0;" />
       <p style="font-size: 12px; color: #71717A; text-align: center; margin: 0;">
@@ -175,7 +207,7 @@ async function sendPasswordResetEmail(email, name, resetLink) {
 
   const text = `Hello ${formattedName},\n\nWe received a request to reset the password for your ZUNUZ account. Click the link below or copy and paste it into your browser to reset your password:\n\n${resetLink}\n\nThis link is only valid for 15 minutes.`;
 
-  return sendMailHelper({ to: email, subject, html, text });
+  return sendMailHelper({ to: email, subject, html, text }, { type: 'PASSWORD_RESET' });
 }
 
 /**
@@ -209,11 +241,11 @@ function getOrderConfirmationHtml(order) {
           <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse;">
             <tr>
               <td width="60" style="vertical-align: middle; padding: 0;">
-                <img src="${productImage}" width="50" height="50" style="border-radius: 8px; object-fit: cover; display: block; border: 1px solid rgba(0, 0, 0, 0.08);" />
+                <img src="${esc(productImage)}" width="50" height="50" style="border-radius: 8px; object-fit: cover; display: block; border: 1px solid rgba(0, 0, 0, 0.08);" />
               </td>
               <td style="padding-left: 12px; vertical-align: middle; text-align: left;">
-                <div style="font-size: 15px; font-weight: bold; color: #1a1a1a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">${item.product?.name || 'Jewellery Item'}</div>
-                <div style="font-size: 12px; color: #71717a; margin-top: 4px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">Quantity: ${item.quantity}x</div>
+                <div style="font-size: 15px; font-weight: bold; color: #1a1a1a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">${esc(item.product?.name || 'Jewellery Item')}</div>
+                <div style="font-size: 12px; color: #71717a; margin-top: 4px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">Quantity: ${esc(item.quantity)}x</div>
               </td>
               <td align="right" style="vertical-align: middle; font-size: 15px; font-weight: 600; color: #1a1a1a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
                 ₹${item.quantity * item.price}
@@ -230,7 +262,9 @@ function getOrderConfirmationHtml(order) {
   // (immutable once the order is placed), so the delivery fee shown is
   // whatever it actually was for this order, not a hardcoded "Free".
   const itemsSubtotal = order.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-  const deliveryFee = order.total - itemsSubtotal;
+  const discount = order.discount || 0;
+  const creditsUsed = order.creditsUsed || 0; // ZUNUZ Credits applied
+  const deliveryFee = order.total - itemsSubtotal + discount + creditsUsed;
   const deliveryFeeDisplay = deliveryFee > 0 ? `₹${deliveryFee}.00` : `₹0.00 (Free)`;
 
   const addr = order.address || {};
@@ -250,7 +284,7 @@ function getOrderConfirmationHtml(order) {
           <td style="padding: 40px 32px 24px 32px; background-color: #1f2024;">
             <h1 style="font-family: 'Grift', 'Space Grotesk', sans-serif; font-size: 28px; font-weight: normal; color: #fff; margin: 0 0 16px 0; text-align: left;">Order confirmation.</h1>
             <p style="font-size: 15px; color: #fff; line-height: 1.5; margin: 0 0 30px 0; text-align: left;">
-              Hi ${customerName}, your order for ${order.items.length} product${order.items.length > 1 ? 's' : ''} has been confirmed.
+              Hi ${esc(customerName)}, your order for ${order.items.length} product${order.items.length > 1 ? 's' : ''} has been confirmed.
             </p>
 
             <!-- Items Box -->
@@ -274,6 +308,14 @@ function getOrderConfirmationHtml(order) {
                             <td style="padding: 4px 0; text-align: left;">Shipping fee:</td>
                             <td style="padding: 4px 0; text-align: right; font-weight: 600; color: #1a1a1a;">${deliveryFeeDisplay}</td>
                           </tr>
+                          ${discount ? `<tr>
+                            <td style="padding: 4px 0; text-align: left;">Discount${order.couponCode ? ` (${esc(order.couponCode)})` : ''}</td>
+                            <td style="padding: 4px 0; text-align: right; font-weight: 600; color: #1a1a1a;">&minus;&#8377;${discount}</td>
+                          </tr>` : ''}
+                          ${creditsUsed ? `<tr>
+                            <td style="padding: 4px 0; text-align: left;">ZUNUZ Credits</td>
+                            <td style="padding: 4px 0; text-align: right; font-weight: 600; color: #1a1a1a;">&minus;&#8377;${creditsUsed}</td>
+                          </tr>` : ''}
                           <tr style="border-top: 1px solid rgba(0, 0, 0, 0.08);">
                             <td style="padding: 16px 0 0 0; text-align: left; font-size: 15px; font-weight: bold; color: #1a1a1a;">Grand Total:</td>
                             <td style="padding: 16px 0 0 0; text-align: right; font-size: 18px; font-weight: bold; color: #FC4B4E;">₹${order.total}</td>
@@ -300,7 +342,7 @@ function getOrderConfirmationHtml(order) {
               <tr>
                 <td width="33.33%" style="vertical-align: top; border-right: 1px solid #e4e4e7; padding: 0 10px 0 0; text-align: left;">
                   <div style="font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px;">Order id:</div>
-                  <div style="font-size: 13px; color: #fff; line-height: 1.4;">${order.id}</div>
+                  <div style="font-size: 13px; color: #fff; line-height: 1.4;">${esc(order.id)}</div>
                 </td>
                 <td width="33.33%" style="vertical-align: top; border-right: 1px solid #e4e4e7; padding: 0 10px; text-align: left;">
                   <div style="font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px;">Order date:</div>
@@ -308,8 +350,8 @@ function getOrderConfirmationHtml(order) {
                 </td>
                 <td width="33.33%" style="vertical-align: top; padding: 0 0 0 10px; text-align: left;">
                   <div style="font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px;">Payment:</div>
-                  <div style="font-size: 13px; color: #fff; line-height: 1.4;">${order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Card'}</div>
-                  ${order.razorpayPaymentId ? `<div style="font-size: 11px; color: #a1a1aa; line-height: 1.4; margin-top: 4px; word-break: break-all;">ID: ${order.razorpayPaymentId}</div>` : ''}
+                  <div style="font-size: 13px; color: #fff; line-height: 1.4;">${order.paymentMethod === 'COD' ? 'Cash on Delivery' : order.paymentMethod === 'CREDITS' ? 'ZUNUZ Credits' : 'Online Card'}</div>
+                  ${order.razorpayPaymentId ? `<div style="font-size: 11px; color: #a1a1aa; line-height: 1.4; margin-top: 4px; word-break: break-all;">ID: ${esc(order.razorpayPaymentId)}</div>` : ''}
                 </td>
               </tr>
             </table>
@@ -319,7 +361,7 @@ function getOrderConfirmationHtml(order) {
               <tr>
                 <td style="padding-top: 16px; text-align: left;">
                   <div style="font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px;">Address:</div>
-                  <div style="font-size: 13px; color: #fff; line-height: 1.5; word-break: break-word;">${addressString}</div>
+                  <div style="font-size: 13px; color: #fff; line-height: 1.5; word-break: break-word;">${esc(addressString)}</div>
                 </td>
               </tr>
             </table>
@@ -354,7 +396,9 @@ async function sendOrderConfirmationEmail(email, order) {
     `- ${item.product?.name} (Qty: ${item.quantity} @ ₹${item.price}) = ₹${item.quantity * item.price}`
   ).join('\n');
   const itemsSubtotal = order.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-  const deliveryFee = order.total - itemsSubtotal;
+  const discount = order.discount || 0;
+  const creditsUsed = order.creditsUsed || 0; // ZUNUZ Credits applied
+  const deliveryFee = order.total - itemsSubtotal + discount + creditsUsed;
   const deliveryFeeText = deliveryFee > 0 ? `₹${deliveryFee}` : 'Free';
 
   const addr = order.address || {};
@@ -364,9 +408,9 @@ async function sendOrderConfirmationEmail(email, order) {
   const paymentLine = order.razorpayPaymentId
     ? `PAYMENT METHOD: ${order.paymentMethod} (Payment ID: ${order.razorpayPaymentId})`
     : `PAYMENT METHOD: ${order.paymentMethod}`;
-  const text = `Order Confirmed!\n\nThank you for shopping at ZUNUZ, ${customerName}. Your order #${order.id} has been placed.\n\nITEMS:\n${itemsText}\n\nSUB TOTAL: ₹${itemsSubtotal}\nSHIPPING FEE: ${deliveryFeeText}\nTOTAL: ₹${order.total}\n\nSHIPPING ADDRESS:\n${addressString}\n\n${paymentLine}`;
+  const text = `Order Confirmed!\n\nThank you for shopping at ZUNUZ, ${customerName}. Your order #${order.id} has been placed.\n\nITEMS:\n${itemsText}\n\nSUB TOTAL: ₹${itemsSubtotal}\n${discount ? `DISCOUNT${order.couponCode ? ` (${order.couponCode})` : ''}: -Rs.${discount}\n` : ''}${creditsUsed ? `ZUNUZ CREDITS: -Rs.${creditsUsed}\n` : ''}SHIPPING FEE: ${deliveryFeeText}\nTOTAL: ₹${order.total}\n\nSHIPPING ADDRESS:\n${addressString}\n\n${paymentLine}`;
 
-  return sendMailHelper({ to: email, subject, html, text });
+  return sendMailHelper({ to: email, subject, html, text }, { type: 'ORDER_CONFIRMATION', orderId: order?.id });
 }
 
 /**
@@ -394,7 +438,7 @@ async function sendOrderCancellationEmail(email, order) {
           <td style="padding: 40px 32px 32px 32px; background-color: #ffffff; text-align: left;">
             <h1 style="font-family: 'Grift', 'Space Grotesk', sans-serif; font-size: 28px; font-weight: normal; color: #EF4444; margin: 0 0 16px 0;">Order cancelled.</h1>
             <p style="font-size: 15px; color: #52525b; line-height: 1.5; margin: 0 0 24px 0;">
-              Hi ${customerName}, your order #${order.id} has been cancelled. Any payment made will be refunded to your source account within 5-7 working days.
+              Hi ${esc(customerName)}, your order #${esc(order.id)} has been cancelled. Any payment made will be refunded to your source account within 5-7 working days.
             </p>
             <p style="font-size: 14px; color: #71717a; line-height: 1.5; margin: 0;">
               If you have any questions or would like to reactivate your order, please reply to this email or visit our help center.
@@ -407,7 +451,7 @@ async function sendOrderCancellationEmail(email, order) {
 
   const text = `Order Cancelled!\n\nHello ${customerName}, your order #${order.id} has been cancelled. Any payment made will be refunded within 5-7 working days.`;
 
-  return sendMailHelper({ to: email, subject, html, text });
+  return sendMailHelper({ to: email, subject, html, text }, { type: 'ORDER_CANCELLATION', orderId: order?.id });
 }
 
 module.exports = {
@@ -417,4 +461,8 @@ module.exports = {
   sendOrderCancellationEmail,
   getOrderConfirmationHtml,
   getWelcomeEmailHtml,
+  // Generic sender for templates in lib/mail/*.js:
+  // sendMailHelper({ to, subject, html, text }, { type, orderId })
+  sendMailHelper,
+  CLIENT_URL,
 };

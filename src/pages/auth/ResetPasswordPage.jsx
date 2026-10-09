@@ -1,125 +1,96 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 import { api } from '../../utils/api';
+import AuthLayout, { AuthField, AuthAlert } from '../../components/store/AuthLayout';
+import { primaryBtnCls, BtnSweep } from '../../components/store/StoreShell';
 import Seo from '../../components/Seo';
 
-const inp = {
-  width: '100%',
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: '12px',
-  padding: '13px 16px',
-  color: '#F5F2EB',
-  fontSize: '14px',
-  outline: 'none',
-  boxSizing: 'border-box',
-  fontFamily: "'Grift', sans-serif"
-};
-
+// Reset password (/reset-password?token=…), from the emailed link. On
+// success it counts down and goes to Log in. The token is read once, then
+// stripped from the address bar so analytics / history never record it.
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const [token] = useState(() => searchParams.get('token'));
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has('token')) return;
+    window.history.replaceState(window.history.state, '', window.location.pathname);
+  }, []);
+
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [done, setDone] = useState(false);
+  const [count, setCount] = useState(4);
+
+  useEffect(() => {
+    if (!done) return undefined;
+    if (count <= 0) { navigate('/login', { replace: true }); return undefined; }
+    const t = setTimeout(() => setCount((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [done, count, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
-
-    if (!token) return setError('Reset token is missing. Please request a new password reset link.');
-    if (password.length < 6) return setError('Password must be at least 6 characters');
-    if (password !== confirmPassword) return setError('Passwords do not match');
-
+    const errs = {};
+    if (password.length < 6) errs.password = 'At least 6 characters';
+    if (confirm !== password) errs.confirm = "Passwords don't match";
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
     setLoading(true);
     try {
-      const res = await api.post('/auth/reset-password', { token, password });
-      setSuccess(res.message || 'Password reset successful!');
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
+      await api.post('/auth/reset-password', { token, password });
+      setDone(true);
     } catch (err) {
-      setError(err.message || 'Failed to reset password. Please try again.');
+      setError(err.message || 'Could not reset the password. Please request a new link.');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="flex-1 flex flex-col justify-center bg-[#1F2024] text-[#F5F2EB] overflow-y-auto" style={{ fontFamily: "'Grift', sans-serif" }}>
-      <Seo title="Reset Password" path="/reset-password" noindex />
-      <div style={{ maxWidth: '420px', width: '100%', margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#F5F2EB', letterSpacing: '0.02em' }}>Set New Password</h1>
-          <p style={{ color: '#71717A', fontSize: '14px', marginTop: '8px' }}>
-            Choose a strong password for your Zunuz account
-          </p>
-        </div>
-
-        {error && (
-          <div style={{ background: 'rgba(252,75,78,0.1)', border: '1px solid rgba(252,75,78,0.25)', borderRadius: '12px', padding: '12px 16px', marginBottom: '20px', color: '#FC4B4E', fontSize: '13px', textAlign: 'center' }}>
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '12px', padding: '12px 16px', marginBottom: '20px', color: '#22C55E', fontSize: '13px', textAlign: 'center' }}>
-            {success}
-          </div>
-        )}
-
-        {!token && (
-          <div style={{ background: 'rgba(252,75,78,0.1)', border: '1px solid rgba(252,75,78,0.25)', borderRadius: '12px', padding: '16px', marginBottom: '20px', color: '#FC4B4E', fontSize: '13px', textAlign: 'center' }}>
-            Invalid or missing reset token. Please request a new password reset from the{' '}
-            <Link to="/forgot-password" style={{ color: '#FC4B4E', textDecoration: 'underline' }}>Forgot Password page</Link>.
-          </div>
-        )}
-
-        {!success && token && (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <input
-                type="password"
-                value={password}
-                onChange={e => { setPassword(e.target.value); setError(''); }}
-                placeholder="New Password (min. 6 characters)"
-                required
-                style={inp}
-              />
-            </div>
-
-            <div>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={e => { setConfirmPassword(e.target.value); setError(''); }}
-                placeholder="Confirm New Password"
-                required
-                style={inp}
-              />
-            </div>
-            
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-buy-now"
-              style={{ height: '52px', borderRadius: '12px', border: 'none', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
-            >
-              {loading ? 'Updating password...' : 'Save Password'}
-            </button>
-          </form>
-        )}
-
-        <p style={{ textAlign: 'center', color: '#71717A', fontSize: '13px', marginTop: '28px' }}>
-          Back to{' '}
-          <Link to="/login" style={{ color: '#FC4B4E', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
-        </p>
+  let content;
+  if (!token) {
+    content = (
+      <>
+        <AuthAlert>This reset link is missing its code. Request a new one below.</AuthAlert>
+        <Link to="/forgot-password" className={`au-in ${primaryBtnCls} mt-5 w-full`}><BtnSweep />Get a new link</Link>
+      </>
+    );
+  } else if (done) {
+    content = (
+      <div className="au-in flex flex-col items-center rounded-[22px] bg-white/85 px-6 py-8 text-center animate-[jw-rise_0.5s_cubic-bezier(0.16,1,0.3,1)_both]">
+        <CheckCircle2 size={52} className="animate-[jw-pop_0.6s_cubic-bezier(0.34,1.56,0.64,1)_both] text-[#1E8A4C]" />
+        <p className="m-0 mt-3 text-[22px] font-bold">Password updated!</p>
+        <p className="m-0 mt-1 font-['Inter',sans-serif] text-[14px] text-[#111110]/65" aria-live="polite">Taking you to log in in {count}s…</p>
+        <Link to="/login" replace className={`${primaryBtnCls} mt-5`}><BtnSweep />Log in now</Link>
       </div>
-    </div>
+    );
+  } else {
+    content = (
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <AuthAlert>{error}</AuthAlert>
+        {error && /expired|invalid/i.test(error) && (
+          <Link to="/forgot-password" className="au-in font-['Inter',sans-serif] text-[14px] font-bold text-[#1A6FE8]">Request a new link →</Link>
+        )}
+        <AuthField id="rp-password" label="New password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} hint="At least 6 characters" />
+        <AuthField id="rp-confirm" label="Confirm new password" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} error={errors.confirm} />
+        <button type="submit" disabled={loading} className={`au-in ${primaryBtnCls} mt-1 w-full`}>
+          <BtnSweep />
+          {loading ? <><span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Saving…</> : 'Set new password'}
+        </button>
+      </form>
+    );
+  }
+
+  return (
+    <AuthLayout image="/modal4.webp" title="New password" accent="text-[#1E8A4C]" subtitle={done ? null : 'Choose something you’ll remember (and nobody will guess).'} tagline="Fresh start, same sparkle.">
+      <Seo title="Reset password" path="/reset-password" noindex />
+      {content}
+    </AuthLayout>
   );
 }

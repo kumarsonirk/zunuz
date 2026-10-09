@@ -1,47 +1,43 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
+import AuthLayout, { AuthField, AuthAlert, OrDivider } from '../../components/store/AuthLayout';
+import { primaryBtnCls, BtnSweep } from '../../components/store/StoreShell';
 import Seo from '../../components/Seo';
 
-export default function LoginPage({ onReopenBillSummary }) {
+// Log in (/login). `location.state.returnTo` (set by checkout, reviews, …)
+// is where we go afterwards; it's passed on to Sign up / Forgot password
+// too, so switching pages doesn't lose it.
+export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { customer, loading: authLoading, login, loginWithGoogle } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const returnTo = location.state?.returnTo;
+  // Set when this page signs the customer in: the redirect below then goes
+  // to returnTo (or home) instead of the "already signed in → account" one.
+  const [justAuthed, setJustAuthed] = useState(false);
 
-  // Already signed in — don't show the form again until they log out.
-  // Wait for the initial /customers/me check (authLoading) before deciding,
-  // otherwise a logged-in user reloading this page briefly sees the form
-  // flash before redirecting.
+  // Already signed in — straight on (after the initial /customers/me check,
+  // so a signed-in reload doesn't flash the form).
   if (authLoading) return null;
-  if (customer) return <Navigate to={returnTo || '/account'} replace />;
+  if (customer) return <Navigate to={returnTo || (justAuthed ? '/' : '/account')} replace />;
 
-  // Sent here from a checkout screen (Cart/Buy Now) that required sign-in —
-  // go straight back there instead of home. Otherwise land on the home page.
-  const goAfterAuth = () => {
-    if (returnTo) {
-      if (location.state?.reopenBillSummary) onReopenBillSummary?.();
-      navigate(returnTo);
-    } else {
-      navigate('/');
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!email.trim() || !password) { setError('Enter your email and password.'); return; }
     setLoading(true);
     try {
-      await login(email, password);
-      goAfterAuth();
+      setJustAuthed(true);
+      await login(email.trim(), password);
     } catch (err) {
+      setJustAuthed(false);
       setError(err.message || 'Invalid email or password');
-    } finally {
       setLoading(false);
     }
   };
@@ -50,63 +46,48 @@ export default function LoginPage({ onReopenBillSummary }) {
     setError('');
     setLoading(true);
     try {
+      setJustAuthed(true);
       await loginWithGoogle(credential);
-      goAfterAuth();
     } catch (err) {
+      setJustAuthed(false);
       setError(err.message || 'Google sign-in failed');
-    } finally {
       setLoading(false);
     }
   };
 
-  const inp = { width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '13px 16px', color: '#F5F2EB', fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: "'Grift', sans-serif" };
-
   return (
-    <div className="flex-1 flex flex-col justify-center bg-[#1F2024] text-[#F5F2EB] overflow-y-auto" style={{ fontFamily: "'Grift', sans-serif" }}>
-      <Seo title="Log In" path="/login" noindex />
-      <div style={{ maxWidth: '420px', width: '100%', margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#F5F2EB', letterSpacing: '0.02em' }}>Welcome back</h1>
-          <p style={{ color: '#71717A', fontSize: '14px', marginTop: '8px' }}>Sign in to your Zunuz account</p>
-        </div>
+    <AuthLayout
+      image="/modal2.webp"
+      title="Welcome back"
+      subtitle={returnTo === '/checkout' ? 'Log in to finish your order — your bag is saved.' : 'Log in to track orders, save addresses and check out faster.'}
+      tagline="Your bag missed you."
+    >
+      <Seo title="Log in" path="/login" noindex />
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <AuthAlert>{error}</AuthAlert>
+        <AuthField id="login-email" label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <AuthField
+          id="login-password"
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          right={<Link to="/forgot-password" state={{ returnTo, email }} className="font-['Inter',sans-serif] text-[13px] font-semibold text-[#1A6FE8] no-underline hover:underline">Forgot password?</Link>}
+        />
+        <button type="submit" disabled={loading} className={`au-in ${primaryBtnCls} mt-1 w-full`}>
+          <BtnSweep />
+          {loading ? <><span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Logging in…</> : 'Log in'}
+        </button>
+      </form>
 
-        {error && (
-          <div style={{ background: 'rgba(252,75,78,0.1)', border: '1px solid rgba(252,75,78,0.25)', borderRadius: '12px', padding: '12px 16px', marginBottom: '20px', color: '#FC4B4E', fontSize: '13px', textAlign: 'center' }}>
-            {error}
-          </div>
-        )}
+      <OrDivider />
+      <div className="au-in"><GoogleSignInButton onCredential={handleGoogleCredential} text="signin_with" /></div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" required style={inp} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" required style={inp} />
-            <div style={{ textAlign: 'right' }}>
-              <Link to="/forgot-password" style={{ color: '#FC4B4E', textDecoration: 'none', fontSize: '12px', fontWeight: 500 }}>
-                Forgot Password?
-              </Link>
-            </div>
-          </div>
-          <button type="submit" disabled={loading}
-            className="btn-buy-now"
-            style={{ marginTop: '4px', height: '52px', borderRadius: '12px', border: 'none', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
-          <span style={{ color: '#71717A', fontSize: '11px', letterSpacing: '0.08em' }}>OR</span>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
-        </div>
-
-        <GoogleSignInButton onCredential={handleGoogleCredential} text="signin_with" />
-
-        <p style={{ textAlign: 'center', color: '#71717A', fontSize: '13px', marginTop: '28px' }}>
-          Don't have an account?{' '}
-          <Link to="/signup" style={{ color: '#FC4B4E', textDecoration: 'none', fontWeight: 500 }}>Create one</Link>
-        </p>
-      </div>
-    </div>
+      <p className="au-in m-0 mt-7 text-center font-['Inter',sans-serif] text-[15px] text-[#111110]/65">
+        New to ZUNUZ?{' '}
+        <Link to="/signup" state={{ returnTo }} className="font-bold text-[#FF3D8B] no-underline hover:underline">Create an account</Link>
+      </p>
+    </AuthLayout>
   );
 }

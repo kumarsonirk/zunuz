@@ -1,8 +1,7 @@
 const router = require('express').Router();
-const { PrismaClient } = require('@prisma/client');
 const auth = require('../../middleware/adminAuth');
 
-const prisma = new PrismaClient();
+const prisma = require('../../lib/prisma');
 
 // Get all campaign submissions with search and pagination
 router.get('/', auth, async (req, res) => {

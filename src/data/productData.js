@@ -11,8 +11,7 @@ export const Br = [
 
 export const wp = [
   { id: "core", title: "CORE", subtitle: "Best For College, Office & Everyday Wear", image: "/core_bg.webp" },
-  { id: "trending", title: "TRENDING", subtitle: "Latest Styles Everyone's Loving", image: "/trending_bg.webp" },
-  { id: "complete-vibe", title: "COMPLETE VIBE", subtitle: "Curated Looks That Complete Your Style", image: "/vibe_bg.webp" }
+  { id: "trending", title: "TRENDING", subtitle: "Latest Styles Everyone's Loving", image: "/trending_bg.webp" }
 ];
 
 export const m1 = [
@@ -55,18 +54,6 @@ export const productData = {
     ],
     bracelets: [
       { id: "t-b1", name: "Celestial Chain Band", price: "₹899", likes: "30k", image: "/gold_link_bracelet.webp", images: ["/gold_link_bracelet.webp", "/gold_link_bracelet_alt1.webp", "/gold_link_bracelet_alt2.webp"] }
-    ]
-  },
-  "complete-vibe": {
-    title: "Complete Vibe",
-    necklaces: [
-      { id: "v-n1", name: "Vibe Statement Pearl", price: "₹2,499", likes: "45k", image: "/gold_knot_necklace.webp", images: ["/gold_knot_necklace.webp", "/gold_knot_necklace_alt1.webp", "/gold_knot_necklace_alt2.webp"] }
-    ],
-    earrings: [
-      { id: "v-e1", name: "Modern Bar Danglers", price: "₹999", likes: "27k", image: "/gold_hoop_earrings.webp", images: ["/gold_hoop_earrings.webp", "/gold_hoop_earrings_alt1.webp", "/gold_hoop_earrings_alt2.webp"] }
-    ],
-    bracelets: [
-      { id: "v-b1", name: "Luxury Gold Cuff", price: "₹1,899", likes: "55k", image: "/gold_link_bracelet.webp", images: ["/gold_link_bracelet.webp", "/gold_link_bracelet_alt1.webp", "/gold_link_bracelet_alt2.webp"] }
     ]
   }
 };
