@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, RotateCcw, Save } from 'lucide-react';
+import { Check, ChevronDown, RotateCcw, Save } from 'lucide-react';
 import { api } from '../../../utils/api';
 import { refreshContentCache } from '../../../store/content';
 import { Card, Button, Badge, Field, ImageUpload, ConfirmDialog } from '../AdminUI';
@@ -15,6 +15,10 @@ import ContentPreview from './ContentPreview';
 const URL_OK = /^(\/(?!\/)|https?:\/\/)[^\s"'()<>\\`]*$/i;
 const toEdit = (f, v) => (f.type === 'lines' ? (Array.isArray(v) ? v.join('\n') : String(v ?? '')) : String(v ?? ''));
 const toValue = (f, s) => (f.type === 'lines' ? s.split('\n').map((l) => l.trim()).filter(Boolean) : s.replace(/\s+/g, ' ').trim());
+// Collapsed/expanded per block, remembered in this browser (admin convenience).
+const OPEN_KEY = 'zunuz_admin_content_open';
+const readOpen = () => { try { return JSON.parse(localStorage.getItem(OPEN_KEY) || '{}'); } catch { return {}; } };
+const writeOpen = (key, on) => { try { localStorage.setItem(OPEN_KEY, JSON.stringify({ ...readOpen(), [key]: on })); } catch { /* ignore */ } };
 const fmtWhen = (d) => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 function validate(f, raw) {
@@ -83,6 +87,9 @@ export default function BlockEditor({ block, onSaved, style }) {
   const [error, setError] = useState('');
   const [savedAt, setSavedAt] = useState(0);
   const [confirmReset, setConfirmReset] = useState(false);
+  // Blocks start collapsed (the page is long); a click opens one.
+  const [open, setOpen] = useState(() => !!readOpen()[block.key] || window.location.hash === `#content-${block.key}`);
+  const toggle = () => setOpen((o) => { writeOpen(block.key, !o); return !o; });
 
   if (base !== block.updatedAt) {
     setBase(block.updatedAt);
@@ -135,17 +142,29 @@ export default function BlockEditor({ block, onSaved, style }) {
 
   return (
     <Card id={`content-${block.key}`} className="scroll-mt-24 p-[clamp(16px,2vw,24px)] animate-[jw-rise_0.5s_cubic-bezier(0.16,1,0.3,1)_both]" style={style}>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className={`m-0 flex flex-wrap items-center gap-2 text-[18px] font-bold text-[var(--admin-text)] ${DISPLAY}`}>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        aria-controls={`content-body-${block.key}`}
+        className={`flex w-full cursor-pointer items-start justify-between gap-3 border-0 bg-transparent p-0 text-left ${open ? 'mb-4' : ''}`}
+      >
+        <span className="min-w-0">
+          <span className={`flex flex-wrap items-center gap-2 text-[18px] font-bold text-[var(--admin-text)] ${DISPLAY}`}>
             {block.title}
             {customized ? <Badge tone="pink" dot>Customised</Badge> : <Badge tone="muted">Default</Badge>}
             {dirty && <Badge tone="yellow">Unsaved changes</Badge>}
-          </h3>
-          <p className="m-0 mt-1 max-w-[640px] text-[14px] text-[var(--admin-text-muted)]">{block.description}</p>
-          {block.updatedAt && <p className="m-0 mt-1 text-[12px] text-[var(--admin-text-dim)]">Last edited {fmtWhen(block.updatedAt)}</p>}
-        </div>
-      </div>
+          </span>
+          <span className="mt-1 block max-w-[640px] text-[14px] text-[var(--admin-text-muted)]">{block.description}</span>
+          {block.updatedAt && <span className="mt-1 block text-[12px] text-[var(--admin-text-dim)]">Last edited {fmtWhen(block.updatedAt)}</span>}
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--admin-border-4)] px-3 py-1.5 text-[13px] font-semibold text-[var(--admin-text-muted)]">
+          {open ? 'Collapse' : 'Edit'}
+          <ChevronDown size={16} className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+        </span>
+      </button>
+
+      {open && (<div id={`content-body-${block.key}`}>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">
         <div className="flex min-w-0 flex-col gap-4">
@@ -186,6 +205,7 @@ export default function BlockEditor({ block, onSaved, style }) {
         <Button variant="secondary" icon={RotateCcw} disabled={!customized || busy != null} onClick={() => setConfirmReset(true)}>Reset to default</Button>
         <Button icon={Save} loading={busy === 'save'} disabled={!dirty || busy != null} onClick={save}>Save</Button>
       </div>
+      </div>)}
 
       <ConfirmDialog
         open={confirmReset}
