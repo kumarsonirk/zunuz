@@ -49,6 +49,9 @@ function sortProducts(list, key) {
   return out;
 }
 
+// "All jewellery" category buttons — brand pink / yellow / teal.
+const CATEGORY_CHIP_COLORS = ['bg-[#FF3D8B] text-white', 'bg-[#F6C915] text-[#111110]', 'bg-[#4EB8C9] text-white'];
+
 export default memo(CategoryPage);
 
 function CategoryPage({ categorySlug = null, tier = null }) {
@@ -200,9 +203,13 @@ function CategoryPage({ categorySlug = null, tier = null }) {
               </h1>
               {subtitle && <p className="cp-in m-0 mt-3 max-w-[520px] font-['Inter',sans-serif] text-[length:clamp(13px,1.3vw,18px)] text-[#111110]/70">{subtitle}</p>}
               {!categorySlug && (
-                <div className="cp-in mt-5 flex flex-wrap gap-2">
-                  {catalog.categories.filter((c) => !OWN_PAGE_ONLY_CATEGORY_SLUGS.includes(c.slug)).map((c) => (
-                    <Link key={c.slug} to={categoryPath(c.slug)} className="rounded-full bg-[#111110] px-4 py-2 font-['Inter',sans-serif] text-[14px] font-semibold text-white no-underline transition-[background-color,translate] duration-300 hover:-translate-y-0.5 hover:bg-[#FF3D8B]">
+                <div className="cp-in mt-5 flex flex-nowrap gap-2 max-[480px]:gap-1.5">
+                  {catalog.categories.filter((c) => !OWN_PAGE_ONLY_CATEGORY_SLUGS.includes(c.slug)).map((c, i) => (
+                    <Link
+                      key={c.slug}
+                      to={categoryPath(c.slug)}
+                      className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 font-['Inter',sans-serif] text-[14px] font-semibold no-underline shadow-[0_6px_16px_-10px_rgba(17,17,16,0.5)] transition-[translate,filter] duration-300 hover:-translate-y-0.5 hover:brightness-105 max-[480px]:px-3 max-[480px]:py-1.5 max-[480px]:text-[13px] ${CATEGORY_CHIP_COLORS[i % CATEGORY_CHIP_COLORS.length]}`}
+                    >
                       {c.name}
                     </Link>
                   ))}
