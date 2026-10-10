@@ -38,7 +38,8 @@ export default function useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc,
     if (!withLoader) {
       if (loader) gsap.set(loader, { display: 'none' });
       if (reduced) {
-        gsap.set([head, photo, lines, subs, btns, strip].filter(Boolean), { opacity: 1, y: 0, yPercent: 0, rotate: 0, scale: 1 });
+        // Flat list of elements (NodeLists spread) — nested NodeLists made GSAP throw.
+        gsap.set([head, photo, ...lines, ...subs, ...btns, ...strip].filter(Boolean), { opacity: 1, y: 0, yPercent: 0, rotate: 0, scale: 1 });
         return undefined;
       }
 

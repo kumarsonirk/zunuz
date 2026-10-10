@@ -59,6 +59,14 @@ html.in-app-browser *,
 html.in-app-browser *::before,
 html.in-app-browser *::after {
   will-change: auto !important;
+  /* Live background blur is the heaviest effect for a WebView's memory. */
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+/* Light mode (see main.jsx): stop the endlessly scrolling photo wall. */
+html.in-app-browser .animate-t3-col-up,
+html.in-app-browser .animate-t3-col-down {
+  animation: none !important;
 }
 
 /* Default base font */

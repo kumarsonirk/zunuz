@@ -16,6 +16,20 @@ installImageFallback()
 // randomly went missing. Flag them so index.css turns layer hints off.
 if (/Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|Line\//i.test(navigator.userAgent || '')) {
   document.documentElement.classList.add('in-app-browser')
+  // Light mode for in-app browsers: their WebViews lose track of scroll-linked
+  // animations (half-drawn sections) and can run out of memory on the full
+  // effects (black screen). Every animated section already has a "reduced
+  // motion" path that shows its content straight away with no scroll
+  // animation / smooth-scroll engine — report that preference here so those
+  // paths are used.
+  const realMatchMedia = window.matchMedia.bind(window)
+  window.matchMedia = (query) => {
+    if (/prefers-reduced-motion\s*:\s*reduce/i.test(query)) {
+      const noop = () => {}
+      return { matches: true, media: query, onchange: null, addListener: noop, removeListener: noop, addEventListener: noop, removeEventListener: noop, dispatchEvent: () => false }
+    }
+    return realMatchMedia(query)
+  }
 }
 
 // Store settings (delivery fee, payment methods, maintenance, contact) and
