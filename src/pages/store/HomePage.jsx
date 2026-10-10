@@ -600,6 +600,9 @@ function FaqSection({ scrollRef, sectionRef }) {
 // background skips it automatically).
 const SHOW_NEWSLETTER = true;
 
+// "Follow the fits" reel section on/off (hidden for now — set true to bring it back).
+const SHOW_FOLLOW = false;
+
 // Newsletter CTA photos: fanned out over the panel's top-right edge.
 // rot = resting tilt, depth = scroll-parallax strength, bob = idle bob speed.
 // Literal position classes so Tailwind generates them.
@@ -2191,6 +2194,7 @@ function HomePage() {
           </>)}
 
           {/* ── Follow the fits ── curved, endlessly looping reel strip. */}
+          {SHOW_FOLLOW && (
           <section ref={followRef} className="relative overflow-hidden pt-[clamp(8px,1vw,16px)] pb-[clamp(48px,6vw,80px)] text-[#111110]">
             <div className="relative z-[1] mx-auto flex max-w-[1100px] items-center justify-between gap-8 px-5">
               <div className="min-w-0">
@@ -2314,6 +2318,7 @@ function HomePage() {
               </a>
             </div>
           </section>
+          )}
 
           {/* ── FAQs ── */}
           <FaqSection scrollRef={scrollRef} sectionRef={faqRef} />
