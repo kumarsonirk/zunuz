@@ -1965,7 +1965,7 @@ function HomePage() {
             {/* The mask fades the wall to nothing at its top and bottom edges,
                 so it melts into the sections around it instead of ending in
                 a hard line. */}
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex gap-[clamp(10px,1.2vw,18px)] px-[clamp(10px,1.2vw,18px)] opacity-[0.25] [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]">
+            <div aria-hidden="true" className="brand-wall pointer-events-none absolute inset-0 flex gap-[clamp(10px,1.2vw,18px)] px-[clamp(10px,1.2vw,18px)] opacity-[0.25] [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]">
               {BRAND_WALL.map((col, c) => (
                 <div key={c} className={`relative min-w-0 flex-1 ${c > 2 ? 'max-[760px]:hidden' : ''}`} style={{ marginTop: col.offset }}>
                   <div
@@ -1990,7 +1990,7 @@ function HomePage() {
             {/* Soft cream glow behind the copy so it reads clearly over the wall. */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_55%_45%_at_center,rgba(255,253,247,0.95)_0%,rgba(255,253,247,0.75)_45%,rgba(255,253,247,0)_100%)]" />
 
-            <div className="relative z-[1] mx-auto max-w-[900px]">
+            <div className="relative z-[2] mx-auto max-w-[900px]">
               <h2 aria-label={brand.headline} className="m-0 text-[length:clamp(34px,5.2vw,76px)] font-bold leading-[1.1] tracking-[-0.01em] text-[#FF3D8B] [text-shadow:0_2px_6px_rgba(0,0,0,0.2),0_1px_1px_rgba(0,0,0,0.2)]">
                 {brand.headline.split(' ').filter(Boolean).map((word, i) => (
                   <span key={i} aria-hidden="true" className="t3v-word mr-[0.25em] inline-block last:mr-0">{word}</span>
@@ -2116,7 +2116,7 @@ function HomePage() {
               price edits below slide up over it as a cream panel (square
               edges, full width); the banner dims underneath (vibeStackRef). */}
           <div ref={vibeStackRef} className="relative">
-          <div className="vibe-stick sticky top-[min(0px,calc(100dvh-56.25vw))] z-0 max-[700px]:top-[min(0px,calc(100dvh-133.34vw))]">
+          <div className="vibe-stick sticky motion-reduce:static top-[min(0px,calc(100dvh-56.25vw))] z-0 max-[700px]:top-[min(0px,calc(100dvh-133.34vw))]">
           <div className="vibe-inner relative">
           <ScriptBanner
             scrollRef={scrollRef}

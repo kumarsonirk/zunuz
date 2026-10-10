@@ -63,10 +63,16 @@ html.in-app-browser *::after {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-/* Light mode (see main.jsx): stop the endlessly scrolling photo wall. */
-html.in-app-browser .animate-t3-col-up,
-html.in-app-browser .animate-t3-col-down {
-  animation: none !important;
+/* Light mode (see main.jsx): leave out the brand section's photo wall (≈30
+   faded photos in tall layered columns — heavy for a WebView, and the copy
+   over it went undrawn), and don't pin the "wear your vibe" banner (the
+   cover panel slides over a pinned banner only with scroll effects on). */
+html.in-app-browser .brand-wall {
+  display: none !important;
+}
+html.in-app-browser .vibe-stick {
+  position: relative !important;
+  top: auto !important;
 }
 
 /* Default base font */
