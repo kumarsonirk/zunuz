@@ -25,9 +25,9 @@ const FESTIVE_TYPES = [
 ];
 
 const SORTS = [
+  { key: 'low', label: 'Price: low to high' },
   { key: 'featured', label: 'Featured' },
   { key: 'new', label: 'Newest' },
-  { key: 'low', label: 'Price: low to high' },
   { key: 'high', label: 'Price: high to low' },
 ];
 
@@ -68,7 +68,7 @@ function FestiveGlowPage() {
   const lenisRef = useSmoothScroll(scrollRef, scrollContentRef);
   const heroRef = useRef(null);
   const gridRef = useRef(null);
-  const [sort, setSort] = useState('featured');
+  const [sort, setSort] = useState('low'); // default: price low → high
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Phones: 1 or 2 cards per row

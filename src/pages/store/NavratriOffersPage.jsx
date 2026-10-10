@@ -32,8 +32,8 @@ const FESTIVE_GLOW =
 const COLS_KEY = 'zunuz_mobile_cols';
 
 const SORT_OPTIONS = [
-  { key: 'highest-savings', label: 'Highest savings' },
   { key: 'price-low', label: 'Price: low to high' },
+  { key: 'highest-savings', label: 'Highest savings' },
   { key: 'name', label: 'Name (A–Z)' },
 ];
 
@@ -80,7 +80,7 @@ function NavratriOffersPage() {
   const bagIds = useMemo(() => new Set(cart.map((i) => String(i.id))), [cart]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [activePriceRange, setActivePriceRange] = useState('all');
-  const [sortBy, setSortBy] = useState('highest-savings'); // default to biggest savings
+  const [sortBy, setSortBy] = useState('price-low'); // default: price low → high
   const [addedSuccess, setAddedSuccess] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [mobileCols, setMobileCols] = useState(() => {

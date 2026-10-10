@@ -33,9 +33,9 @@ const LOOKS = {
 const COLS_KEY = 'zunuz_mobile_cols';
 
 const SORTS = [
+  { key: 'low', label: 'Price: low to high' },
   { key: 'featured', label: 'Featured' },
   { key: 'new', label: 'Newest' },
-  { key: 'low', label: 'Price: low to high' },
   { key: 'high', label: 'Price: high to low' },
 ];
 
@@ -57,7 +57,7 @@ function CategoryPage({ categorySlug = null, tier = null }) {
   const lenisRef = useSmoothScroll(scrollRef, scrollContentRef);
   const heroRef = useRef(null);
   const gridRef = useRef(null);
-  const [sort, setSort] = useState('featured');
+  const [sort, setSort] = useState('low'); // default: price low → high
   // Phones only: 1 or 2 product cards per row (remembered on this device).
   const [mobileCols, setMobileCols] = useState(() => {
     try { return localStorage.getItem(COLS_KEY) === '1' ? 1 : 2; } catch { return 2; }

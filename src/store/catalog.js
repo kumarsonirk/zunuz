@@ -73,7 +73,9 @@ export function loadCatalog(force = false) {
         .map((c) => ({ id: c.id, slug: c.slug, name: c.name, subtitle: c.subtitle, image: c.image }));
       const products = (Array.isArray(prods) ? prods : [])
         .filter((p) => CATEGORY_SLUGS.includes(p.category?.slug))
-        .map(normalizeProduct);
+        .map(normalizeProduct)
+        // Every section lists products cheapest first by default.
+        .sort((a, b) => a.price - b.price);
       lastLoad = Date.now();
       setState({ status: 'ready', categories, products, error: null });
     })
