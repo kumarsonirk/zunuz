@@ -56,6 +56,8 @@ function clean(body, current = null) {
   out.isActive = src.isActive === undefined ? true : !!src.isActive;
   // Listed on the shoppers' bag page ("Offers for you").
   out.isPublic = src.isPublic === undefined ? (current ? current.isPublic : true) : !!src.isPublic;
+  // Only for customers with no orders yet.
+  out.firstOrderOnly = src.firstOrderOnly === undefined ? (current ? current.firstOrderOnly : false) : !!src.firstOrderOnly;
   if (current && has('usageLimit') && out.usageLimit != null && out.usageLimit < current.usedCount) {
     bad(`The usage limit can't be lower than the ${current.usedCount} times it's already been used.`);
   }

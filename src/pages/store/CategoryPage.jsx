@@ -10,8 +10,8 @@ import ProductCard from '../../components/store/ProductCard';
 import FilterSheet from '../../components/store/FilterSheet';
 import SortMenu from '../../components/store/SortMenu';
 import Seo from '../../components/Seo';
-import { useCatalog, productsIn, tierOf } from '../../store/catalog';
-import { TIERS, categoryPath, OWN_PAGE_ONLY_CATEGORY_SLUGS } from '../../store/catalogConfig';
+import { useCatalog, productsIn } from '../../store/catalog';
+import { TIERS, CATEGORY_SLUGS, categoryPath, OWN_PAGE_ONLY_CATEGORY_SLUGS } from '../../store/catalogConfig';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -69,7 +69,6 @@ function CategoryPage({ categorySlug = null, tier = null }) {
 
   const catalog = useCatalog();
   const category = categorySlug ? catalog.categories.find((c) => c.slug === categorySlug) : null;
-  const activeTier = tierOf(tier) ? tier : null;
   const look = LOOKS[categorySlug] || LOOKS.all;
   const name = categorySlug ? (category?.name || categorySlug[0].toUpperCase() + categorySlug.slice(1)) : 'All jewellery';
   const subtitle = categorySlug ? (category?.subtitle || '') : 'Necklaces, bracelets and earrings — everyday pieces from ₹199.';
@@ -77,11 +76,28 @@ function CategoryPage({ categorySlug = null, tier = null }) {
   const heroImage = category?.image || (!categorySlug ? (catalog.categories[0]?.image || '/jewel1.webp') : null);
 
   const all = useMemo(() => productsIn(catalog, categorySlug), [catalog, categorySlug]);
+  // Filter chips: the price tiers, then any other subcategory the admin adds
+  // (e.g. "Set") — picked up automatically from the products on this page.
+  const filters = useMemo(() => {
+    const extra = new Map();
+    for (const p of all) {
+      // Skip subcategories named like a category ("necklaces") — not a filter.
+      if (!p.tierSlug && p.subcategorySlug && !CATEGORY_SLUGS.includes(p.subcategorySlug) && !extra.has(p.subcategorySlug)) {
+        const label = p.subcategoryName || p.subcategorySlug;
+        extra.set(p.subcategorySlug, label.charAt(0).toUpperCase() + label.slice(1));
+      }
+    }
+    return [
+      ...TIERS.map((t) => ({ slug: t.slug, label: t.label, match: (p) => p.tierSlug === t.slug })),
+      ...[...extra].map(([slug, label]) => ({ slug, label, match: (p) => !p.tierSlug && p.subcategorySlug === slug })),
+    ].map((f) => ({ ...f, count: all.filter(f.match).length }));
+  }, [all]);
+  const activeFilter = filters.find((f) => f.slug === tier) || null;
+  const activeTier = activeFilter?.slug || null;
   const products = useMemo(
-    () => sortProducts(activeTier ? all.filter((p) => p.tierSlug === activeTier) : all, sort),
-    [all, activeTier, sort],
+    () => sortProducts(activeFilter ? all.filter(activeFilter.match) : all, sort),
+    [all, activeFilter, sort],
   );
-  const tierCounts = useMemo(() => Object.fromEntries(TIERS.map((t) => [t.slug, all.filter((p) => p.tierSlug === t.slug).length])), [all]);
   const listKey = `${catalog.status}|${activeTier}|${sort}|${products.map((p) => p.id).join()}`;
 
   // Hero entrance: title lines rise out of their masks, then the rest.
@@ -128,7 +144,7 @@ function CategoryPage({ categorySlug = null, tier = null }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const budgetOptions = [
     { key: 'all', label: 'All prices', count: all.length, to: basePath, on: !activeTier },
-    ...TIERS.map((t) => ({ key: t.slug, label: t.label, count: tierCounts[t.slug] || 0, to: `${basePath}?tier=${t.slug}`, on: activeTier === t.slug })),
+    ...filters.map((f) => ({ key: f.slug, label: f.label, count: f.count, to: `${basePath}?tier=${f.slug}`, on: activeTier === f.slug })),
   ];
 
   const chip = (slug, label, count) => {
@@ -152,7 +168,7 @@ function CategoryPage({ categorySlug = null, tier = null }) {
   return (
     <div className={`relative h-dvh w-full overflow-hidden bg-[#FFF8EE] text-[#111110] ${FONT_CLASS}`}>
       <Seo
-        title={activeTier ? `${name} ${tierOf(activeTier).label}` : name}
+        title={activeFilter ? `${name} ${activeFilter.label}` : name}
         description={subtitle || `Shop ${name.toLowerCase()} at ZUNUZ.`}
         path={basePath}
       />
@@ -219,12 +235,12 @@ function CategoryPage({ categorySlug = null, tier = null }) {
               >
                 <SlidersHorizontal size={16} className="shrink-0" /> Filter
                 <span className={`ml-auto truncate rounded-full px-2.5 py-1 text-[13px] ${activeTier ? 'bg-[#111110] text-white' : 'bg-[#111110]/6 text-[#111110]/70'}`}>
-                  {activeTier ? tierOf(activeTier).label : 'All prices'}{catalog.status === 'ready' && ` · ${products.length}`}
+                  {activeFilter ? activeFilter.label : 'All prices'}{catalog.status === 'ready' && ` · ${products.length}`}
                 </span>
               </button>
               <div className="-my-1 flex min-w-0 flex-1 gap-2 overflow-x-auto px-0.5 py-1 [scrollbar-width:none] max-[700px]:hidden">
                 {chip(null, 'All', all.length)}
-                {TIERS.map((t) => chip(t.slug, t.label, tierCounts[t.slug]))}
+                {filters.map((f) => chip(f.slug, f.label, f.count))}
               </div>
               <div role="group" aria-label="Products per row" className="flex h-10 shrink-0 items-center gap-0.5 rounded-full border-2 border-[#111110]/15 bg-white p-0.5 min-[701px]:hidden">
                 {[[1, Square, 'One per row'], [2, Grid2x2, 'Two per row']].map(([n, Icon, label]) => (

@@ -5,6 +5,7 @@ export function describeRule(c) {
   const parts = [c.type === 'PERCENT' ? `${c.value}% off` : `${inr(c.value)} off`];
   if (c.type === 'PERCENT' && c.maxDiscount != null) parts.push(`max ${inr(c.maxDiscount)}`);
   if (c.minOrder > 0) parts.push(`min ${inr(c.minOrder)}`);
+  if (c.firstOrderOnly) parts.push('first order only');
   return parts.join(' · ');
 }
 

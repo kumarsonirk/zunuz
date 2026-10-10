@@ -340,6 +340,8 @@ model Coupon {
   // Listed to shoppers on the bag page ("Offers for you") — on by default;
   // switch it off for private codes (influencer, support).
   isPublic         Boolean  @default(true)
+  // Only for customers who haven't placed an order yet (e.g. WELCOME50).
+  firstOrderOnly   Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   redemptions      CouponRedemption[]

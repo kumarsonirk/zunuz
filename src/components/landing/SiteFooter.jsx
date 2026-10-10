@@ -40,12 +40,9 @@ const FOOTER_COLUMNS = [
     { label: 'Orders', href: '/account/orders' },
     { label: 'Bag', href: '/cart' },
   ] },
-  { title: 'Social', links: [
-    { label: 'Instagram', href: 'https://instagram.com/zunuz', external: true },
-    { label: 'Pinterest', href: '#', external: true },
-    { label: 'YouTube', href: '#', external: true },
-  ] },
 ];
+
+const INSTAGRAM_URL = 'https://www.instagram.com/zunuz_official/';
 
 // Footer backdrop wordmark, set in Qrokinex — the brand display font the
 // logo uses — as real text so it stays sharp at any size (the 424px logo
@@ -71,16 +68,6 @@ const SOCIAL_ICONS = {
       <rect x="2" y="2" width="20" height="20" rx="5" />
       <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
       <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-    </svg>
-  ),
-  Pinterest: (
-    <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
-      <path d="M12 2a10 10 0 0 0-3.64 19.31c-.09-.79-.16-2 .03-2.86l1.17-4.97s-.3-.6-.3-1.48c0-1.39.8-2.42 1.81-2.42.85 0 1.26.64 1.26 1.4 0 .86-.55 2.14-.83 3.33-.24 1 .5 1.81 1.48 1.81 1.77 0 3.14-1.87 3.14-4.57 0-2.39-1.72-4.06-4.17-4.06-2.84 0-4.51 2.13-4.51 4.34 0 .86.33 1.78.74 2.28a.3.3 0 0 1 .07.29l-.27 1.13c-.04.18-.15.22-.34.13-1.25-.58-2.03-2.41-2.03-3.88 0-3.16 2.3-6.06 6.62-6.06 3.48 0 6.18 2.48 6.18 5.79 0 3.45-2.18 6.23-5.2 6.23-1.02 0-1.97-.53-2.3-1.15l-.62 2.39c-.23.87-.84 1.96-1.25 2.63A10 10 0 1 0 12 2z" />
-    </svg>
-  ),
-  YouTube: (
-    <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
-      <path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12 31 31 0 0 0 1 16.8a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.75 15.02V8.98L15.5 12l-5.75 3.02z" />
     </svg>
   ),
 };
@@ -200,7 +187,7 @@ export default function SiteFooter({ scrollRef, lenisRef }) {
   };
 
   return (
-    <footer ref={footerRef} className="relative overflow-hidden px-5 pt-[clamp(48px,6vw,80px)] text-[#111110]">
+    <footer ref={footerRef} className="relative overflow-hidden px-5 pt-[clamp(32px,4vw,56px)] text-[#111110]">
       {/* "ZUNUZ" in Qrokinex as a faint, full-width backdrop behind
           everything (the wrapper's low opacity keeps it a watermark while each
           letter still rises in on scroll and waves under the cursor).
@@ -215,7 +202,7 @@ export default function SiteFooter({ scrollRef, lenisRef }) {
       </div>
 
       <div className="relative z-[1] mx-auto max-w-[1100px] border-t border-[#111110]/12 pt-[clamp(40px,5vw,64px)]">
-        <div className="grid grid-cols-5 gap-x-[clamp(16px,2.4vw,36px)] gap-y-10 max-[860px]:grid-cols-3 max-[639px]:block">
+        <div className="grid grid-cols-4 gap-x-[clamp(16px,2.4vw,36px)] gap-y-10 max-[860px]:grid-cols-3 max-[639px]:block">
           {/* Link columns */}
           {FOOTER_COLUMNS.map((col) => {
             const social = col.title === 'Social';
@@ -276,6 +263,20 @@ export default function SiteFooter({ scrollRef, lenisRef }) {
               </nav>
             );
           })}
+        </div>
+
+        {/* Follow us — its own centred line (outside the phone accordions). */}
+        <div className="mt-[clamp(24px,3vw,40px)] flex justify-center">
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="group/ig inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[#111110]/12 bg-white/70 px-5 py-2.5 font-['Inter',sans-serif] text-[15px] font-semibold text-[#111110] no-underline transition-[color,border-color,translate] duration-300 hover:-translate-y-0.5 hover:border-[#FF3D8B] hover:text-[#FF3D8B]"
+          >
+            {SOCIAL_ICONS.Instagram}
+            Follow us on Instagram
+            <span aria-hidden="true" className="text-[12px] transition-transform duration-300 group-hover/ig:translate-x-0.5 group-hover/ig:-translate-y-0.5">↗</span>
+          </a>
         </div>
 
         {/* Bottom bar */}

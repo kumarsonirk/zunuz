@@ -43,7 +43,22 @@ function describeRule(c) {
   const parts = [c.type === 'PERCENT' ? `${c.value}% off` : `${inr(c.value)} off`];
   if (c.type === 'PERCENT' && c.maxDiscount != null) parts.push(`max ${inr(c.maxDiscount)}`);
   if (c.minOrder > 0) parts.push(`min ${inr(c.minOrder)}`);
+  if (c.firstOrderOnly) parts.push('first order only');
   return parts.join(' · ');
+}
+
+// Has this customer placed a real order (COD, or paid online) that wasn't
+// cancelled? `excludeOrderId`: the order being checked itself.
+async function hasPlacedOrder(client, customerId, excludeOrderId) {
+  const n = await client.order.count({
+    where: {
+      customerId: Number(customerId),
+      status: { not: 'CANCELLED' },
+      OR: [{ paymentMethod: 'COD' }, { paymentStatus: 'PAID' }],
+      ...(excludeOrderId ? { id: { not: Number(excludeOrderId) } } : {}),
+    },
+  });
+  return n > 0;
 }
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
@@ -103,6 +118,9 @@ async function evaluate(code, itemsTotal, customerId = null, client = prisma, { 
     // can't use coupons, so throwaway accounts can't farm once-per-customer codes.
     if (!customer?.email) return fail(NO_EMAIL_MSG, coupon);
     if (!customer.emailVerified) return fail(UNVERIFIED_MSG, coupon);
+    if (coupon.firstOrderOnly && await hasPlacedOrder(client, customerId, excludeOrderId)) {
+      return fail(`${clean} is for your first order only.`, coupon);
+    }
   }
 
   if (coupon.usageLimit != null) {
@@ -183,6 +201,8 @@ async function stillRedeemable(tx, order) {
   if (!coupon) return true;
   if (await tx.couponRedemption.findUnique({ where: { orderId: order.id } })) return true;
   if (coupon.usageLimit != null && coupon.usedCount >= coupon.usageLimit) return false;
+  // First-order coupon, but another order became real while this one was paying.
+  if (coupon.firstOrderOnly && await hasPlacedOrder(tx, order.customerId, order.id)) return false;
   if (coupon.perCustomerLimit != null) {
     const used = await tx.couponRedemption.count({ where: { couponId: coupon.id, customerId: order.customerId } });
     if (used >= coupon.perCustomerLimit) return false;

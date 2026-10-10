@@ -739,7 +739,7 @@ function NewsletterSection({ scrollRef, sectionRef }) {
   };
 
   return (
-    <section ref={sectionRef} className="relative overflow-x-clip px-5 pt-[clamp(90px,11vw,150px)] pb-[clamp(64px,8vw,110px)] text-[#111110]">
+    <section ref={sectionRef} className="relative overflow-x-clip px-5 pt-[clamp(90px,11vw,150px)] pb-[clamp(16px,2vw,28px)] text-[#111110]">
       <div className="t3n-panel relative z-[1] mx-auto max-w-[1100px] rounded-[clamp(24px,3vw,40px)] bg-[#4EC5CF] px-[clamp(24px,5vw,72px)] pt-[clamp(40px,5.5vw,76px)] pb-[clamp(28px,3.4vw,44px)] shadow-[0_24px_44px_-30px_rgba(31,140,150,0.6)]">
         {/* Photos — decorative. Outer = fan-out, middle = scroll drift,
             inner = idle bob; each layer owns one transform so they never
@@ -2160,7 +2160,7 @@ function HomePage() {
               <div className="min-w-0">
                 {/* Handle tag */}
                 <a
-                  href="https://instagram.com/zunuz"
+                  href="https://www.instagram.com/zunuz_official/"
                   target="_blank"
                   rel="noreferrer"
                   className="t3r-fade inline-flex items-center gap-2 rounded-full border border-[#FF3D8B]/25 bg-white/80 px-3.5 py-1.5 font-['Inter',sans-serif] text-[13px] font-semibold text-[#111110] no-underline shadow-[0_6px_18px_-12px_rgba(255,61,139,0.6)] backdrop-blur-sm transition-colors hover:border-[#FF3D8B]"
@@ -2171,7 +2171,7 @@ function HomePage() {
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                     <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
                   </svg>
-                  @zunuz
+                  @zunuz_official
                 </a>
 
                 {/* "Follow the" bold + "fits" in the banners' Momo Signature
@@ -2212,7 +2212,7 @@ function HomePage() {
 
               {/* Spinning "follow the fits" badge with the eyes icon (desktop). */}
               <a
-                href="https://instagram.com/zunuz"
+                href="https://www.instagram.com/zunuz_official/"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Follow Zunuz on Instagram"
@@ -2269,7 +2269,7 @@ function HomePage() {
 
             <div className="relative z-[1] mx-auto flex max-w-[1100px] justify-end px-5">
               <a
-                href="https://instagram.com/zunuz"
+                href="https://www.instagram.com/zunuz_official/"
                 target="_blank"
                 rel="noreferrer"
                 className="t3r-link group/link inline-flex items-center gap-1.5 font-['Inter',sans-serif] text-[length:clamp(16px,1.5vw,21px)] text-[#111110] no-underline underline-offset-4 hover:underline"

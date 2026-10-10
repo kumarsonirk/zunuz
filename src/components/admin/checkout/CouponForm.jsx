@@ -6,7 +6,7 @@ import { api } from '../../../utils/api';
 import { describeRule, discountFor, toDateInput, fromDateInput } from './couponUtils';
 
 // Create / edit a coupon (admin Coupons page).
-const blank = { code: '', description: '', type: 'PERCENT', value: '', minOrder: '', maxDiscount: '', startsAt: '', expiresAt: '', usageLimit: '', perCustomerLimit: '1', isActive: true, isPublic: true };
+const blank = { code: '', description: '', type: 'PERCENT', value: '', minOrder: '', maxDiscount: '', startsAt: '', expiresAt: '', usageLimit: '', perCustomerLimit: '1', isActive: true, isPublic: true, firstOrderOnly: false };
 const str = (v) => (v == null ? '' : String(v));
 
 function randomCode() {
@@ -21,7 +21,7 @@ export default function CouponForm({ initial, onSaved, onClose }) {
     code: initial.code, description: str(initial.description), type: initial.type, value: str(initial.value),
     minOrder: initial.minOrder ? str(initial.minOrder) : '', maxDiscount: str(initial.maxDiscount),
     startsAt: toDateInput(initial.startsAt), expiresAt: toDateInput(initial.expiresAt),
-    usageLimit: str(initial.usageLimit), perCustomerLimit: str(initial.perCustomerLimit), isActive: initial.isActive, isPublic: initial.isPublic !== false,
+    usageLimit: str(initial.usageLimit), perCustomerLimit: str(initial.perCustomerLimit), isActive: initial.isActive, isPublic: initial.isPublic !== false, firstOrderOnly: !!initial.firstOrderOnly,
   } : blank));
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
@@ -63,7 +63,7 @@ export default function CouponForm({ initial, onSaved, onClose }) {
       code: f.code, description: f.description.trim(), type: f.type, value: Number(f.value),
       minOrder: num(f.minOrder) || 0, maxDiscount: pct ? num(f.maxDiscount) : null,
       startsAt: fromDateInput(f.startsAt), expiresAt: fromDateInput(f.expiresAt, true),
-      usageLimit: num(f.usageLimit), perCustomerLimit: num(f.perCustomerLimit), isActive: f.isActive, isPublic: f.isPublic,
+      usageLimit: num(f.usageLimit), perCustomerLimit: num(f.perCustomerLimit), isActive: f.isActive, isPublic: f.isPublic, firstOrderOnly: f.firstOrderOnly,
     };
     try {
       const saved = initial ? await api.put(`/admin/coupons/${initial.id}`, body, true) : await api.post('/admin/coupons', body, true);
@@ -154,6 +154,7 @@ export default function CouponForm({ initial, onSaved, onClose }) {
         </div>
 
         <Toggle checked={f.isActive} onChange={(v) => setF((s) => ({ ...s, isActive: v }))} label={f.isActive ? 'Active — customers can use it' : 'Off — customers can’t use it'} />
+        <Toggle checked={f.firstOrderOnly} onChange={(v) => setF((s) => ({ ...s, firstOrderOnly: v }))} label={f.firstOrderOnly ? 'First order only — customers who haven’t ordered before' : 'Any order — new and returning customers'} />
         <Toggle checked={f.isPublic} onChange={(v) => setF((s) => ({ ...s, isPublic: v }))} label={f.isPublic ? 'Shown on the bag page — listed under “Offers for you”' : 'Private — only people who know the code can use it'} />
 
         {preview && (
