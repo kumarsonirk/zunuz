@@ -20,14 +20,18 @@ export default function scrollRise(section, scroller, elements, { base = 70, ste
   const els = Array.from(elements || []).filter(Boolean);
   if (!section || !scroller || !els.length) return () => {};
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
+  // Own compositor layer per piece, but only while the section is animating:
+  // fading opacity otherwise repaints the text every scroll frame (~30 slow
+  // frames over a full page scroll without it). Keeping layers permanently
+  // made some Android in-app browsers (Instagram's WebView) intermittently
+  // skip painting those pieces — headings / forms went missing.
   const tl = gsap.timeline({
-    scrollTrigger: { trigger: section, scroller, start: 'top 95%', end, scrub: 0.8 },
+    scrollTrigger: {
+      trigger: section, scroller, start: 'top 95%', end, scrub: 0.8,
+      onToggle: (self) => gsap.set(els, self.isActive ? { willChange: 'transform, opacity' } : { clearProps: 'willChange' }),
+    },
   });
   if (at) tl.set({}, {}, 0);
-  // Own compositor layer per piece: otherwise fading opacity repaints the
-  // text every scroll frame (measured: ~30 slow frames over a full page
-  // scroll without this, ~0 with it).
-  gsap.set(els, { willChange: 'transform, opacity' });
   els.forEach((el, i) => {
     tl.fromTo(el, { y: base + Math.min(i, 3) * step, opacity: 0 }, { y: 0, opacity: 1, ease: 'power2.out', duration: 1 }, at + i * gap);
   });

@@ -11,6 +11,13 @@ import { installImageFallback } from './utils/imageFallback.js'
 // Broken storefront images → a product photo instead (see utils/imageFallback.js).
 installImageFallback()
 
+// In-app browsers (Instagram, Facebook, LinkedIn…) run an embedded WebView that
+// can skip painting GPU-promoted layers under memory pressure, so sections
+// randomly went missing. Flag them so index.css turns layer hints off.
+if (/Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|Line\//i.test(navigator.userAgent || '')) {
+  document.documentElement.classList.add('in-app-browser')
+}
+
 // Store settings (delivery fee, payment methods, maintenance, contact) and
 // the editable storefront copy (Homepage & Banners) are loaded before App's
 // modules are evaluated — App is imported afterwards so everything reads the

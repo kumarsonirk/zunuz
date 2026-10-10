@@ -43,5 +43,44 @@ export default function useSmoothScroll(wrapperRef, contentRef, enabled = true) 
     };
   }, [enabled, wrapperRef, contentRef]);
 
+  // Keep every scroll animation's start/end positions in step with the page.
+  // ScrollTrigger measures once; when the page grows afterwards (products,
+  // photos or fonts arriving late — slowest in in-app browsers like
+  // Instagram's, whose toolbar also resizes the screen while you scroll) the
+  // stored positions go stale and scroll-linked fade-ins can stop half-way,
+  // leaving headings / forms invisible. Re-measure (debounced) whenever the
+  // content or the scroll box changes size, and after fonts + page load.
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    const content = contentRef.current;
+    if (!wrapper || !content) return undefined;
+    let timer = null;
+    let lastH = 0;
+    const refresh = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { ScrollTrigger.refresh(); ScrollTrigger.update(); }, 180);
+    };
+    const ro = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => {
+        const h = Math.round(content.scrollHeight) + Math.round(wrapper.clientHeight) * 10000;
+        if (h !== lastH) { lastH = h; refresh(); }
+      })
+      : null;
+    ro?.observe(content);
+    ro?.observe(wrapper);
+    const onLoad = () => refresh();
+    if (document.readyState !== 'complete') window.addEventListener('load', onLoad, { once: true });
+    document.fonts?.ready?.then(refresh, () => {});
+    // Images finishing late (lazy ones) — the error/load events don't bubble,
+    // so listen in the capture phase.
+    content.addEventListener('load', onLoad, true);
+    return () => {
+      clearTimeout(timer);
+      ro?.disconnect();
+      window.removeEventListener('load', onLoad);
+      content.removeEventListener('load', onLoad, true);
+    };
+  }, [wrapperRef, contentRef]);
+
   return lenisRef;
 }

@@ -53,6 +53,14 @@
   font-display: swap;
 }
 
+/* In-app browsers (see main.jsx): no forced GPU layers — their WebView can
+   skip painting promoted layers, which made sections vanish at random. */
+html.in-app-browser *,
+html.in-app-browser *::before,
+html.in-app-browser *::after {
+  will-change: auto !important;
+}
+
 /* Default base font */
 html, body, #root {
   font-family: 'Grift', 'Space Grotesk', sans-serif;
