@@ -114,6 +114,9 @@ function ProductShell({ children }) {
   );
 }
 
+// Low-stock ("Only N left") badge on the product photo — off for now.
+const SHOW_LOW_STOCK_TAG = false;
+
 export default memo(ProductPage);
 
 function ProductPage({ slug }) {
@@ -187,7 +190,8 @@ function ProductView({ product, related }) {
   const zoomLayerRef = useRef(null);
   const panRef = useRef(null); // { x, y } quickTo setters while zoomed
 
-  const tag = soldOut ? 'Sold out' : product.stock <= 5 ? `Only ${product.stock} left` : null;
+  // "Only N left" badge hidden for now (SHOW_LOW_STOCK_TAG); "Sold out" still shows.
+  const tag = soldOut ? 'Sold out' : SHOW_LOW_STOCK_TAG && product.stock <= 5 ? `Only ${product.stock} left` : null;
   const short = product.tagline || parseRichContent(product.description).find((l) => l.type !== 'heading')?.text || '';
   const accordion = [
     { title: 'Description', body: product.description },
@@ -645,12 +649,11 @@ function ProductView({ product, related }) {
                   </div>
                 )}
 
-                {/* Tagline: Cormorant italic with a thin gold rule — an editorial touch
-                    under the price. font-serif-custom beats the page's Grift override. */}
+                {/* Tagline: Cormorant italic with a pink → plum → gold gradient under
+                    the price. font-serif-custom beats the page's Grift override. */}
                 {short && (
-                  <p className="pd-in mt-5 mb-0 flex max-w-[520px] items-start gap-3">
-                    <span aria-hidden="true" className="mt-[0.55em] h-px w-7 shrink-0 bg-[#C9A24A]" />
-                    <span className="font-serif-custom text-[length:clamp(19px,1.6vw,22px)] leading-snug font-medium tracking-[0.01em] text-[#8C6420] italic">{short}</span>
+                  <p className="pd-in mt-5 mb-0 max-w-[520px]">
+                    <span className="font-serif-custom text-[length:clamp(19px,1.6vw,22px)] leading-snug font-semibold tracking-[0.01em] italic bg-[linear-gradient(90deg,#E0306E_0%,#A23E9B_50%,#B07A1E_100%)] bg-clip-text text-transparent [-webkit-text-fill-color:transparent] [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">{short}</span>
                   </p>
                 )}
 
