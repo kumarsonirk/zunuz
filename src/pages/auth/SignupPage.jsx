@@ -154,7 +154,6 @@ export default function SignupPage() {
       image="/modal1.webp"
       title="Join the club"
       accent="text-[#1A6FE8]"
-      subtitle="One account for faster checkout, order tracking and saved addresses."
       tagline="Made for every you."
     >
       <Seo title="Create account" path="/signup" noindex />

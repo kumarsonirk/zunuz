@@ -59,7 +59,7 @@ export default function LoginPage() {
     <AuthLayout
       image="/modal2.webp"
       title="Welcome back"
-      subtitle={returnTo === '/checkout' ? 'Log in to finish your order — your bag is saved.' : 'Log in to track orders, save addresses and check out faster.'}
+      subtitle={returnTo === '/checkout' ? 'Log in to finish your order — your bag is saved.' : null}
       tagline="Your bag missed you."
     >
       <Seo title="Log in" path="/login" noindex />

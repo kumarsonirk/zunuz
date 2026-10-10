@@ -645,7 +645,14 @@ function ProductView({ product, related }) {
                   </div>
                 )}
 
-                {short && <p className="pd-in mt-4 mb-0 max-w-[520px] font-['Inter',sans-serif] text-[15px] leading-relaxed text-[#111110]/75">{short}</p>}
+                {/* Tagline: Cormorant italic with a thin gold rule — an editorial touch
+                    under the price. font-serif-custom beats the page's Grift override. */}
+                {short && (
+                  <p className="pd-in mt-5 mb-0 flex max-w-[520px] items-start gap-3">
+                    <span aria-hidden="true" className="mt-[0.55em] h-px w-7 shrink-0 bg-[#C9A24A]" />
+                    <span className="font-serif-custom text-[length:clamp(19px,1.6vw,22px)] leading-snug font-medium tracking-[0.01em] text-[#8C6420] italic">{short}</span>
+                  </p>
+                )}
 
                 {/* ── Festive 3-for-₹999 Combo Tray Box ── */}
                 {isComboEligible && (

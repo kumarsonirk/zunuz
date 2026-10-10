@@ -41,7 +41,7 @@ export default function AuthLayout({ image, title, subtitle, accent = 'text-[#FF
     <StoreShell footer={false}>
       <main ref={rootRef} className="mx-auto grid min-h-[calc(100dvh-88px)] max-w-[1180px] grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-[clamp(24px,5vw,72px)] px-5 py-[clamp(20px,4vw,48px)] max-[860px]:grid-cols-1 max-[860px]:content-start">
         {/* Photo panel */}
-        <div className="au-photo relative h-[min(640px,calc(100dvh-160px))] max-[860px]:h-[180px]">
+        <div className="au-photo relative h-[min(640px,calc(100dvh-160px))] max-[860px]:h-auto max-[860px]:aspect-[16/15]">
           <div className="absolute inset-0 overflow-hidden rounded-[clamp(24px,3vw,40px)] bg-[#FF3D8B] shadow-[0_40px_80px_-50px_rgba(17,17,16,0.6)]">
             <img src={image} alt="" className="h-full w-full object-cover object-top" />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_45%,rgba(17,17,16,0.55))]" />
@@ -65,12 +65,13 @@ export default function AuthLayout({ image, title, subtitle, accent = 'text-[#FF
 
         {/* Form side */}
         <div className="mx-auto w-full max-w-[440px]">
-          <h1 className={`m-0 text-[length:clamp(40px,5vw,64px)] leading-[0.95] font-extrabold tracking-[-0.03em] ${accent}`}>
-            {title.split(' ').map((w, i) => (
-              <span key={i} className="inline-block overflow-hidden pb-[0.08em] align-top"><span className="au-word inline-block">{w}&nbsp;</span></span>
+          <h1 className={`m-0 text-[length:clamp(40px,5vw,64px)] leading-[0.95] font-extrabold tracking-[-0.03em] max-[860px]:text-center ${accent}`}>
+            {/* No space after the last word, so centred titles sit truly centred. */}
+            {title.split(' ').map((w, i, all) => (
+              <span key={i} className="inline-block overflow-hidden pb-[0.08em] align-top"><span className="au-word inline-block">{w}{i < all.length - 1 ? ' ' : ''}</span></span>
             ))}
           </h1>
-          {subtitle && <p className="au-in m-0 mt-3 font-['Inter',sans-serif] text-[16px] text-[#111110]/65">{subtitle}</p>}
+          {subtitle && <p className="au-in m-0 mt-3 font-['Inter',sans-serif] text-[16px] text-[#111110]/65 max-[860px]:text-center">{subtitle}</p>}
           <div className="mt-7">{children}</div>
         </div>
       </main>
