@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import useSmoothScroll from '../../hooks/useSmoothScroll';
 import { LandingHeader } from '../../components/landing/LandingIntro';
 import useHeroIntro from '../../components/landing/useHeroIntro';
+import BudgetCardPhotos from '../../components/landing/BudgetCardPhotos';
 import scrollRise from '../../components/landing/scrollRise';
 import PriceEdit from '../../components/landing/PriceEdit';
 import SiteFooter from '../../components/landing/SiteFooter';
@@ -46,7 +47,7 @@ const SECTION_THEMES = [
 // Photo + copy come from content 'shared.budget' (card1…3); prices fixed.
 const BUDGET_CARDS = [
   { price: 199, textClass: 'text-white' },
-  { price: 499, textClass: 'text-[#111110]' },
+  { price: 499, textClass: 'text-white' },
   { price: 999, textClass: 'text-white' },
 ];
 
@@ -474,13 +475,15 @@ function JewelleryPage() {
             {/* Copy — left side, as in the design: script line, huge "OWN IT", sub-line. */}
             <div className="t3h-copy absolute inset-y-0 left-[4%] right-[42%] z-[1] flex flex-col justify-center pt-[clamp(60px,8vh,90px)] portrait:inset-y-auto portrait:top-[calc(clamp(80px,12vh,120px)+var(--announce-h,0px))] portrait:right-5 portrait:left-5 portrait:pt-0">
               <h1 aria-label="Don't just wear it, live it. Own it." className="m-0">
-                <span className="-mx-[0.1em] -my-[0.08em] block overflow-hidden px-[0.1em] py-[0.08em]">
-                  <span className="t3-line block font-['Momo_Signature',cursive] text-[length:clamp(22px,3vw,52px)] font-normal leading-[1.3] text-[#CB4E4E] portrait:text-[length:clamp(20px,6vw,30px)]">
+                {/* Extra room (cancelled by the negative margin) so the script's
+                    tall loops and descenders aren't clipped by the reveal mask. */}
+                <span className="-mx-[0.1em] -my-[0.3em] block overflow-hidden px-[0.1em] py-[0.3em]">
+                  <span className="t3-line block font-['Momo_Signature',cursive] text-[length:clamp(22px,3vw,52px)] font-normal leading-[1.45] text-[#CB4E4E] portrait:text-[length:clamp(20px,6vw,30px)]">
                     Don&apos;t just wear it live it
                   </span>
                 </span>
                 <span className="-mx-[0.1em] -my-[0.08em] block overflow-hidden px-[0.1em] py-[0.08em]">
-                  <span className="t3-line block whitespace-nowrap text-[length:clamp(72px,11.5vw,210px)] font-black uppercase leading-[0.92] tracking-[-0.02em] text-[#DE8E5D] portrait:text-[length:clamp(72px,24vw,120px)]">
+                  <span className="t3-line block whitespace-nowrap text-[length:clamp(84px,14vw,250px)] font-black uppercase leading-[0.92] tracking-[-0.02em] text-[#DE8E5D] portrait:text-[length:clamp(80px,26vw,140px)]">
                     Own it
                   </span>
                 </span>
@@ -566,8 +569,8 @@ function JewelleryPage() {
                         pushes those outside the card's clip, so the card's own
                         radius is always the visible edge and the card never
                         looks like it grows on hover. */}
-                    <img className="absolute inset-0 h-full w-full scale-100 object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]" src={budget[`card${ci + 1}Image`]} alt={`Jewellery from ₹${card.price}`} />
-                    <div className="absolute inset-x-0 bottom-0 px-[clamp(16px,1.8vw,26px)] pb-[clamp(18px,2vw,28px)]">
+                    <BudgetCardPhotos tier={`${card.price}-plus`} fallback={budget[`card${ci + 1}Image`]} alt={`Jewellery from ₹${card.price}`} delay={ci * 1200} />
+                    <div className="absolute inset-x-0 bottom-0 z-[1] px-[clamp(16px,1.8vw,26px)] pb-[clamp(18px,2vw,28px)]">
                       <p className="mb-[0.3em] text-[length:clamp(24px,2.6vw,38px)] font-bold leading-none">
                         ₹{card.price}+
                       </p>

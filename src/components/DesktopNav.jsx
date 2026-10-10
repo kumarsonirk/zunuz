@@ -65,7 +65,7 @@ export default function DesktopNav({ cartItems = [], onLogoClick, onCartClick, t
               type="button"
               onClick={() => navigate(link.path)}
               aria-current={active ? 'page' : undefined}
-              className={`group/nl relative cursor-pointer border-0 bg-transparent px-0 py-1 font-['Grift',sans-serif] text-[16px] tracking-[0.04em] transition-colors duration-300 ${ink} ${light ? 'font-medium hover:text-[#FF3D8B]' : 'font-semibold hover:text-white'}`}
+              className={`group/nl relative cursor-pointer border-0 bg-transparent px-0 py-1 font-['Grift_Medium','Grift',sans-serif] text-[16px] font-normal tracking-[0.04em] transition-colors duration-300 ${ink} ${light ? 'hover:text-[#FF3D8B]' : 'hover:text-white'}`}
             >
               {link.label}
               {/* underline: grows on hover, stays for the current page */}
@@ -105,7 +105,7 @@ export default function DesktopNav({ cartItems = [], onLogoClick, onCartClick, t
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className={`cursor-pointer border-0 bg-transparent font-['Grift',sans-serif] text-[16px] transition-colors duration-300 ${ink} ${light ? 'font-medium hover:text-[#FF3D8B]' : 'font-semibold'}`}
+            className={`cursor-pointer border-0 bg-transparent font-['Grift_Medium','Grift',sans-serif] text-[16px] font-normal transition-colors duration-300 ${ink} ${light ? 'hover:text-[#FF3D8B]' : ''}`}
           >
             Log in
           </button>

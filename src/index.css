@@ -43,6 +43,16 @@
   font-display: swap;
 }
 
+/* Real Grift Medium (the base 'Grift' face is Light only) — used for the
+   desktop menu so it reads heavier without faux-bolding. */
+@font-face {
+  font-family: 'Grift Medium';
+  src: url('/font/Grift-Medium.woff2') format('woff2'), url('/font/Grift-Medium.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Default base font */
 html, body, #root {
   font-family: 'Grift', 'Space Grotesk', sans-serif;

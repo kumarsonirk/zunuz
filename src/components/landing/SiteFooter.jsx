@@ -282,13 +282,15 @@ export default function SiteFooter({ scrollRef, lenisRef }) {
         {/* Bottom bar */}
         <div className="mt-[clamp(20px,3vw,40px)] flex flex-wrap items-center justify-between gap-4 border-t border-[#111110]/12 py-6 font-['Inter',sans-serif] text-[13px] text-[#111110]/60">
           <p className="m-0">© 2026 ZUNUZ. All rights reserved.</p>
-          <div className="flex items-center gap-5">
+          {/* Phones: this row wraps under the copyright — full width so
+              "Back to top" sits on the right, Privacy / Terms on the left. */}
+          <div className="flex items-center gap-5 max-[639px]:w-full">
             <Link to="/privacy" className="text-[#111110]/60 no-underline transition-colors hover:text-[#FF3D8B]">Privacy</Link>
             <Link to="/terms" className="text-[#111110]/60 no-underline transition-colors hover:text-[#FF3D8B]">Terms</Link>
             <button
               type="button"
               onClick={toTop}
-              className="t3ft-top group/top inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#111110]/15 bg-white/70 px-4 py-2 text-[13px] font-semibold text-[#111110] transition-[background-color,border-color,color] duration-300 hover:border-[#111110] hover:bg-[#111110] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF3D8B]"
+              className="t3ft-top group/top ml-auto inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#111110]/15 bg-white/70 px-4 py-2 text-[13px] font-semibold text-[#111110] transition-[background-color,border-color,color] duration-300 hover:border-[#111110] hover:bg-[#111110] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF3D8B]"
             >
               Back to top
               <span aria-hidden="true" className="inline-block transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/top:-translate-y-0.5">↑</span>

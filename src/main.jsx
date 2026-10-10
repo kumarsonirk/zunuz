@@ -6,6 +6,10 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import { loadSettings } from './store/settings.js'
 import { loadContent } from './store/content.js'
+import { installImageFallback } from './utils/imageFallback.js'
+
+// Broken storefront images → a product photo instead (see utils/imageFallback.js).
+installImageFallback()
 
 // Store settings (delivery fee, payment methods, maintenance, contact) and
 // the editable storefront copy (Homepage & Banners) are loaded before App's

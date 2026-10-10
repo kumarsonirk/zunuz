@@ -8,6 +8,7 @@ import { formatPrice } from '../../store/catalogConfig';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import useSmoothScroll from '../../hooks/useSmoothScroll';
 import { LandingHeader, LandingLoader } from '../../components/landing/LandingIntro';
+import BudgetCardPhotos from '../../components/landing/BudgetCardPhotos';
 import useHeroIntro from '../../components/landing/useHeroIntro';
 import { api } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -49,7 +50,7 @@ const customBg = (src, def) => (src && src !== def ? { backgroundImage: `url("${
 // Photo + copy are editable (content 'shared.budget' card1…3); prices fixed.
 const BUDGET_CARDS = [
   { price: 199, textClass: 'text-white' },
-  { price: 499, textClass: 'text-[#111110]' },
+  { price: 499, textClass: 'text-white' },
   { price: 999, textClass: 'text-white' },
 ];
 
@@ -95,15 +96,15 @@ const SECTION_THEMES = [
 // (not Math.random at render) so the layout never jumps between renders.
 // Each column: [start offset, animation duration, direction, tiles...].
 const J1 = '/jewel1.webp', J2 = '/jewel2.webp', J3 = '/jewel3.webp';
-// Brand wall jewellery shots (WebP copies of /public/jewel6–9.png).
-const F1 = '/jewel6.webp', F2 = '/jewel7.webp', F3 = '/jewel8.webp', J9 = '/jewel9.webp';
+// Brand wall jewellery shots (WebP copies of /public/jewel6–10.png).
+const F1 = '/jewel6.webp', F2 = '/jewel7.webp', F3 = '/jewel8.webp', J9 = '/jewel9.webp', J10 = '/jewel10.webp';
 const TALL = 'aspect-[466/600]', SQUARE = 'aspect-square', PORTRAIT = 'aspect-[3/4]', FOUR_FIVE = 'aspect-[4/5]';
 const BRAND_WALL = [
-  { offset: '-12%', duration: '46s', dir: 'up', tiles: [[F2, TALL], [J3, SQUARE], [F1, PORTRAIT], [J1, FOUR_FIVE], [F3, SQUARE], [J2, TALL]] },
-  { offset: '-38%', duration: '38s', dir: 'down', tiles: [[J9, SQUARE], [F3, TALL], [J1, PORTRAIT], [F2, SQUARE], [J3, FOUR_FIVE], [F1, TALL]] },
-  { offset: '-4%', duration: '52s', dir: 'up', tiles: [[J1, PORTRAIT], [F1, SQUARE], [J3, TALL], [F3, FOUR_FIVE], [J9, SQUARE], [F2, PORTRAIT]] },
-  { offset: '-27%', duration: '42s', dir: 'down', tiles: [[F3, FOUR_FIVE], [J2, TALL], [F2, SQUARE], [J1, SQUARE], [F1, PORTRAIT], [J3, TALL]] },
-  { offset: '-18%', duration: '49s', dir: 'up', tiles: [[J3, SQUARE], [F2, PORTRAIT], [J9, FOUR_FIVE], [F1, TALL], [J1, SQUARE], [F3, PORTRAIT]] },
+  { offset: '-12%', duration: '46s', dir: 'up', tiles: [[F2, TALL], [J10, SQUARE], [F1, PORTRAIT], [J1, FOUR_FIVE], [J9, SQUARE], [J2, TALL]] },
+  { offset: '-38%', duration: '38s', dir: 'down', tiles: [[J9, SQUARE], [F3, TALL], [J10, PORTRAIT], [F2, SQUARE], [J3, FOUR_FIVE], [F1, TALL]] },
+  { offset: '-4%', duration: '52s', dir: 'up', tiles: [[J1, PORTRAIT], [J10, SQUARE], [J3, TALL], [F3, FOUR_FIVE], [J9, SQUARE], [F2, PORTRAIT]] },
+  { offset: '-27%', duration: '42s', dir: 'down', tiles: [[F3, FOUR_FIVE], [J2, TALL], [J9, SQUARE], [J10, SQUARE], [F1, PORTRAIT], [J3, TALL]] },
+  { offset: '-18%', duration: '49s', dir: 'up', tiles: [[J10, SQUARE], [F2, PORTRAIT], [J9, FOUR_FIVE], [F1, TALL], [J1, SQUARE], [F3, PORTRAIT]] },
 ];
 
 // "Shop the look" — each look lists its pieces (each individually addable)
@@ -1019,7 +1020,31 @@ function HomePage() {
       });
     }, 7500);
     return () => clearInterval(timer);
-  }, [totalSlides, isHeroHovered]);
+  }, [totalSlides, isHeroHovered, activeSlide]); // activeSlide: a swipe/tap restarts the 7.5s wait
+
+  // Swipe / drag the hero left or right to change slide (touch + mouse).
+  // Horizontal moves only — vertical scrolling is left alone — and a swipe
+  // doesn't also count as a tap on the slide's link.
+  const swipeRef = useRef(null);
+  const swipedRef = useRef(false);
+  const onSwipeStart = (e) => {
+    if (totalSlides <= 1 || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    swipeRef.current = { x: e.clientX, y: e.clientY };
+    swipedRef.current = false;
+  };
+  const onSwipeEnd = (e) => {
+    const start = swipeRef.current;
+    swipeRef.current = null;
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    swipedRef.current = true;
+    changeSlide((activeSlide + (dx < 0 ? 1 : -1) + totalSlides) % totalSlides);
+  };
+  const onSwipeClick = (e) => {
+    if (swipedRef.current) { e.preventDefault(); e.stopPropagation(); swipedRef.current = false; }
+  };
 
   const getSlideClasses = (index) => {
     if (activeSlide === index) {
@@ -1669,7 +1694,7 @@ function HomePage() {
             ref={heroRef}
             onMouseEnter={() => setIsHeroHovered(true)}
             onMouseLeave={() => setIsHeroHovered(false)}
-            className="relative flex h-dvh flex-col overflow-hidden bg-[#F3E4D3]" /* cream like the first poster — no pink blink while it fades in */
+            className="relative flex h-dvh flex-col overflow-hidden bg-[#F3E4D3] portrait:bg-[#F5E9DC]" /* cream like the first poster — no pink blink while it fades in */
           >
             {/* Transparent header laid over the top of the poster. It lives
                 inside the hero (not fixed) so it scrolls away with it rather
@@ -1680,7 +1705,14 @@ function HomePage() {
 
             {/* Size container (cqw/cqh) so the photo and copy scale off the
                 poster area itself, not the whole window. */}
-            <div className="relative min-h-0 flex-1 overflow-hidden [container-type:size]">
+            <div
+              className="relative min-h-0 flex-1 touch-pan-y overflow-hidden select-none [container-type:size]"
+              onPointerDown={onSwipeStart}
+              onPointerUp={onSwipeEnd}
+              onPointerCancel={() => { swipeRef.current = null; }}
+              onClickCapture={onSwipeClick}
+              onDragStart={(e) => e.preventDefault()}
+            >
               {/* ── Slide 0: Main Brand Hero ── */}
               <div
                 className={`absolute inset-0 ${getSlideClasses(0)}`}
@@ -1692,9 +1724,13 @@ function HomePage() {
                 <div
                   role="img"
                   aria-label="Smiling woman sitting cross-legged in front of a large faded word Your"
-                  className="t3h-photo absolute inset-0 bg-[#F3E4D3] bg-[image:var(--hero-img)] bg-no-repeat bg-[length:max(100cqw,213.4cqh)_auto] bg-[position:40%_60%] portrait:bg-[image:var(--hero-img-m)] portrait:bg-[#F3E4D3] portrait:bg-[length:auto_max(calc(100cqh-var(--announce-h,0px)-44px),177.8cqw)] portrait:bg-[position:right_bottom]"
+                  className="t3h-photo absolute inset-0 bg-[#F3E4D3] bg-[image:var(--hero-img)] bg-no-repeat bg-[length:max(100cqw,213.4cqh)_auto] bg-[position:40%_60%] portrait:bg-[image:var(--hero-img-m)] portrait:bg-[#F5E9DC] portrait:bg-[length:auto_max(calc(100cqh-var(--announce-h,0px)-44px),177.8cqw)] portrait:bg-[position:right_bottom]"
                   style={{ '--hero-img': `url("${HERO_IMG}")`, '--hero-img-m': `url("${HERO_IMG_M}")` }}
                 />
+                {/* Phones: the photo is bottom-anchored, so a strip of plain fill sits
+                    above it. This short fade (fill → transparent) starts just above
+                    the photo's top edge (same formula as its size) and hides the join. */}
+                <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-[calc(100cqh-max(calc(100cqh-var(--announce-h,0px)-44px),177.8cqw)-4px)] hidden h-[56px] bg-[linear-gradient(to_bottom,#F5E9DC_0%,rgba(245,233,220,0.85)_30%,rgba(245,233,220,0)_100%)] portrait:block" />
                 {/* Phones: soft dark fade at the bottom so the centred copy stays readable */}
                 <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-[42%] bg-[linear-gradient(to_top,rgba(17,17,16,0.62),rgba(17,17,16,0.28)_55%,transparent)] portrait:block" />
 
@@ -1770,7 +1806,7 @@ function HomePage() {
 
               {/* ── Slide indicators ── */}
               {totalSlides > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full portrait:left-auto portrait:right-6 portrait:translate-x-0 bg-[#111110]/60 px-3.5 py-1.5 backdrop-blur-md shadow-lg">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full portrait:left-auto portrait:right-6 portrait:translate-x-0 border border-white/40 bg-white/20 px-3.5 py-1.5 shadow-[0_8px_24px_-8px_rgba(17,17,16,0.35),inset_0_1px_0_rgba(255,255,255,0.45)] backdrop-blur-xl backdrop-saturate-150">
                   {slideNames.map((name, i) => (
                     <button
                       key={name}
@@ -1779,7 +1815,7 @@ function HomePage() {
                       aria-label={`Slide ${i + 1}: ${name}`}
                       aria-current={activeSlide === i ? 'true' : undefined}
                       className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer border-0 ${
-                        activeSlide === i ? `w-6 shadow-sm ${i >= firstOrderSlide ? 'bg-[#FF3D8B]' : 'bg-white'}` : 'w-2.5 bg-white/40 hover:bg-white/80'
+                        activeSlide === i ? 'w-6 bg-white shadow-[0_1px_4px_rgba(17,17,16,0.3)]' : 'w-2.5 bg-white/45 hover:bg-white/80'
                       }`}
                     />
                   ))}
@@ -1834,8 +1870,8 @@ function HomePage() {
                         pushes those outside the card's clip, so the card's own
                         radius is always the visible edge and the card never
                         looks like it grows on hover. */}
-                    <img className="absolute inset-0 h-full w-full scale-100 object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]" src={budget[`card${ci + 1}Image`]} alt={`Jewellery from ₹${card.price}`} />
-                    <div className="absolute inset-x-0 bottom-0 px-[clamp(16px,1.8vw,26px)] pb-[clamp(18px,2vw,28px)]">
+                    <BudgetCardPhotos tier={`${card.price}-plus`} fallback={budget[`card${ci + 1}Image`]} alt={`Jewellery from ₹${card.price}`} delay={ci * 1200} />
+                    <div className="absolute inset-x-0 bottom-0 z-[1] px-[clamp(16px,1.8vw,26px)] pb-[clamp(18px,2vw,28px)]">
                       <p className="mb-[0.3em] text-[length:clamp(24px,2.6vw,38px)] font-bold leading-none">
                         ₹{card.price}+
                       </p>
