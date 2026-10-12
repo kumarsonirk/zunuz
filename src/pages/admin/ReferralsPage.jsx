@@ -85,7 +85,7 @@ export default function ReferralsPage() {
 
   const stats = [
     { label: 'Total referrals', value: s ? s.total.toLocaleString('en-IN') : '–', icon: Gift, sub: s ? `${s.joined} pending` : ' ', tone: 'muted' },
-    { label: 'Rewarded referrals', value: s ? s.rewarded.toLocaleString('en-IN') : '–', icon: UserCheck, sub: 'Delivered & verified', tone: 'green' },
+    { label: 'Rewarded referrals', value: s ? s.rewarded.toLocaleString('en-IN') : '–', icon: UserCheck, sub: 'Paid out', tone: 'green' },
     { label: 'Credits issued', value: s ? inr(s.creditsIssued) : '–', icon: Coins, sub: 'Referrals & friend bonuses', tone: 'pink' },
     { label: 'Credits spent', value: s ? inr(s.creditsSpent) : '–', icon: Coins, sub: 'Used on completed orders', tone: 'blue' },
     { label: 'Credits outstanding', value: s ? inr(s.creditsOutstanding) : '–', icon: Coins, sub: 'Unspent customer balance', tone: 'yellow' },
@@ -145,7 +145,9 @@ export default function ReferralsPage() {
             text={search ? `No referrals matched "${search}"` : 'Customer referrals will show up here as shoppers invite their friends.'}
           />
         ) : (
-          <table className={tableCls}>
+          // Scrolls sideways on narrow screens so the Approve / Reject buttons stay reachable.
+          <div className="overflow-x-auto">
+          <table className={`${tableCls} min-w-[880px]`}>
             <thead>
               <tr>
                 <th className={thCls}>Referrer</th>
@@ -199,7 +201,7 @@ export default function ReferralsPage() {
                     ) : r.status === 'REJECTED' ? (
                       <span className="text-[13px] text-[var(--tone-red)]">{r.rejectReason || 'Not eligible'}</span>
                     ) : (
-                      <span className="text-[13px] text-[var(--admin-text-dim)]">Awaiting qualifying order</span>
+                      <span className="text-[13px] text-[var(--admin-text-dim)]">{r.friendBonus > 0 ? 'Pending — paid after friend’s first delivered order (or Approve now)' : 'Waiting for friend to verify email'}</span>
                     )}
                   </td>
                   <td className={`${tdCls} text-right`}>
@@ -230,6 +232,7 @@ export default function ReferralsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

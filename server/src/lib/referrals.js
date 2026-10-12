@@ -10,11 +10,12 @@ const prisma = require('./prisma');
 //   2. A NEW account created through a code is linked to its referrer
 //      (Referral row, status JOINED). The friend gets their bonus credit once
 //      their email is verified (Google sign-ups are verified already).
-//   3. The referrer is rewarded once the friend's first order with an items
-//      total of at least referralMinOrder is DELIVERED and its 24-hour return
-//      window has passed with no refund / return — checked hourly (sweep).
-//      Same phone or delivery address as the referrer → rejected (self-
-//      referral). Over the referrer's monthly cap → waits for next month.
+//   3. The referrer is rewarded AT THE SAME TIME as the friend's bonus
+//      (rewardReferrerNow): same phone as the referrer → rejected (self-
+//      referral); over the referrer's monthly cap → stays JOINED and is paid
+//      by the hourly sweep once the friend's first qualifying order (items
+//      total ≥ referralMinOrder) is delivered and past its return window
+//      (also the path for referrals that joined before this rule).
 //   4. Admins can approve early or reject (admin/referrals.js).
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
@@ -88,6 +89,8 @@ async function grantFriendBonus(refereeId) {
       return true;
     });
     if (!done) return 0;
+    // The referrer is credited at the same moment (Give ₹50, get ₹50).
+    await rewardReferrerNow(ref).catch((e) => console.error('Instant referrer reward failed:', e));
     const friend = await prisma.customer.findUnique({ where: { id: ref.refereeId }, select: { name: true, email: true } });
     sendCreditEmail(friend, {
       amount, type: 'CREDIT_FRIEND_BONUS', expiryDays: s.creditExpiryDays,
@@ -99,6 +102,29 @@ async function grantFriendBonus(refereeId) {
     console.error('Friend bonus failed:', e);
     return 0;
   }
+}
+
+// Referrer's reward straight away, when the friend's bonus is granted.
+// Self-referral (friend's phone = referrer's) → rejected; over the monthly
+// cap → left JOINED for the order-based sweep.
+async function rewardReferrerNow(ref) {
+  const s = settings.get();
+  if (!s.referralEnabled) return false;
+  const [referrer, friend] = await Promise.all([
+    prisma.customer.findUnique({ where: { id: ref.referrerId }, include: { addresses: { select: { phone: true } } } }),
+    prisma.customer.findUnique({ where: { id: ref.refereeId }, select: { phone: true } }),
+  ]);
+  if (!referrer) return reject(ref, 'Referrer account no longer exists');
+  const theirPhones = new Set([digits(referrer.phone), ...referrer.addresses.map((a) => digits(a.phone))].filter((p) => p.length === 10));
+  const friendPhone = digits(friend?.phone);
+  if (friendPhone.length === 10 && theirPhones.has(friendPhone)) return reject(ref, 'Same phone number as the referrer');
+  if (s.referralMonthlyCap > 0) {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const thisMonth = await prisma.referral.count({ where: { referrerId: ref.referrerId, status: 'REWARDED', rewardedAt: { gte: monthStart } } });
+    if (thisMonth >= s.referralMonthlyCap) return false;
+  }
+  return reward(ref, null, { by: 'signup' });
 }
 
 const normAddr = (a) => (a ? `${a.houseNo || ''} ${a.street || ''} ${a.pincode || ''}`.toLowerCase().replace(/[^a-z0-9]/g, '') : '');
@@ -124,7 +150,9 @@ async function reward(ref, orderId, { by = 'sweep' } = {}) {
     sendCreditEmail(referrer, {
       amount, type: 'CREDIT_REFERRAL_REWARD', expiryDays: s.creditExpiryDays,
       headline: `You earned ₹${amount}!`,
-      body: `${firstName(friend?.name) || 'Your friend'} just received their first ZUNUZ order — thanks for spreading the word. Your reward is ready to use on your next order.`,
+      body: by === 'signup'
+        ? `${firstName(friend?.name) || 'Your friend'} just joined ZUNUZ with your link — thanks for spreading the word. Your reward is ready to use on your next order.`
+        : `${firstName(friend?.name) || 'Your friend'} just received their first ZUNUZ order — thanks for spreading the word. Your reward is ready to use on your next order.`,
     }).catch((e) => console.error('Referral reward email failed:', e));
   }
   return done;

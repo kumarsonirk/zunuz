@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { inSwipeStrip } from './swipeStrip';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -40,7 +41,7 @@ export default function PriceEdit({
     // The heading finishes rising (top 60%) before the cards pop in (top 75%
     // + their own animation), so the cards never show under an empty title.
     const unrise = scrollRise(section, scroller, [...heading, link], { end: 'clamp(top 60%)' });
-    gsap.set(cards, { opacity: 0, scale: 0.7, transformOrigin: 'center center' });
+    gsap.set(cards, inSwipeStrip(cards[0]) ? { opacity: 0, y: 40 } : { opacity: 0, scale: 0.7, transformOrigin: 'center center' });
 
     let tl;
     const trigger = ScrollTrigger.create({
@@ -50,7 +51,7 @@ export default function PriceEdit({
       once: true,
       onEnter: () => {
         tl = gsap.timeline();
-        tl.to(cards, { opacity: 1, scale: 1, duration: 1.1, ease: 'power3.out', stagger: 0.1 }, 0.1);
+        tl.to(cards, { opacity: 1, y: 0, scale: 1, duration: 1.1, ease: 'power3.out', stagger: 0.1 }, 0.1);
       },
     });
 
@@ -81,7 +82,7 @@ export default function PriceEdit({
               key={item.id}
               product={item}
               imageAspect={imageAspect}
-              className="t3u-card max-[560px]:shrink-0 max-[560px]:basis-[62%] max-[560px]:snap-start"
+              className="t3u-card max-[560px]:shrink-0 max-[560px]:basis-[62%] max-[560px]:snap-start max-[560px]:snap-always"
             />
           ))}
         </div>

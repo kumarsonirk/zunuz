@@ -8,6 +8,7 @@ import useSmoothScroll from '../../hooks/useSmoothScroll';
 import { LandingHeader } from '../../components/landing/LandingIntro';
 import useHeroIntro from '../../components/landing/useHeroIntro';
 import BudgetCardPhotos from '../../components/landing/BudgetCardPhotos';
+import { inSwipeStrip } from '../../components/landing/swipeStrip';
 import scrollRise from '../../components/landing/scrollRise';
 import PriceEdit from '../../components/landing/PriceEdit';
 import SiteFooter from '../../components/landing/SiteFooter';
@@ -349,7 +350,7 @@ function JewelleryPage() {
 
     const unrise = scrollRise(section, scroller, heading);
     gsap.set(eyes, { scale: 0, rotate: -30 });
-    gsap.set(cards, { opacity: 0, scale: 0.7, transformOrigin: 'center center' });
+    gsap.set(cards, inSwipeStrip(cards[0]) ? { opacity: 0, y: 40 } : { opacity: 0, scale: 0.7, transformOrigin: 'center center' });
     gsap.set(link, { opacity: 0, x: -12 });
 
     let tl;
@@ -361,7 +362,7 @@ function JewelleryPage() {
       onEnter: () => {
         tl = gsap.timeline();
         tl.to(eyes, { scale: 1, rotate: 0, duration: 0.7, ease: 'back.out(2.2)' }, 0.3)
-          .to(cards, { opacity: 1, scale: 1, duration: 1.2, ease: 'power3.out', stagger: 0.12 }, 0.2)
+          .to(cards, { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: 'power3.out', stagger: 0.12 }, 0.2)
           .to(link, { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }, '-=0.4');
         // Eyes keep glancing left/right after they land.
         tl.to(eyes, { rotate: 10, duration: 0.9, ease: 'sine.inOut', repeat: -1, yoyo: true, repeatDelay: 0.8 });
@@ -563,7 +564,7 @@ function JewelleryPage() {
               {/* Phones: cards become a swipeable strip instead of three tiny columns. */}
               <div className="mt-[clamp(24px,3vw,40px)] grid grid-cols-3 gap-[clamp(12px,1.6vw,22px)] max-[760px]:-mx-5 max-[760px]:flex max-[760px]:snap-x max-[760px]:snap-mandatory max-[760px]:scroll-pl-5 max-[760px]:overflow-x-auto max-[760px]:px-5 max-[760px]:pt-2 max-[760px]:pb-3">
                 {BUDGET_CARDS.map((card, ci) => (
-                  <Link key={card.price} to={`/shop?tier=${card.price}-plus`} className={`t3b-card group relative isolate block aspect-[466/600] overflow-hidden rounded-[clamp(18px,2vw,28px)] no-underline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#1A6FE8] max-[760px]:shrink-0 max-[760px]:basis-[72%] max-[760px]:snap-start ${card.textClass}`}>
+                  <Link key={card.price} to={`/shop?tier=${card.price}-plus`} className={`t3b-card group relative isolate block aspect-[466/600] overflow-hidden rounded-[clamp(18px,2vw,28px)] no-underline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#1A6FE8] max-[760px]:shrink-0 max-[760px]:basis-[72%] max-[760px]:snap-start max-[760px]:snap-always ${card.textClass}`}>
                     {/* The photos have their own rounded corners baked in
                         (transparent PNG corners). Sitting at 110% at rest
                         pushes those outside the card's clip, so the card's own

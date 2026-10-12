@@ -9,11 +9,13 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import useSmoothScroll from '../../hooks/useSmoothScroll';
 import { LandingHeader, LandingLoader } from '../../components/landing/LandingIntro';
 import BudgetCardPhotos from '../../components/landing/BudgetCardPhotos';
+import { inSwipeStrip } from '../../components/landing/swipeStrip';
 import useHeroIntro from '../../components/landing/useHeroIntro';
 import { api } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import scrollRise from '../../components/landing/scrollRise';
 import PriceEdit from '../../components/landing/PriceEdit';
+import OffersRow from '../../components/landing/OffersRow';
 import SiteFooter from '../../components/landing/SiteFooter';
 import { getContent, CONTENT_DEFAULTS } from '../../store/content';
 import { SETTINGS } from '../../store/settings';
@@ -1210,7 +1212,7 @@ function HomePage() {
 
     const unrise = scrollRise(section, scroller, heading);
     gsap.set(eyes, { scale: 0, rotate: -30 });
-    gsap.set(cards, { opacity: 0, scale: 0.7, transformOrigin: 'center center' });
+    gsap.set(cards, inSwipeStrip(cards[0]) ? { opacity: 0, y: 40 } : { opacity: 0, scale: 0.7, transformOrigin: 'center center' });
     gsap.set(link, { opacity: 0, x: -12 });
 
     let tl;
@@ -1222,7 +1224,7 @@ function HomePage() {
       onEnter: () => {
         tl = gsap.timeline();
         tl.to(eyes, { scale: 1, rotate: 0, duration: 0.7, ease: 'back.out(2.2)' }, 0.3)
-          .to(cards, { opacity: 1, scale: 1, duration: 1.2, ease: 'power3.out', stagger: 0.12 }, 0.2)
+          .to(cards, { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: 'power3.out', stagger: 0.12 }, 0.2)
           .to(link, { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }, '-=0.4');
         // Eyes keep glancing left/right after they land.
         tl.to(eyes, { rotate: 10, duration: 0.9, ease: 'sine.inOut', repeat: -1, yoyo: true, repeatDelay: 0.8 });
@@ -1295,7 +1297,7 @@ function HomePage() {
     const texts = section.querySelectorAll('.t3g-text');
 
     const unrise = scrollRise(section, scroller, [title]);
-    gsap.set(cards, { opacity: 0, y: 70, scale: 0.96 });
+    gsap.set(cards, inSwipeStrip(cards[0]) ? { opacity: 0, y: 70 } : { opacity: 0, y: 70, scale: 0.96 });
     gsap.set(texts, { opacity: 0, y: 14 });
 
     let tl;
@@ -1400,7 +1402,7 @@ function HomePage() {
     const rows = section.querySelectorAll('.t3s-row');
 
     const unrise = scrollRise(section, scroller, heading);
-    gsap.set(cards, { opacity: 0, y: 70, scale: 0.96 });
+    gsap.set(cards, inSwipeStrip(cards[0]) ? { opacity: 0, y: 70 } : { opacity: 0, y: 70, scale: 0.96 });
     gsap.set(rows, { opacity: 0, x: -16 });
 
     let tl;
@@ -1843,8 +1845,11 @@ function HomePage() {
             </div>
           </section>
 
+          {/* ── Offers, unlocked ── (cream, same theme as the budget section) */}
+          <OffersRow scrollRef={scrollRef} />
+
           {/* ── Jewellery, by budget ── */}
-          <section ref={budgetRef} className="relative overflow-hidden px-5 pt-[clamp(56px,7vw,96px)] pb-[clamp(64px,8vw,10px)] text-[#111110]">
+          <section ref={budgetRef} className="relative overflow-hidden px-5 pt-[clamp(24px,4vw,56px)] pb-[clamp(64px,8vw,10px)] text-[#111110]">
             {/* Decorative shapes sit behind the content (z-0 vs the z-[1] inner
                 wrapper). The filter deepens their pale butter-yellow so they
                 still read clearly on the light cream background. */}
@@ -1867,7 +1872,7 @@ function HomePage() {
               {/* Phones: cards become a swipeable strip instead of three tiny columns. */}
               <div className="mt-[clamp(24px,3vw,40px)] grid grid-cols-3 gap-[clamp(12px,1.6vw,22px)] max-[760px]:-mx-5 max-[760px]:flex max-[760px]:snap-x max-[760px]:snap-mandatory max-[760px]:scroll-pl-5 max-[760px]:overflow-x-auto max-[760px]:px-5 max-[760px]:pt-2 max-[760px]:pb-3">
                 {BUDGET_CARDS.map((card, ci) => (
-                  <Link key={card.price} to={`/shop?tier=${card.price}-plus`} className={`t3b-card group relative isolate block aspect-[466/600] overflow-hidden rounded-[clamp(18px,2vw,28px)] no-underline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#1A6FE8] max-[760px]:shrink-0 max-[760px]:basis-[72%] max-[760px]:snap-start ${card.textClass}`}>
+                  <Link key={card.price} to={`/shop?tier=${card.price}-plus`} className={`t3b-card group relative isolate block aspect-[466/600] overflow-hidden rounded-[clamp(18px,2vw,28px)] no-underline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#1A6FE8] max-[760px]:shrink-0 max-[760px]:basis-[72%] max-[760px]:snap-start max-[760px]:snap-always ${card.textClass}`}>
                     {/* The photos have their own rounded corners baked in
                         (transparent PNG corners). Sitting at 110% at rest
                         pushes those outside the card's clip, so the card's own
@@ -1900,7 +1905,7 @@ function HomePage() {
 
               <div className="mt-[clamp(28px,3.6vw,48px)] grid grid-cols-3 gap-[clamp(12px,1.6vw,22px)] max-[760px]:-mx-5 max-[760px]:flex max-[760px]:snap-x max-[760px]:snap-mandatory max-[760px]:scroll-pl-5 max-[760px]:overflow-x-auto max-[760px]:px-5 max-[760px]:pt-2 max-[760px]:pb-3">
                 {FIT_CARDS.map((card) => (
-                  <Link key={card.price} to={`/shop?tier=${card.price}-plus`} className={`t3b-card group relative isolate block aspect-[466/600] overflow-hidden rounded-[clamp(18px,2vw,28px)] no-underline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#1A6FE8] max-[760px]:shrink-0 max-[760px]:basis-[72%] max-[760px]:snap-start ${card.textClass}`}>
+                  <Link key={card.price} to={`/shop?tier=${card.price}-plus`} className={`t3b-card group relative isolate block aspect-[466/600] overflow-hidden rounded-[clamp(18px,2vw,28px)] no-underline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#1A6FE8] max-[760px]:shrink-0 max-[760px]:basis-[72%] max-[760px]:snap-start max-[760px]:snap-always ${card.textClass}`}>
                     <img className="absolute inset-0 h-full w-full scale-100 object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]" src={card.image} alt={`Outfits from ₹${card.price.toLocaleString('en-IN')}`} />
                     <p className="t3f-label absolute top-[clamp(16px,2vw,26px)] left-[clamp(16px,2vw,26px)] m-0 text-[length:clamp(12px,1vw,15px)] font-bold leading-[1.25]">
                       {card.label[0]}<br />{card.label[1]}
@@ -1932,7 +1937,7 @@ function HomePage() {
               {/* Phones: a swipeable strip, same as the budget sections. */}
               <div className="mt-[clamp(24px,3vw,40px)] grid grid-cols-3 gap-[clamp(12px,1.6vw,22px)] max-[760px]:-mx-5 max-[760px]:flex max-[760px]:snap-x max-[760px]:snap-mandatory max-[760px]:scroll-pl-5 max-[760px]:overflow-x-auto max-[760px]:px-5 max-[760px]:pt-2 max-[760px]:pb-3">
                 {GRWM_LOOKS.map((look) => (
-                  <div key={look.image} className="max-[760px]:shrink-0 max-[760px]:basis-[72%] max-[760px]:snap-start">
+                  <div key={look.image} className="max-[760px]:shrink-0 max-[760px]:basis-[72%] max-[760px]:snap-start max-[760px]:snap-always">
                     {/* Same baked-in rounded PNG corners as the budget cards,
                         so the photo sits at 110% to keep the card's own
                         radius as the visible edge. */}
@@ -2028,7 +2033,7 @@ function HomePage() {
                   const addedCount = look.pieces.filter((_, pi) => addedPieces[`${li}-${pi}`]).length;
                   const allAdded = addedCount === look.pieces.length;
                   return (
-                    <div key={look.title} style={{ '--accent': look.accent }} className="t3s-card flex flex-col rounded-[clamp(18px,2vw,26px)] bg-[#EEF0E2] p-[clamp(6px,0.6vw,8px)] max-[760px]:shrink-0 max-[760px]:basis-[80%] max-[760px]:snap-start">
+                    <div key={look.title} style={{ '--accent': look.accent }} className="t3s-card flex flex-col rounded-[clamp(18px,2vw,26px)] bg-[#EEF0E2] p-[clamp(6px,0.6vw,8px)] max-[760px]:shrink-0 max-[760px]:basis-[80%] max-[760px]:snap-start max-[760px]:snap-always">
                       {/* Photos have baked-in rounded PNG corners — 110% keeps
                           the frame's own radius as the visible edge. */}
                       <div className="group relative isolate aspect-[2/2] overflow-hidden rounded-[clamp(14px,1.6vw,20px)]">

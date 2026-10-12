@@ -221,7 +221,7 @@ export default function SettingsPage() {
                 onChange={set('referralEnabled')}
               />
               <div className="grid grid-cols-2 gap-3 max-[560px]:grid-cols-1">
-                <Field label="Referrer reward (₹)" hint="Credited to referrer after friend's order is delivered.">
+                <Field label="Referrer reward (₹)" hint="Credited to the referrer when the friend verifies their email (same time as the friend's bonus).">
                   <input
                     className={inputCls}
                     type="number"
@@ -245,7 +245,7 @@ export default function SettingsPage() {
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3 max-[560px]:grid-cols-1">
-                <Field label="Minimum qualifying order (₹)" hint="Minimum items total required for referral reward.">
+                <Field label="Minimum qualifying order (₹)" hint="Only used when a referrer is over their monthly limit — then the reward waits for the friend's first order of at least this amount.">
                   <input
                     className={inputCls}
                     type="number"

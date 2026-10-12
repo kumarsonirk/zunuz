@@ -1,6 +1,6 @@
-import { memo, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { Gift, X } from 'lucide-react';
 import { SETTINGS } from '../../store/settings';
 
 // Slim announcement strip at the very top of every storefront page (rendered
@@ -9,16 +9,22 @@ import { SETTINGS } from '../../store/settings';
 // - internal links ("/shop…") use the router; https:// links open a new tab;
 // - dismissible for the browser session (remembered per text, so a new
 //   message shows again);
-// - the text eases in once; it only scrolls (marquee) when it doesn't fit.
+// - the text eases in once; it only scrolls (marquee) when it doesn't fit;
+// - with the referral program on, it takes turns with a Refer & Earn message
+//   ("Give ₹50, get ₹50 — refer a friend →", amounts from Settings), swapping
+//   every few seconds (paused while hovered / focused).
 // It's a normal block in the header's flow, so pages that float the header
 // over a hero (home / jewellery) just get the header pushed down by its height;
 // while it's showing it also sets --announce-h on <html> so those heroes can
 // nudge copy that's positioned from the top (portrait layouts) down to match.
 const BAR_H = 34;
+const HOLD_MS = 5000; // how long each message stays when there are several
 const DISMISS_KEY = 'zunuz_announcement_dismissed';
 const isDismissed = (text) => {
   try { return sessionStorage.getItem(DISMISS_KEY) === text; } catch { return false; }
 };
+
+const GiftIcon = () => <Gift size={13} strokeWidth={2.4} aria-hidden="true" className="shrink-0 text-[#F6C915]" />;
 
 const Sparkle = () => (
   <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" className="shrink-0">
@@ -26,10 +32,10 @@ const Sparkle = () => (
   </svg>
 );
 
-function Message({ text, link, tabIndex }) {
+function Message({ text, link, icon: Icon = Sparkle, tabIndex }) {
   const inner = (
     <>
-      <Sparkle />
+      <Icon />
       <span>{text}</span>
       {link && <span aria-hidden="true" className="inline-block transition-transform duration-300 group-hover/an:translate-x-1">→</span>}
     </>
@@ -42,12 +48,33 @@ function Message({ text, link, tabIndex }) {
   return <Link to={link} tabIndex={tabIndex} className={`${cls} hover:underline underline-offset-2`}>{inner}</Link>;
 }
 
-function AnnouncementBar() {
+// The messages to show: the admin announcement, then Refer & Earn.
+function getMessages() {
+  const list = [];
   const text = String(SETTINGS.announcementText || '').trim();
-  const link = String(SETTINGS.announcementLink || '').trim();
-  const enabled = !!SETTINGS.announcementEnabled && !!text;
-  const [hidden, setHidden] = useState(() => !enabled || isDismissed(text));
+  if (SETTINGS.announcementEnabled && text) {
+    list.push({ text, link: String(SETTINGS.announcementLink || '').trim(), icon: Sparkle });
+  }
+  const reward = Number(SETTINGS.referralReward) || 0;
+  const bonus = Number(SETTINGS.referralFriendBonus) || 0;
+  if (SETTINGS.referralEnabled && (reward || bonus)) {
+    const refer = reward && bonus ? `Give ₹${bonus}, get ₹${reward} — refer a friend`
+      : reward ? `Refer a friend, get ₹${reward} in ZUNUZ Credits`
+        : `Refer a friend — they get ₹${bonus} in ZUNUZ Credits`;
+    list.push({ text: refer, link: '/account/refer', icon: GiftIcon });
+  }
+  return list;
+}
+
+function AnnouncementBar() {
+  const [messages] = useState(getMessages);
+  const dismissKey = messages.map((m) => m.text).join(' | ');
+  const [hidden, setHidden] = useState(() => !messages.length || isDismissed(dismissKey));
   const [closing, setClosing] = useState(false);
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const { text, link, icon } = messages[active] || {};
+  const Icon = icon || Sparkle;
   // Natural text width when it overflows (→ marquee), else 0.
   const [overflowW, setOverflowW] = useState(0);
   const boxRef = useRef(null);
@@ -63,7 +90,15 @@ function AnnouncementBar() {
     const ro = new ResizeObserver(check);
     ro.observe(box);
     return () => ro.disconnect();
-  }, [hidden]);
+  }, [hidden, active]);
+
+  // Take turns between messages. One that scrolls stays for a full loop.
+  useEffect(() => {
+    if (hidden || closing || paused || messages.length < 2) return undefined;
+    const hold = overflowW ? Math.max(HOLD_MS, ((overflowW + 48) / 40) * 1000) : HOLD_MS;
+    const t = setTimeout(() => setActive((i) => (i + 1) % messages.length), hold);
+    return () => clearTimeout(t);
+  }, [active, overflowW, hidden, closing, paused, messages.length]);
 
   // Publish the bar's height for hero layouts (0 once dismissed / hidden).
   useLayoutEffect(() => {
@@ -76,7 +111,7 @@ function AnnouncementBar() {
   if (hidden) return null;
 
   const dismiss = () => {
-    try { sessionStorage.setItem(DISMISS_KEY, text); } catch { /* ignore */ }
+    try { sessionStorage.setItem(DISMISS_KEY, dismissKey); } catch { /* ignore */ }
     setClosing(true);
     setTimeout(() => setHidden(true), 320);
   };
@@ -94,21 +129,30 @@ function AnnouncementBar() {
       <div className="min-h-0 overflow-hidden">
         <div className="flex h-[var(--bar-h)] items-center gap-2 pr-1.5 pl-4 font-['Inter',sans-serif] text-[13px] font-semibold tracking-[0.01em]">
           {/* Text area — centred when it fits, scrolling when it doesn't. */}
-          <div ref={boxRef} className="relative flex min-w-0 flex-1 justify-center overflow-hidden animate-[jw-rise_0.6s_cubic-bezier(0.16,1,0.3,1)_0.15s_both] motion-reduce:animate-none">
+          <div
+            ref={boxRef}
+            key={active}
+            aria-live="polite"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
+            className="relative flex min-w-0 flex-1 justify-center overflow-hidden animate-[jw-rise_0.6s_cubic-bezier(0.16,1,0.3,1)_0.15s_both] motion-reduce:animate-none"
+          >
             {/* Invisible copy used only to measure the natural width. */}
             <span ref={measureRef} aria-hidden="true" className="pointer-events-none invisible absolute top-0 left-0 inline-flex items-center gap-2 whitespace-nowrap">
-              <Sparkle /><span>{text}</span>{link && <span>→</span>}
+              <Icon /><span>{text}</span>{link && <span>→</span>}
             </span>
             {overflowW ? (
               <div className="flex w-max animate-t3-marquee hover:[animation-play-state:paused] motion-reduce:animate-none" style={{ animationDuration: duration }}>
                 {[0, 1].map((copy) => (
                   <span key={copy} aria-hidden={copy === 1} className="pr-12">
-                    <Message text={text} link={link} tabIndex={copy === 1 ? -1 : undefined} />
+                    <Message text={text} link={link} icon={icon} tabIndex={copy === 1 ? -1 : undefined} />
                   </span>
                 ))}
               </div>
             ) : (
-              <Message text={text} link={link} />
+              <Message text={text} link={link} icon={icon} />
             )}
           </div>
           <button

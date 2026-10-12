@@ -133,7 +133,6 @@ export default function ReferPage() {
 
   const reward = me?.reward ?? SETTINGS.referralReward;
   const friendBonus = me?.friendBonus ?? SETTINGS.referralFriendBonus;
-  const minOrder = me?.minOrder ?? SETTINGS.referralMinOrder;
   const enabled = SETTINGS.referralEnabled && me?.enabled !== false;
   const link = me?.code ? referralUrl(me.link || me.code) : '';
   const shareText = `I love ZUNUZ jewellery! Sign up with my link and get ${formatPrice(friendBonus)} in ZUNUZ Credits to spend on your first order:`;
@@ -195,7 +194,7 @@ export default function ReferPage() {
     const steps = [
       { icon: Share2, title: 'Share your link', text: 'Send your code or link to friends — WhatsApp, Instagram, anywhere.' },
       { icon: UserPlus, title: `They get ${formatPrice(friendBonus)}`, text: `Your friend signs up and gets ${formatPrice(friendBonus)} in ZUNUZ Credits once they verify their email.` },
-      { icon: Gift, title: `You get ${formatPrice(reward)}`, text: `When their first order of ${formatPrice(minOrder)}+ is delivered (and its return window passes), ${formatPrice(reward)} lands in your credits.` },
+      { icon: Gift, title: `You get ${formatPrice(reward)}`, text: `At the same time — as soon as your friend verifies their email, ${formatPrice(reward)} lands in your credits too.` },
     ];
     body = (
       <div className="flex flex-col gap-5">
@@ -249,7 +248,7 @@ export default function ReferPage() {
               Give <span className="text-[#FF3D8B]">{formatPrice(friendBonus)}</span>, get <span className="relative inline-block text-[#FF3D8B]">{formatPrice(reward)}<span aria-hidden="true" className="absolute inset-x-0 -bottom-1 h-[0.18em] rounded-full bg-[#F6C915]/70" /></span>
             </h2>
             <p className="m-0 mt-3 max-w-[520px] font-['Inter',sans-serif] text-[15px] text-[#111110]/65">
-              Your friends get {formatPrice(friendBonus)} in ZUNUZ Credits when they join. You get {formatPrice(reward)} after their first order of {formatPrice(minOrder)} or more is delivered.
+              Your friends get {formatPrice(friendBonus)} in ZUNUZ Credits when they join — and you get {formatPrice(reward)} at the same time.
             </p>
 
             {/* Code ticket */}
