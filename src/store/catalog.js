@@ -107,3 +107,18 @@ export const productsIn = (snap, categorySlug, tierSlug) => snap.products.filter
   (p) => (categorySlug ? p.categorySlug === categorySlug : !isOwnPageOnly(p)) && (!tierSlug || p.tierSlug === tierSlug),
 );
 export const tierOf = (slug) => TIERS.find((t) => t.slug === slug) || null;
+
+// Product rows (home + jewellery pages): cheapest first, one product per
+// price (so a row reads ₹199 · ₹249 · ₹299 · ₹349, not four ₹199s). Only if
+// there aren't enough different prices is the row topped up with the next
+// cheapest.
+export function cheapestDistinct(products, count = 4) {
+  const sorted = [...products].sort((a, b) => a.price - b.price);
+  const seen = new Set();
+  const picked = sorted.filter((p) => !seen.has(p.price) && seen.add(p.price)).slice(0, count);
+  if (picked.length < count) {
+    picked.push(...sorted.filter((p) => !picked.includes(p)).slice(0, count - picked.length));
+    picked.sort((a, b) => a.price - b.price);
+  }
+  return picked;
+}

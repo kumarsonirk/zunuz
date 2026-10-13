@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCatalog, productsIn } from '../../store/catalog';
+import { useCatalog, productsIn, cheapestDistinct } from '../../store/catalog';
 import { FAQS } from '../../data/faqs';
 import { gsap } from 'gsap';
 import { ArrowRight, Check, Mail } from 'lucide-react';
@@ -939,6 +939,14 @@ function NavaratriCta() {
   );
 }
 
+// Phones: where the hero photo's top edge sits. --hero-fit = the space under
+// the header; the photo is max(that, 177.8cqw) tall, and any extra is split
+// half above / half below. Used by the photo and the fade above it.
+const HERO_PHOTO_Y = {
+  '--hero-fit': 'calc(100cqh - var(--announce-h, 0px) - 44px)',
+  '--hero-photo-y': 'calc(var(--announce-h, 0px) + 44px - (max(var(--hero-fit), 177.8cqw) - var(--hero-fit)) * 0.5)',
+};
+
 // Set once the loading screen has played in this tab.
 const INTRO_KEY = 'zunuz_intro_seen';
 
@@ -974,12 +982,12 @@ function useShowNewsletter() {
 function HomePage() {
   const catalog = useCatalog();
   const under499 = useMemo(
-    () => productsIn(catalog, null, '199-plus').filter((p) => p.price < 499).sort((a, b) => a.price - b.price).slice(0, 4),
+    () => cheapestDistinct(productsIn(catalog, null, '199-plus').filter((p) => p.price < 499)),
     [catalog],
   );
   // The under ₹999 edit: the ₹499+ tier, cheapest first.
   const under999 = useMemo(
-    () => productsIn(catalog, null, '499-plus').filter((p) => p.price < 999).sort((a, b) => a.price - b.price).slice(0, 4),
+    () => cheapestDistinct(productsIn(catalog, null, '499-plus').filter((p) => p.price < 999)),
     [catalog],
   );
   // Editable copy (see customBg above). Plain reads — no subscriptions.
@@ -1725,22 +1733,26 @@ function HomePage() {
                 {/* Matches the design: photo ~106% of the poster width (never
                     less than what's needed to fill the height), positioned so
                     the baked-in "Your" and the woman sit where they do in the
-                    reference. Portrait screens fall back to cover. */}
+                    reference. Portrait screens fall back to cover. On short
+                    phones (iPhone SE etc.) the photo is taller than the space
+                    under the header; --hero-photo-y crops that extra half off
+                    the top and half off her feet, so her head stays clear of
+                    the headline without the photo sitting too low. */}
                 <div
                   role="img"
                   aria-label="Smiling woman sitting cross-legged in front of a large faded word Your"
-                  className="t3h-photo absolute inset-0 bg-[#F3E4D3] bg-[image:var(--hero-img)] bg-no-repeat bg-[length:max(100cqw,213.4cqh)_auto] bg-[position:40%_60%] portrait:bg-[image:var(--hero-img-m)] portrait:bg-[#F5E9DC] portrait:bg-[length:auto_max(calc(100cqh-var(--announce-h,0px)-44px),177.8cqw)] portrait:bg-[position:right_bottom]"
-                  style={{ '--hero-img': `url("${HERO_IMG}")`, '--hero-img-m': `url("${HERO_IMG_M}")` }}
+                  className="t3h-photo absolute inset-0 bg-[#F3E4D3] bg-[image:var(--hero-img)] bg-no-repeat bg-[length:max(100cqw,213.4cqh)_auto] bg-[position:40%_60%] portrait:bg-[image:var(--hero-img-m)] portrait:bg-[#F5E9DC] portrait:bg-[length:auto_max(calc(100cqh-var(--announce-h,0px)-44px),177.8cqw)] portrait:bg-[position:right_var(--hero-photo-y)]"
+                  style={{ '--hero-img': `url("${HERO_IMG}")`, '--hero-img-m': `url("${HERO_IMG_M}")`, ...HERO_PHOTO_Y }}
                 />
-                {/* Phones: the photo is bottom-anchored, so a strip of plain fill sits
-                    above it. This short fade (fill → transparent) starts just above
-                    the photo's top edge (same formula as its size) and hides the join. */}
-                <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-[calc(100cqh-max(calc(100cqh-var(--announce-h,0px)-44px),177.8cqw)-4px)] hidden h-[56px] bg-[linear-gradient(to_bottom,#F5E9DC_0%,rgba(245,233,220,0.85)_30%,rgba(245,233,220,0)_100%)] portrait:block" />
+                {/* Phones: a strip of plain fill can sit above the photo (behind the
+                    header). This short fade (fill → transparent) starts just above
+                    the photo's top edge and hides the join. */}
+                <div aria-hidden="true" style={HERO_PHOTO_Y} className="pointer-events-none absolute inset-x-0 top-[calc(var(--hero-photo-y)-4px)] hidden h-[56px] bg-[linear-gradient(to_bottom,#F5E9DC_0%,rgba(245,233,220,0.85)_30%,rgba(245,233,220,0)_100%)] portrait:block" />
                 {/* Phones: soft dark fade at the bottom so the centred copy stays readable */}
                 <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-[42%] bg-[linear-gradient(to_top,rgba(17,17,16,0.62),rgba(17,17,16,0.28)_55%,transparent)] portrait:block" />
 
                 {/* Copy block */}
-                <div className="t3h-copy absolute top-[20%] right-[4%] left-[56%] z-[1] portrait:top-[calc(clamp(72px,11vh,110px)+var(--announce-h,0px))] portrait:right-5 portrait:bottom-[10%] portrait:left-5 portrait:flex portrait:flex-col">
+                <div className="t3h-copy absolute top-[20%] right-[4%] left-[56%] z-[1] portrait:top-[calc(clamp(72px,11vh,110px)+var(--announce-h,0px))] portrait:right-5 portrait:bottom-[10%] portrait:left-5 portrait:flex portrait:flex-col [@media(orientation:portrait)_and_(max-height:700px)]:bottom-[calc(7%+4px)]">
                   <h1 aria-label={heroHeadline.map((l) => `Your ${l.toLowerCase()}`).join(' ')} className="mt-[25px] portrait:mt-2 pl-[min(calc(0.4*(100cqw-max(100cqw,213.4cqh))+0.66*max(100cqw,213.4cqh)-56cqw),calc(40cqw-3.3em))] portrait:self-end portrait:text-left text-[90px] font-bold leading-[0.98] tracking-[-0.01em] portrait:pl-0 text-[#B07E49] [text-shadow:0_2px_8px_rgba(176,126,73,0.08)] portrait:text-[length:clamp(42px,13vw,72px)]">
                     {heroHeadline.map((line, i) => (
                       <span key={i} className="-mx-[0.1em] -my-[0.08em] block overflow-hidden px-[0.1em] py-[0.08em]">
@@ -1755,7 +1767,7 @@ function HomePage() {
                     <p className="t3h-sub mt-[0.45em] text-[length:clamp(15px,1.65vw,24px)] font-normal text-[#111110]/75 portrait:text-white portrait:[text-shadow:0_2px_12px_rgba(0,0,0,0.45),0_1px_3px_rgba(0,0,0,0.5)] portrait:text-[length:clamp(14px,3.9vw,18px)]">
                       {SHOW_CLOTHING ? `${hero.priceLine} · Clothing from ₹499` : hero.priceLine}
                     </p>
-                    <div className="mt-[clamp(20px,2.4vw,32px)] flex flex-wrap gap-3 portrait:mt-4 portrait:justify-center">
+                    <div className="mt-[clamp(20px,2.4vw,32px)] flex flex-wrap gap-3 portrait:mt-4 portrait:justify-center [@media(orientation:portrait)_and_(max-height:700px)]:mt-3">
                       {SHOW_CLOTHING && (
                         <Link
                           to="/jewellery"

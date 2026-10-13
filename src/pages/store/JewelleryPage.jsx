@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useCatalog, productsIn, isOwnPageOnly } from '../../store/catalog';
+import { useCatalog, productsIn, isOwnPageOnly, cheapestDistinct } from '../../store/catalog';
 import { JEWELLERY_CATEGORY_SLUGS, categoryPath, productPath, formatPrice } from '../../store/catalogConfig';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -215,7 +215,7 @@ function JewelleryPage() {
     [catalog],
   );
   const rows = useMemo(
-    () => categories.map((c) => ({ ...c, items: productsIn(catalog, c.slug).slice(0, 4) })).filter((r) => r.items.length),
+    () => categories.map((c) => ({ ...c, items: cheapestDistinct(productsIn(catalog, c.slug)) })).filter((r) => r.items.length),
     [catalog, categories],
   );
   // Sections appear once the catalogue loads — the page grows, so every
