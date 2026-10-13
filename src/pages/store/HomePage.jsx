@@ -10,6 +10,7 @@ import useSmoothScroll from '../../hooks/useSmoothScroll';
 import { LandingHeader, LandingLoader } from '../../components/landing/LandingIntro';
 import BudgetCardPhotos from '../../components/landing/BudgetCardPhotos';
 import { inSwipeStrip } from '../../components/landing/swipeStrip';
+import whileVisible from '../../components/landing/whileVisible';
 import useHeroIntro from '../../components/landing/useHeroIntro';
 import { api } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -845,8 +846,10 @@ const HERO_IMG_M = '/poster1_mob.webp';
 
 // Image-only hero slides (after the brand + Navratri slides). Each has a 16:9
 // desktop poster and a tall phone poster; both cover the hero. `deskPos` /
-// `mobilePos` pick the part that stays in view when the screen crops it.
-// WebP copies are generated from the PNGs in /public.
+// `mobilePos` pick the part that stays in view when the screen crops it
+// (`mobilePos` / `mobileShift` are portrait: classes — written out in full so
+// Tailwind sees them). One <picture> per slide, so a phone only downloads the
+// phone art and a desktop only the desktop art.
 const POSTER_SLIDES = [
   {
     key: 'navaratri',
@@ -855,10 +858,9 @@ const POSTER_SLIDES = [
     to: '/festive-glow',
     desk: '/navaratri.webp',
     mobile: '/navaratri_mobile.webp',
-    mobileFallback: '/navaratri_mobile.jpeg',
     deskPos: 'object-[80%_50%]', // keeps the poster's own headline in view (NavaratriCta mirrors 80%)
-    mobilePos: 'object-center',
-    mobileShift: '-translate-y-[5%]', // lifts the art so the link clears the slide dots
+    mobilePos: 'portrait:object-center',
+    mobileShift: 'portrait:-translate-y-[5%]', // lifts the art so the link clears the slide dots
     bg: 'bg-[#1A0503] portrait:bg-[#020001]',
     copy: 'navaratri', // "Shop the collection →" under the poster's own text (see NavaratriCta)
   },
@@ -870,9 +872,8 @@ const POSTER_SLIDES = [
     to: '/jewellery',
     desk: '/50-off-poster-desk.webp',
     mobile: '/50-off-poster-mobile.webp',
-    mobileFallback: '/50-off-poster-mobile.png',
     deskPos: 'object-[95%_80%]', // keeps "50% OFF" + the fine print in view
-    mobilePos: 'object-[center_60%]',
+    mobilePos: 'portrait:object-[center_60%]',
     bg: 'bg-white',
   },
   {
@@ -883,12 +884,11 @@ const POSTER_SLIDES = [
     copy: 'top3', // text overlay (see Top3Copy)
     desk: '/top3-poster-desk.webp',
     mobile: '/top3-poster-mobile.webp',
-    mobileFallback: '/top3-poster-mobile.png',
     deskPos: 'object-[70%_30%]', // keeps both faces in view
-    mobilePos: 'object-[center_70%]',
+    mobilePos: 'portrait:object-[center_70%]',
     // Phones: image nudged down so the text sits above the faces; the gap at
     // the top is filled with the poster's own orange.
-    mobileShift: 'translate-y-[12%]',
+    mobileShift: 'portrait:translate-y-[12%]',
     bg: 'bg-[#F59A4E] portrait:bg-[linear-gradient(to_right,#E46424_0%,#ED7232_27%,#F38541_50%,#F8914B_75%,#FB853E_100%)]',
   },
 ];
@@ -1241,11 +1241,14 @@ function HomePage() {
 
     const spinFlower = gsap.to(flower, { rotate: 360, duration: 40, ease: 'none', repeat: -1 });
     const spinAsterisk = gsap.to(asterisk, { rotate: -360, duration: 30, ease: 'none', repeat: -1 });
+    // Spinning shapes + glancing eyes only run while the section is on screen.
+    const unwatch = whileVisible(section, () => [spinFlower, spinAsterisk, tl]);
     const scrollOpts = { trigger: section, scroller, start: 'top bottom', end: 'bottom top', scrub: true };
     const driftFlower = gsap.fromTo(flower, { y: 60 }, { y: -60, ease: 'none', scrollTrigger: scrollOpts });
     const driftAsterisk = gsap.fromTo(asterisk, { y: -40 }, { y: 40, ease: 'none', scrollTrigger: { ...scrollOpts } });
 
     return () => {
+      unwatch();
       unrise();
       trigger.kill();
       tl?.kill();
@@ -1675,8 +1678,6 @@ function HomePage() {
 
   return (
     <div className={`relative h-dvh w-full overflow-hidden bg-[#E8304F] text-white ${FONT_CLASS}`}>
-      {/* React 19 hoists this into <head>; the font is only needed here. */}
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Momo+Signature&display=swap" />
 
       {/* Shared, viewport-sized background behind every section after the
           hero (the hero's own red poster covers it at the top). The glows
@@ -1795,21 +1796,17 @@ function HomePage() {
                   aria-label={poster.label}
                   className={`group absolute inset-0 block ${poster.bg} ${getSlideClasses(firstOrderSlide + i)}`}
                 >
-                  {/* Desktop: poster covers the whole hero */}
-                  <img
-                    src={poster.desk}
-                    alt=""
-                    decoding="async"
-                    className={`absolute inset-0 size-full object-cover ${poster.deskPos} portrait:hidden`}
-                  />
-                  {/* Phones: tall poster, full-bleed */}
-                  <picture className="hidden portrait:block">
-                    <source srcSet={poster.mobile} type="image/webp" />
+                  {/* Poster covers the whole hero: 16:9 art on desktop, the tall
+                      art on phones (portrait). Only the matching file loads, at
+                      low priority — the first slide and the page come first. */}
+                  <picture>
+                    <source media="(orientation: portrait)" srcSet={poster.mobile} />
                     <img
-                      src={poster.mobileFallback}
+                      src={poster.desk}
                       alt=""
+                      fetchPriority="low"
                       decoding="async"
-                      className={`absolute inset-0 size-full object-cover ${poster.mobilePos} ${poster.mobileShift || ''}`}
+                      className={`absolute inset-0 size-full object-cover ${poster.deskPos} ${poster.mobilePos} ${poster.mobileShift || ''}`}
                     />
                   </picture>
                   {/* Soft shade at the top so the white header reads (dark slides only;

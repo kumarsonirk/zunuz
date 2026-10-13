@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useCatalog, productsIn } from '../../store/catalog';
+import { thumbUrl, thumbSrcSet } from '../../utils/productImage';
 
 // Photos for a "Jewellery, by budget" card (₹199+ / ₹499+ / ₹999+): up to
 // three in-stock products from that price tier — one per category first, for
@@ -43,7 +44,10 @@ export default function BudgetCardPhotos({ tier, fallback, alt, delay = 0 }) {
       {srcs.map((src, i) => (
         <img
           key={src}
-          src={src}
+          src={thumbUrl(src, 800)}
+          srcSet={thumbSrcSet(src)}
+          sizes="(max-width: 760px) 72vw, 360px"
+          data-original={src}
           alt={i === current ? alt : ''}
           aria-hidden={i === current ? undefined : true}
           loading="lazy"

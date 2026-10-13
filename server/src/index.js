@@ -81,6 +81,8 @@ const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 // Upload filenames are unique (timestamp + random) and never change, so
 // browsers/CDNs can cache them for a year.
+// Resized card-size copies (<name>.w400.webp / .w800.webp) — lib/thumbnails.js.
+app.use('/uploads', require('./lib/thumbnails').thumbnailRoute(uploadsDir));
 app.use('/uploads', express.static(uploadsDir, { maxAge: '365d', immutable: true }));
 
 // Sitemap is proxied at the root path (not /api) since it must be reachable

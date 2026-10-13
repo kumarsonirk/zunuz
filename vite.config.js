@@ -39,6 +39,41 @@ function viewportUnitFallbacks() {
   };
 }
 
+// main.jsx waits for the store settings + page content (API, ≤1.5s on a
+// first visit) before importing App.jsx, so the app reads real values from
+// its first render. That wait used to delay even *downloading* the app's
+// code. This adds <link rel="modulepreload"> for App.jsx's chunk and every
+// chunk it statically imports, so the browser fetches (but doesn't run)
+// them straight away, in parallel with those API calls.
+function preloadAppChunks() {
+  return {
+    name: 'preload-app-chunks',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        const bundle = ctx.bundle || {};
+        const chunks = Object.values(bundle).filter((c) => c.type === 'chunk');
+        const app = chunks.find((c) => c.facadeModuleId && /[\/]src[\/]App\.jsx$/.test(c.facadeModuleId));
+        if (!app) return html;
+        const files = new Set();
+        const visit = (name) => {
+          if (files.has(name)) return;
+          files.add(name);
+          (bundle[name]?.imports || []).forEach(visit);
+        };
+        visit(app.fileName);
+        const already = new Set(chunks.filter((c) => c.isEntry).flatMap((c) => [c.fileName, ...c.imports]));
+        return [...files].filter((f) => !already.has(f)).map((f) => ({
+          tag: 'link',
+          attrs: { rel: 'modulepreload', crossorigin: '', href: `/${f}` },
+          injectTo: 'head',
+        }));
+      },
+    },
+  };
+}
+
 // Older in-app browsers (iOS 14+, Android WebView/Chrome 87+).
 const LEGACY_TARGETS = ['es2020', 'chrome87', 'safari14', 'firefox78', 'edge88'];
 
@@ -48,6 +83,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     viewportUnitFallbacks(),
+    preloadAppChunks(),
   ],
   build: {
     target: LEGACY_TARGETS,

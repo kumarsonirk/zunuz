@@ -1,11 +1,21 @@
 import { useEffect, useRef } from 'react';
 
 // Renders Google's own "Sign in with Google" button via Google Identity Services
-// (script loaded in index.html) and forwards the resulting ID token credential.
+// and forwards the resulting ID token credential. The GIS script (~90 KB) is
+// loaded here, the first time a button shows — not on every page.
 // The button itself renders inside a Google-controlled iframe, so its fill/hover
 // can't be restyled directly — it's Google's light "outline" pill (to sit on
 // the cream storefront), sized to the column it's in, inside a soft wrapper
 // that lifts on hover.
+const GIS_SRC = 'https://accounts.google.com/gsi/client';
+function loadGis() {
+  if (window.google?.accounts?.id || document.querySelector(`script[src="${GIS_SRC}"]`)) return;
+  const s = document.createElement('script');
+  s.src = GIS_SRC;
+  s.async = true;
+  document.head.appendChild(s);
+}
+
 export default function GoogleSignInButton({ onCredential, text = 'continue_with' }) {
   const buttonRef = useRef(null);
 
@@ -44,10 +54,10 @@ export default function GoogleSignInButton({ onCredential, text = 'continue_with
       return;
     }
 
-    // The GIS <script> tag is async/defer, so it may not have finished
-    // loading yet when this effect first runs — poll briefly instead of
+    // Load the GIS script, then poll briefly until it's ready instead of
     // giving up silently (which would leave the button permanently missing
     // for that visit on a slow connection).
+    loadGis();
     let attempts = 0;
     const interval = setInterval(() => {
       attempts += 1;

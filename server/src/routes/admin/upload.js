@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
+const { makeThumbnails } = require('../../lib/thumbnails');
 const auth = require('../../middleware/adminAuth');
 
 const uploadsDir = path.join(__dirname, '../../../uploads');
@@ -39,6 +40,10 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
     // Outlook, etc.) even though it renders fine on the website itself, so
     // the email template swaps to this file instead of the WebP one.
     await resized.clone().jpeg({ quality: 82 }).toFile(path.join(uploadsDir, `${base}.jpg`));
+    // Card-size copies, so the storefront's first visitor doesn't wait for them
+    // (they'd otherwise be made on first request — lib/thumbnails.js).
+    await makeThumbnails(uploadsDir, base, await resized.clone().webp({ quality: 90 }).toBuffer())
+      .catch((e) => console.error('Thumbnails failed (made on demand instead):', e.message));
     // Configured public API address when set (never trust the Host header).
     const baseUrl = String(process.env.API_PUBLIC_URL || '').replace(/\/+$/, '') || `${req.protocol}://${req.get('host')}`;
     res.json({ url: `${baseUrl}/uploads/${base}.webp` });

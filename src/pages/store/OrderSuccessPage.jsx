@@ -10,6 +10,7 @@ import { addressLine } from '../../utils/address';
 import { formatPrice } from '../../store/catalogConfig';
 import { computeDeliveryFee } from '../../utils/delivery';
 import { paymentMethodLabel } from '../../utils/payments';
+import { thumbUrl } from '../../utils/productImage';
 
 // Order confirmation (/order/:id/success). Uses the order handed over by
 // checkout (router state) for an instant paint, else fetches it — so a
@@ -143,7 +144,7 @@ function OrderSuccessPage({ orderId, initialOrder }) {
               {order.items.map((i) => (
                 <li key={i.id} className="flex items-center gap-3">
                   <span className="size-16 shrink-0 overflow-hidden rounded-[14px] bg-[#EFE8DA]">
-                    {i.product?.image && <img src={i.product.image} alt="" className="h-full w-full scale-110 object-cover" />}
+                    {i.product?.image && <img src={thumbUrl(i.product.image, 400)} data-original={i.product.image} alt="" className="h-full w-full scale-110 object-cover" />}
                   </span>
                   <span className="min-w-0 flex-1 font-['Inter',sans-serif]">
                     <span className="block truncate text-[15px] font-semibold">{i.product?.name || 'Item'}</span>

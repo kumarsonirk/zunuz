@@ -14,6 +14,7 @@ import { addressLine } from '../../utils/address';
 import { downloadInvoice, canInvoice } from '../../utils/invoice';
 import { formatPrice } from '../../store/catalogConfig';
 import { paymentMethodLabel } from '../../utils/payments';
+import { thumbUrl } from '../../utils/productImage';
 
 // My orders (/account/orders): filter tabs + order cards; a card opens a
 // slide-over (bottom sheet on phones) with progress, items, address,
@@ -109,7 +110,7 @@ function OrderDrawer({ order, request, onClose, onReviewed, onReported, onCancel
                 const slug = i.product?.slug;
                 const body = (
                   <>
-                    <span className="size-14 shrink-0 overflow-hidden rounded-[12px] bg-[#EFE8DA]">{i.product?.image && <img src={i.product.image} alt="" className="h-full w-full scale-110 object-cover" />}</span>
+                    <span className="size-14 shrink-0 overflow-hidden rounded-[12px] bg-[#EFE8DA]">{i.product?.image && <img src={thumbUrl(i.product.image, 400)} data-original={i.product.image} alt="" className="h-full w-full scale-110 object-cover" />}</span>
                     <span className="min-w-0 flex-1 font-['Inter',sans-serif]">
                       <span className="block truncate text-[14px] font-semibold">{i.product?.name || 'Item'}</span>
                       <span className="text-[13px] text-[#111110]/55">Qty {i.quantity} × {formatPrice(i.price)}</span>
@@ -264,7 +265,7 @@ export default function OrderHistoryPage() {
                   <span className="flex -space-x-3">
                     {o.items.slice(0, 4).map((i) => (
                       <span key={i.id} className="size-12 overflow-hidden rounded-[12px] border-2 border-white bg-[#EFE8DA] transition-transform duration-300 group-hover/o:translate-x-1">
-                        {i.product?.image && <img src={i.product.image} alt="" className="h-full w-full scale-110 object-cover" />}
+                        {i.product?.image && <img src={thumbUrl(i.product.image, 400)} data-original={i.product.image} alt="" className="h-full w-full scale-110 object-cover" />}
                       </span>
                     ))}
                     {o.items.length > 4 && <span className="flex size-12 items-center justify-center rounded-[12px] border-2 border-white bg-[#111110] font-['Inter',sans-serif] text-[12px] font-bold text-white">+{o.items.length - 4}</span>}

@@ -6,6 +6,7 @@ import { Stars } from '../../components/store/OrderBits';
 import { cardCls, primaryBtnCls, BtnSweep } from '../../components/store/StoreShell';
 import Seo from '../../components/Seo';
 import { api } from '../../utils/api';
+import { thumbUrl } from '../../utils/productImage';
 
 // My reviews (/account/reviews): read-only — product reviews can't be
 // edited once posted (server-enforced). Each card links to the product.
@@ -44,7 +45,7 @@ export default function MyReviewsPage() {
             const inner = (
               <>
                 <span className="flex items-center gap-3">
-                  <span className="size-14 shrink-0 overflow-hidden rounded-[14px] bg-[#EFE8DA]">{r.product?.image && <img src={r.product.image} alt="" className="h-full w-full scale-110 object-cover" />}</span>
+                  <span className="size-14 shrink-0 overflow-hidden rounded-[14px] bg-[#EFE8DA]">{r.product?.image && <img src={thumbUrl(r.product.image, 400)} data-original={r.product.image} alt="" className="h-full w-full scale-110 object-cover" />}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[16px] font-bold">{r.product?.name || 'Product'}</span>
                     <span className="font-['Inter',sans-serif] text-[12px] text-[#111110]/50">{new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>

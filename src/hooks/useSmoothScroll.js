@@ -71,14 +71,14 @@ export default function useSmoothScroll(wrapperRef, contentRef, enabled = true) 
     const onLoad = () => refresh();
     if (document.readyState !== 'complete') window.addEventListener('load', onLoad, { once: true });
     document.fonts?.ready?.then(refresh, () => {});
-    // Images finishing late (lazy ones) — the error/load events don't bubble,
-    // so listen in the capture phase.
-    content.addEventListener('load', onLoad, true);
+    // Late images need nothing extra: if one changes the page height, the
+    // ResizeObserver above sees it. (Re-measuring on every image load used to
+    // run a full ScrollTrigger.refresh() while photos streamed in mid-scroll
+    // — a hitch each time on slower phones.)
     return () => {
       clearTimeout(timer);
       ro?.disconnect();
       window.removeEventListener('load', onLoad);
-      content.removeEventListener('load', onLoad, true);
     };
   }, [wrapperRef, contentRef]);
 

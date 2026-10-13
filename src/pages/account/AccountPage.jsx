@@ -13,6 +13,7 @@ import { useCatalog } from '../../store/catalog';
 import { useWishlist } from '../../store/wishlist';
 import { formatPrice } from '../../store/catalogConfig';
 import { SETTINGS } from '../../store/settings';
+import { thumbUrl } from '../../utils/productImage';
 
 // Account overview (/account): counts (orders / addresses / reviews) that
 // link to their pages, the ZUNUZ Credits balance (→ Refer & Earn), the
@@ -98,7 +99,7 @@ export default function AccountPage() {
             <span className="flex -space-x-3">
               {latest.items.slice(0, 3).map((i) => (
                 <span key={i.id} className="size-14 overflow-hidden rounded-[14px] border-2 border-white bg-[#EFE8DA]">
-                  {i.product?.image && <img src={i.product.image} alt="" className="h-full w-full scale-110 object-cover" />}
+                  {i.product?.image && <img src={thumbUrl(i.product.image, 400)} data-original={i.product.image} alt="" className="h-full w-full scale-110 object-cover" />}
                 </span>
               ))}
             </span>

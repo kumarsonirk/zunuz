@@ -78,7 +78,11 @@ export default function useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc,
 
     if (!reduced) {
       gsap.set(head, { y: -30, opacity: 0 });
-      gsap.set(photo, { opacity: 0, willChange: 'opacity' });
+      // The photo stays visible UNDER the (opaque) loader rather than at
+      // opacity 0: it looks the same, but the browser can count it as painted
+      // as soon as it's drawn — hiding it held Largest Contentful Paint back
+      // until the loader finished (~11s on PageSpeed's slow mobile run).
+      gsap.set(photo, { opacity: 1 });
       gsap.set(lines, { yPercent: 115, rotate: 4, transformOrigin: '0% 100%' });
       gsap.set(subs, { y: 24, opacity: 0 });
       gsap.set(btns, { y: 18, opacity: 0, scale: 0.92 });
@@ -121,8 +125,7 @@ export default function useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc,
       // 2) The photo is put fully in place UNDER the loader, then the loader
       //    dissolves straight into it — cream → photo, never a bare pink
       //    frame (a curtain slide used to uncover the pink background first).
-        .set(photo, { opacity: 1 })
-        .to(loader, { opacity: 0, duration: 0.9, ease: 'power2.inOut', onComplete: () => gsap.set(photo, { clearProps: 'willChange' }) }, '-=0.1')
+        .to(loader, { opacity: 0, duration: 0.9, ease: 'power2.inOut' }, '-=0.1')
         .set(loader, { display: 'none' })
       // 3) …then the text and controls follow.
         .addLabel('text', '>')
@@ -134,14 +137,13 @@ export default function useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc,
     };
 
     // ── What "loaded" means ──
+    // Only what the first screen needs:
     // - Bricolage Grotesque really loaded (document.fonts.load() can resolve
     //   before the stylesheet registers the face, so check the face itself);
-    // - the hero photo fully decoded;
-    // - the page's `load` event has passed (ScrollTrigger re-measures every
-    //   trigger then — ~0.5s of work — so nothing animates on top of it);
-    // - every up-front image on the page has loaded. Lazy images further
-    //   down aren't counted (the 6.6MB banner would hold the loader for ages);
-    //   they're decoded in the background after the hero plays.
+    // - the hero photo fully decoded.
+    // (It used to also wait for the page's `load` event and every non-lazy
+    // image — the other hero posters included — which on a slow phone held
+    // the loader up to its safety limit.) Never more than SAFETY_MS.
     const fontLoaded = () => {
       if (!document.fonts) return true;
       for (const face of document.fonts) {
@@ -153,23 +155,18 @@ export default function useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc,
     const posterImg = new Image();
     posterImg.src = posterSrc;
     posterImg.decode().then(() => { photoReady = true; }, () => { photoReady = true; });
-    let pageLoaded = document.readyState === 'complete';
-    const onLoad = () => requestAnimationFrame(() => requestAnimationFrame(() => { pageLoaded = true; }));
-    if (!pageLoaded) window.addEventListener('load', onLoad, { once: true });
-    const eagerImgs = Array.from(document.querySelectorAll('img')).filter((img) => img.loading !== 'lazy' && !loader.contains(img));
 
     // Progress shown on the loader: real completed steps, eased so the
     // number glides rather than jumping.
     const started = performance.now();
     let shown = 0;
     let poll;
-    const SAFETY_MS = 8000; // never trap anyone on the loader
+    const SAFETY_MS = 3500; // never trap anyone on the loader
     const wait = () => {
       if (cancelled) return;
-      const imgsDone = eagerImgs.filter((img) => img.complete).length;
-      const steps = [fontLoaded(), photoReady, pageLoaded];
-      const done = steps.filter(Boolean).length + imgsDone;
-      const total = steps.length + eagerImgs.length;
+      const steps = [fontLoaded(), photoReady];
+      const done = steps.filter(Boolean).length;
+      const total = steps.length;
       const target = total ? (done / total) * 100 : 100;
       shown += (target - shown) * 0.18;
       if (ldPct) ldPct.textContent = `${Math.round(shown)}%`;
@@ -185,7 +182,6 @@ export default function useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc,
     return () => {
       cancelled = true;
       clearTimeout(poll);
-      window.removeEventListener('load', onLoad);
       clearTimeout(ldPoll);
       tl?.kill();
     };

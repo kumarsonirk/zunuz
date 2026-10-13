@@ -21,6 +21,7 @@ import { clearCart } from '../../store/cart';
 import { loadCatalog } from '../../store/catalog';
 import { formatPrice } from '../../store/catalogConfig';
 import { SETTINGS } from '../../store/settings';
+import { thumbUrl } from '../../utils/productImage';
 
 // Checkout (/checkout): 1 · delivery address (pick a saved one or add one
 // inline) → 2 · payment method → place order. Razorpay / COD go through
@@ -307,7 +308,7 @@ function CheckoutPage() {
             {bag.buyable.map((l) => (
               <li key={l.item.id} className="flex items-center gap-3">
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-[12px] bg-[#EFE8DA]">
-                  <img src={l.product?.image || l.item.image} alt="" className="h-full w-full scale-110 object-cover" />
+                  <img src={thumbUrl(l.product?.image || l.item.image, 400)} data-original={l.product?.image || l.item.image} alt="" className="h-full w-full scale-110 object-cover" />
                   <span className="absolute -top-0 -right-0 flex size-5 items-center justify-center rounded-bl-[8px] bg-[#111110] font-['Inter',sans-serif] text-[11px] font-bold text-white">{l.qty}</span>
                 </span>
                 <span className="min-w-0 flex-1 truncate font-['Inter',sans-serif] text-[14px] font-semibold">{l.item.name}</span>

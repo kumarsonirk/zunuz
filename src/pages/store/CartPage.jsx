@@ -13,6 +13,7 @@ import { formatPrice, productPath } from '../../store/catalogConfig';
 import { SETTINGS } from '../../store/settings';
 import useCoupon from '../../components/store/checkout/useCoupon';
 import BagOffers from '../../components/store/checkout/BagOffers';
+import { thumbUrl } from '../../utils/productImage';
 
 // The bag (/cart). Prices and stock are always the live catalogue values
 // (the stored item only snapshots them at add time). Items that are sold
@@ -34,7 +35,7 @@ function BagLine({ line }) {
   };
   const Img = (
     <span className="relative block size-[clamp(84px,11vw,120px)] shrink-0 overflow-hidden rounded-[16px] bg-[#EFE8DA]">
-      {item.image && <img src={product?.image || item.image} alt="" className={`h-full w-full scale-110 object-cover ${ok ? '' : 'grayscale'}`} />}
+      {item.image && <img src={thumbUrl(product?.image || item.image, 400)} data-original={product?.image || item.image} alt="" className={`h-full w-full scale-110 object-cover ${ok ? '' : 'grayscale'}`} />}
     </span>
   );
   return (

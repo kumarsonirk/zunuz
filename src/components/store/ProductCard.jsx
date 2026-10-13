@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, Check, ArrowRight } from 'lucide-react';
 import { addToCart, useCart } from '../../store/cart';
 import { formatPrice, productPath } from '../../store/catalogConfig';
+import { thumbUrl, thumbSrcSet } from '../../utils/productImage';
 
 // Storefront product card: photo + name + price link to the product page;
 // "Quick add" puts it in the real bag (shows "Added" for a moment), then —
@@ -11,7 +12,11 @@ import { formatPrice, productPath } from '../../store/catalogConfig';
 // sections add their own hook classes (e.g. entrance animations) and
 // layout (e.g. phone-strip sizing).
 // Product photos are 4:5 (portrait) — the card matches so nothing is cropped.
-export default function ProductCard({ product, className = '', imageAspect = 'aspect-[4/5]' }) {
+// The photo loads a resized copy (utils/productImage.js); `imageSizes` tells
+// the browser roughly how wide the card shows, so it picks the right one.
+const CARD_SIZES = '(max-width: 560px) 72vw, (max-width: 1000px) 34vw, 300px';
+
+export default function ProductCard({ product, className = '', imageAspect = 'aspect-[4/5]', imageSizes = CARD_SIZES }) {
   const [added, setAdded] = useState(false);
   const timer = useRef(null);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -36,7 +41,10 @@ export default function ProductCard({ product, className = '', imageAspect = 'as
           {product.image && (
             <img
               className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05] ${soldOut ? 'opacity-60 grayscale-[40%]' : ''}`}
-              src={product.image}
+              src={thumbUrl(product.image, 800)}
+              srcSet={thumbSrcSet(product.image)}
+              sizes={imageSizes}
+              data-original={product.image}
               alt={product.name}
               loading="lazy"
               decoding="async"

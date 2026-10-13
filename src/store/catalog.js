@@ -7,9 +7,31 @@ import { CATEGORY_SLUGS, TIERS, OWN_PAGE_ONLY_CATEGORY_SLUGS } from './catalogCo
 // prop-drilling through App — pages stay prop-less and memo'd.
 // Loaded once on first use, refreshed when the tab regains focus (at most
 // once a minute) so admin edits show up without a reload.
+// The last catalogue is also kept in localStorage (CACHE_KEY, up to
+// CACHE_MAX_AGE old): a returning visitor's pages render straight from it
+// while a fresh copy loads in the background and replaces it. Prices and
+// stock are re-checked by the server at checkout, so a briefly stale copy
+// can't charge the wrong amount.
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-let state = { status: 'idle', categories: [], products: [], error: null };
+const CACHE_KEY = 'zunuz_catalog_v1';
+const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+function readCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (c && Date.now() - c.at < CACHE_MAX_AGE && Array.isArray(c.products) && Array.isArray(c.categories)) return c;
+  } catch { /* storage blocked / bad JSON */ }
+  return null;
+}
+function writeCache(categories, products) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), categories, products })); } catch { /* full / blocked */ }
+}
+
+const cached = typeof window !== 'undefined' ? readCache() : null;
+let state = cached
+  ? { status: 'ready', categories: cached.categories, products: cached.products, error: null }
+  : { status: 'idle', categories: [], products: [], error: null };
 const listeners = new Set();
 const emit = () => listeners.forEach((l) => l());
 const setState = (patch) => { state = { ...state, ...patch }; emit(); };
@@ -77,6 +99,7 @@ export function loadCatalog(force = false) {
         // Every section lists products cheapest first by default.
         .sort((a, b) => a.price - b.price);
       lastLoad = Date.now();
+      writeCache(categories, products);
       setState({ status: 'ready', categories, products, error: null });
     })
     .catch((e) => setState({ status: state.status === 'ready' ? 'ready' : 'error', error: String(e) }))
@@ -86,6 +109,8 @@ export function loadCatalog(force = false) {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('focus', () => { if (state.status !== 'idle') loadCatalog(); });
+  // Started from the cached copy: fetch the fresh one straight away.
+  if (cached) loadCatalog(true);
 }
 
 const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };

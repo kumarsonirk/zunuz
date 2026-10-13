@@ -9,10 +9,12 @@ import { LandingHeader } from '../../components/landing/LandingIntro';
 import useHeroIntro from '../../components/landing/useHeroIntro';
 import BudgetCardPhotos from '../../components/landing/BudgetCardPhotos';
 import { inSwipeStrip } from '../../components/landing/swipeStrip';
+import whileVisible from '../../components/landing/whileVisible';
 import scrollRise from '../../components/landing/scrollRise';
 import PriceEdit from '../../components/landing/PriceEdit';
 import SiteFooter from '../../components/landing/SiteFooter';
 import { getContent } from '../../store/content';
+import { thumbUrl } from '../../utils/productImage';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -149,7 +151,7 @@ function TrendingNow({ scrollRef, sectionRef, items }) {
             >
               <span className="relative block aspect-square overflow-hidden rounded-[clamp(14px,1.6vw,22px)] border-[3px] border-white bg-[#F3E9D2] shadow-[0_22px_40px_-24px_rgba(17,17,16,0.55)] transition-[translate,box-shadow,scale] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/fc:-translate-y-4 group-hover/fc:scale-[1.06] group-hover/fc:shadow-[0_34px_50px_-26px_rgba(17,17,16,0.6)] group-focus-visible/fc:outline-3 group-focus-visible/fc:outline-offset-4 group-focus-visible/fc:outline-[#FF3D8B]">
                 {/* Some photos have baked-in rounded corners — 110% hides them. */}
-                <img src={item.image} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full scale-110 object-cover" />
+                <img src={thumbUrl(item.image, 800)} data-original={item.image} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full scale-110 object-cover" />
                 {i === FAN_MID && (
                   <span className="absolute top-2 left-2 rounded-full bg-[#FF3D8B] px-2.5 py-1 font-['Inter',sans-serif] text-[11px] font-bold text-white">#1</span>
                 )}
@@ -371,11 +373,14 @@ function JewelleryPage() {
 
     const spinFlower = gsap.to(flower, { rotate: 360, duration: 40, ease: 'none', repeat: -1 });
     const spinAsterisk = gsap.to(asterisk, { rotate: -360, duration: 30, ease: 'none', repeat: -1 });
+    // Spinning shapes + glancing eyes only run while the section is on screen.
+    const unwatch = whileVisible(section, () => [spinFlower, spinAsterisk, tl]);
     const scrollOpts = { trigger: section, scroller, start: 'top bottom', end: 'bottom top', scrub: true };
     const driftFlower = gsap.fromTo(flower, { y: 60 }, { y: -60, ease: 'none', scrollTrigger: scrollOpts });
     const driftAsterisk = gsap.fromTo(asterisk, { y: -40 }, { y: 40, ease: 'none', scrollTrigger: { ...scrollOpts } });
 
     return () => {
+      unwatch();
       unrise();
       trigger.kill();
       tl?.kill();
@@ -429,8 +434,6 @@ function JewelleryPage() {
 
   return (
     <div className={`relative h-dvh w-full overflow-hidden bg-[#E8304F] text-white ${FONT_CLASS}`}>
-      {/* React 19 hoists this into <head>; the font is only needed here. */}
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Momo+Signature&display=swap" />
 
       {/* Shared, viewport-sized background behind every section after the
           hero (the hero's red covers it at the top). Radial-gradient glows,

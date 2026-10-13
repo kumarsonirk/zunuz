@@ -7,6 +7,7 @@ import { SETTINGS } from '../../store/settings';
 import { formatPrice } from '../../store/catalogConfig';
 import scrollRise from './scrollRise';
 import { inSwipeStrip } from './swipeStrip';
+import whileVisible from './whileVisible';
 
 // "Offers, unlocked." — one bold card per live offer, above "Jewellery, by
 // budget" on the home page: the Navratri collection, the Pick-3 combo, 50%
@@ -152,7 +153,8 @@ export default function OffersRow({ scrollRef }) {
       onEnter: () => { tween = gsap.to(cards, { opacity: 1, y: 0, scale: 1, duration: 1, ease: 'power3.out', stagger: 0.1 }); },
     });
     const spins = gsap.to(section.querySelectorAll('.t3o-spin'), { rotate: 360, duration: 24, ease: 'none', repeat: -1 });
-    return () => { unrise(); trigger.kill(); tween?.kill(); spins.kill(); };
+    const unwatch = whileVisible(section, () => [spins]); // spin only while on screen
+    return () => { unrise(); unwatch(); trigger.kill(); tween?.kill(); spins.kill(); };
   }, [scrollRef]);
 
   // Phones: auto-advance the strip one card at a time, back to the start

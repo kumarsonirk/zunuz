@@ -21,6 +21,7 @@ import { addToCart, useCart } from '../../store/cart';
 import { useCombo, addToCombo, removeFromCombo, swapIntoCombo, isInCombo, isEligibleForCombo, getComboPerUnitPrice, addComboToBag, comboPieceInCategory } from '../../store/combo';
 import { toggleWishlist, useWishlist } from '../../store/wishlist';
 import { categoryPath, productPath, formatPrice } from '../../store/catalogConfig';
+import { thumbUrl } from '../../utils/productImage';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -531,7 +532,7 @@ function ProductView({ product, related }) {
                         aria-current={imgIdx === i || undefined}
                         className={`size-[clamp(56px,6vw,76px)] shrink-0 cursor-pointer overflow-hidden rounded-[14px] border-2 bg-white p-0 transition-[border-color,translate] duration-300 ${imgIdx === i ? 'border-[#FF3D8B]' : 'border-transparent hover:-translate-y-0.5 hover:border-[#111110]/20'}`}
                       >
-                        <img src={src} alt="" className="h-full w-full scale-110 object-cover" />
+                        <img src={thumbUrl(src, 400)} data-original={src} alt="" className="h-full w-full scale-110 object-cover" />
                       </button>
                     ))}
                   </div>
@@ -719,7 +720,7 @@ function ProductView({ product, related }) {
                             {slotItem ? (
                               <>
                                 <img
-                                  src={slotItem.image}
+                                  src={thumbUrl(slotItem.image, 400)} data-original={slotItem.image}
                                   alt={slotItem.name}
                                   className="size-full rounded-[10px] object-cover"
                                 />
@@ -969,7 +970,7 @@ function ProductView({ product, related }) {
               </span>
               <div className="flex items-center gap-1">
                 {combo.items.map((it) => (
-                  <img key={it.id} src={it.image} alt={it.name} className="size-6 sm:size-7 rounded-full object-cover border border-[#111110]/15" />
+                  <img key={it.id} src={thumbUrl(it.image, 400)} data-original={it.image} alt={it.name} className="size-6 sm:size-7 rounded-full object-cover border border-[#111110]/15" />
                 ))}
               </div>
             </div>

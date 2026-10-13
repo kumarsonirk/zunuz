@@ -25,6 +25,7 @@ import { useCart } from '../../store/cart';
 import { useCombo, addToCombo, removeFromCombo, swapIntoCombo, clearCombo, addComboToBag, isInCombo, comboPieceInCategory } from '../../store/combo';
 import { formatPrice, productPath, JEWELLERY_CATEGORY_SLUGS, COMBO_EXCLUDED_CATEGORY_SLUGS } from '../../store/catalogConfig';
 import { SETTINGS } from '../../store/settings';
+import { thumbUrl } from '../../utils/productImage';
 
 const FESTIVE_GLOW =
   'bg-[radial-gradient(55%_45%_at_10%_0%,#FFE699_0%,transparent_70%),radial-gradient(50%_45%_at_90%_15%,#FFB3C6_0%,transparent_70%),radial-gradient(50%_50%_at_50%_90%,#FFF0D4_0%,transparent_70%)]';
@@ -351,7 +352,7 @@ function NavratriOffersPage() {
                             {item ? (
                               <div className="relative size-full">
                                 <img
-                                  src={item.image}
+                                  src={thumbUrl(item.image, 400)} data-original={item.image}
                                   alt={item.name}
                                   className="size-full rounded-[6px] sm:rounded-[9px] object-cover"
                                 />
@@ -609,7 +610,7 @@ function NavratriOffersPage() {
                         <Link to={productPath(product)} className="group block no-underline">
                           <div className="relative aspect-[4/5] overflow-hidden rounded-[16px] bg-[#EFE8DA]">
                             <img
-                              src={product.image}
+                              src={thumbUrl(product.image, 800)} data-original={product.image}
                               alt={product.name}
                               loading="lazy"
                               decoding="async"

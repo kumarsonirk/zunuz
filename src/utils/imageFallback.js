@@ -8,6 +8,7 @@ import { getCatalogSnapshot, loadCatalog } from '../store/catalog';
 // Not on product pages (a stand-in would misrepresent the product) or in the
 // admin (admins need to see what's actually broken). Logos and tiny icons are
 // skipped. Each image tries up to 3 different product photos, then gives up.
+// (A resized product photo that fails first falls back to its original.)
 const SKIP_PATH = /^\/(products\/|admin)/;
 const MAX_TRIES = 3;
 
@@ -26,6 +27,15 @@ function pick(list, seed, attempt) {
 function onImageError(e) {
   const img = e.target;
   if (!(img instanceof HTMLImageElement)) return;
+  // A resized product photo (utils/productImage.js) that failed: use the
+  // original upload instead — on every page, product pages included.
+  const original = img.dataset.original;
+  if (original && img.dataset.originalTried !== '1') {
+    img.dataset.originalTried = '1';
+    img.removeAttribute('srcset');
+    img.src = original;
+    return;
+  }
   if (SKIP_PATH.test(window.location.pathname)) return;
   if (/logo|favicon|icon/i.test(img.getAttribute('src') || '')) return;
   const tries = Number(img.dataset.fallbackTries || 0);
