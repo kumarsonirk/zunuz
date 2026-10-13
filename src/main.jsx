@@ -50,4 +50,10 @@ Promise.all([loadSettings(), loadContent()])
         </HelmetProvider>
       </StrictMode>,
     )
+    // index.html's static loader copy (#boot-ld) is normally handed over by
+    // the home page's own loader. If this render didn't show one (e.g.
+    // maintenance page), remove the copy now rather than leave it up.
+    setTimeout(() => {
+      if (!document.querySelector('#root [role="status"][aria-label="Loading"]')) document.getElementById('boot-ld')?.remove()
+    }, 300)
   })

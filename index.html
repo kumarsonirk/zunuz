@@ -89,6 +89,43 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
+    <!-- Home page, first visit in this tab: a plain-HTML copy of the loading
+         screen (cream, "ZUNUZ", progress bar) with the hero photo under it,
+         shown the moment the HTML arrives — before the app's JavaScript and
+         its settings/content requests are done. The app's own loader takes
+         over underneath and then removes this (removeBootLoader in
+         src/components/landing/useHeroIntro.js). Looks the same as before;
+         the page just shows something ~3s sooner on a slow phone. -->
+    <script>
+      (function () {
+        var seen = false;
+        try { seen = !!sessionStorage.getItem('zunuz_intro_seen'); } catch (e) { seen = true; }
+        if (location.pathname !== '/' || seen) return;
+        var boot = document.createElement('div');
+        boot.id = 'boot-ld';
+        boot.setAttribute('aria-hidden', 'true');
+        boot.innerHTML =
+          '<picture><source media="(orientation: portrait)" srcset="/poster1_mob.webp">' +
+          '<img src="/poster1_desk.webp" alt="" fetchpriority="high" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></picture>' +
+          '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#FFF8E7;color:#111110">' +
+            '<div class="boot-word" style="font-family:Qrokinex,sans-serif;font-size:clamp(36px,6vw,88px);line-height:1.05;opacity:0;transition:opacity .4s">' +
+              'ZUNUZ'.split('').map(function (c) { return '<span style="display:inline-block;padding:.1em .02em">' + c + '</span>'; }).join('') +
+            '</div>' +
+            '<div style="margin-top:clamp(20px,3vw,36px);height:3px;width:min(280px,60vw);overflow:hidden;border-radius:9999px;background:rgba(17,17,16,.1)">' +
+              '<div style="height:100%;width:100%;border-radius:9999px;background:#FF3D8B;transform-origin:left;transform:scaleX(.08)"></div></div>' +
+            '<p style="margin:12px 0 0;font:600 12px Inter,sans-serif;letter-spacing:.2em;color:rgba(17,17,16,.6)">0%</p>' +
+          '</div>';
+        boot.style.cssText = 'position:fixed;inset:0;z-index:9999;overflow:hidden;background:#FFF8E7;transition:opacity .35s';
+        document.body.insertBefore(boot, document.getElementById('root'));
+        // Letters appear once the brand font is ready (never in a fallback font).
+        var word = boot.querySelector('.boot-word');
+        var show = function () { word.style.opacity = '1'; };
+        if (document.fonts && document.fonts.load) document.fonts.load('400 100px Qrokinex').then(show, show);
+        else show();
+        // Never left on screen if the app fails to start.
+        setTimeout(function () { if (boot.parentNode) boot.remove(); }, 12000);
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

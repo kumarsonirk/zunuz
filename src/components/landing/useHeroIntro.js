@@ -4,6 +4,19 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// index.html shows a plain-HTML copy of the loader (#boot-ld) on a first
+// home visit, before the app starts. Fade it out once the real loader (or,
+// with no loader, the hero) is showing underneath — after `delay` ms, so the
+// real loader's own fade-in has finished and nothing flickers.
+function removeBootLoader(delay = 0) {
+  const boot = document.getElementById('boot-ld');
+  if (!boot) return;
+  setTimeout(() => {
+    boot.style.opacity = '0';
+    setTimeout(() => boot.remove(), 400);
+  }, delay);
+}
+
 // See LandingIntro.jsx for the markup contract (class names) this hook
 // animates, and for <LandingLoader />, whose ref it takes.
 // Loader + hero intro + hero scroll parallax. `posterSrc` is the hero photo
@@ -36,6 +49,7 @@ export default function useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc,
 
     // ── No loading screen: smooth fade-in entrance without any blink ──
     if (!withLoader) {
+      removeBootLoader();
       if (loader) gsap.set(loader, { display: 'none' });
       if (reduced) {
         // Flat list of elements (NodeLists spread) — nested NodeLists made GSAP throw.
@@ -99,7 +113,10 @@ export default function useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc,
       }
       return false;
     };
-    const showLoader = () => { loader.dataset.ready = 'true'; };
+    const showLoader = () => {
+      if (loader.dataset.ready !== 'true') removeBootLoader(800); // after the 700ms fade-in
+      loader.dataset.ready = 'true';
+    };
     let ldPoll;
     const ldStart = performance.now();
     const waitQrokinex = () => {
@@ -115,7 +132,7 @@ export default function useHeroIntro({ heroRef, loaderRef, scrollRef, posterSrc,
       if (cancelled || tl) return;
       clearTimeout(ldPoll);
       showLoader();
-      if (reduced) { gsap.set(loader, { display: 'none' }); return; }
+      if (reduced) { removeBootLoader(); gsap.set(loader, { display: 'none' }); return; }
       if (ldBar) ldBar.style.transform = 'scaleX(1)'; // CSS transition glides it to full
       if (ldPct) ldPct.textContent = '100%';
       tl = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.4 });
