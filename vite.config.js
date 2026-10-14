@@ -54,7 +54,7 @@ function preloadAppChunks() {
       handler(html, ctx) {
         const bundle = ctx.bundle || {};
         const chunks = Object.values(bundle).filter((c) => c.type === 'chunk');
-        const app = chunks.find((c) => c.facadeModuleId && /[\/]src[\/]App\.jsx$/.test(c.facadeModuleId));
+        const app = chunks.find((c) => c.facadeModuleId && /\/src\/App\.jsx$/.test(c.facadeModuleId));
         if (!app) return html;
         const files = new Set();
         const visit = (name) => {
@@ -91,7 +91,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('three')) return 'vendor-three';
           if (id.includes('lucide-react')) return 'vendor-icons';
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
             return 'vendor-react';
