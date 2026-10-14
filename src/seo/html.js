@@ -30,6 +30,10 @@ export function seoHeadTags({ title, description, path = '', image = '/logo_whit
     meta('property', 'og:description', description),
     meta('property', 'og:url', url),
     meta('property', 'og:image', img),
+    meta('property', 'og:image:secure_url', img),
+    /\.jpe?g$/i.test(img) ? meta('property', 'og:image:type', 'image/jpeg') : '',
+    meta('property', 'og:image:alt', full),
+    meta('property', 'og:locale', 'en_IN'),
     meta('name', 'twitter:card', 'summary_large_image'),
     meta('name', 'twitter:title', full),
     meta('name', 'twitter:description', description),
@@ -38,8 +42,13 @@ export function seoHeadTags({ title, description, path = '', image = '/logo_whit
   ].filter(Boolean).join(`${NL}    `);
 }
 
+// The tags go at the very top of <head> (right after <meta charset>), title
+// first: some link-preview crawlers — WhatsApp's especially — only read the
+// start of a page and give up before the app's scripts end.
 export function withSeo(html, page) {
-  return html
-    .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeText(fullTitle(page.title))}</title>`)
-    .replace('</head>', `    ${seoHeadTags(page)}${NL}  </head>`);
+  const tags = `<title>${escapeText(fullTitle(page.title))}</title>${NL}    ${seoHeadTags(page)}`;
+  const body = html.replace(/\s*<title>[\s\S]*?<\/title>/, '');
+  const charset = body.match(/<meta charset[^>]*>/i);
+  if (charset) return body.replace(charset[0], `${charset[0]}${NL}    ${tags}`);
+  return body.replace('<head>', `<head>${NL}    ${tags}`);
 }
