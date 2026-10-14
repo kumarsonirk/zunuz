@@ -10,6 +10,8 @@ import useSmoothScroll from '../../hooks/useSmoothScroll';
 import { LandingHeader, LandingLoader } from '../../components/landing/LandingIntro';
 import BudgetCardPhotos from '../../components/landing/BudgetCardPhotos';
 import { inSwipeStrip } from '../../components/landing/swipeStrip';
+import Seo from '../../components/Seo';
+import { SEO_PAGES, HOME_JSON_LD } from '../../seo/pages';
 import whileVisible from '../../components/landing/whileVisible';
 import useHeroIntro from '../../components/landing/useHeroIntro';
 import { api } from '../../utils/api';
@@ -1678,6 +1680,7 @@ function HomePage() {
 
   return (
     <div className={`relative h-dvh w-full overflow-hidden bg-[#E8304F] text-white ${FONT_CLASS}`}>
+      <Seo {...SEO_PAGES['/']} path="/" jsonLd={HOME_JSON_LD} />
 
       {/* Shared, viewport-sized background behind every section after the
           hero (the hero's own red poster covers it at the top). The glows

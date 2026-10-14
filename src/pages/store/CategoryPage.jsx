@@ -10,6 +10,7 @@ import ProductCard from '../../components/store/ProductCard';
 import FilterSheet from '../../components/store/FilterSheet';
 import SortMenu from '../../components/store/SortMenu';
 import Seo from '../../components/Seo';
+import { SEO_PAGES } from '../../seo/pages';
 import { useCatalog, productsIn } from '../../store/catalog';
 import { TIERS, CATEGORY_SLUGS, categoryPath, OWN_PAGE_ONLY_CATEGORY_SLUGS } from '../../store/catalogConfig';
 
@@ -171,8 +172,8 @@ function CategoryPage({ categorySlug = null, tier = null }) {
   return (
     <div className={`relative h-dvh w-full overflow-hidden bg-[#FFF8EE] text-[#111110] ${FONT_CLASS}`}>
       <Seo
-        title={activeFilter ? `${name} ${activeFilter.label}` : name}
-        description={subtitle || `Shop ${name.toLowerCase()} at ZUNUZ.`}
+        title={activeFilter ? `${name} ${activeFilter.label}` : (SEO_PAGES[basePath]?.title || name)}
+        description={SEO_PAGES[basePath]?.description || subtitle || `Shop ${name.toLowerCase()} at ZUNUZ.`}
         path={basePath}
       />
       <div aria-hidden="true" className={`pointer-events-none absolute inset-0 ${look.glow}`} />

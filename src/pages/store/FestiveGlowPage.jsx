@@ -10,6 +10,7 @@ import ProductCard from '../../components/store/ProductCard';
 import FilterSheet from '../../components/store/FilterSheet';
 import SortMenu from '../../components/store/SortMenu';
 import Seo from '../../components/Seo';
+import { SEO_PAGES } from '../../seo/pages';
 import { useCatalog, productsIn } from '../../store/catalog';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -165,11 +166,7 @@ function FestiveGlowPage() {
 
   return (
     <div className={`relative h-dvh w-full overflow-hidden bg-[#FFF8EE] text-[#111110] ${FONT_CLASS}`}>
-      <Seo
-        title="Festive Glow Jewellery Edit | ZUNUZ"
-        description="Shine bright with our Festive Glow edit. 18k gold-plated necklaces, bracelets and earrings crafted for celebrations."
-        path="/festive-glow"
-      />
+      <Seo {...SEO_PAGES['/festive-glow']} path="/festive-glow" />
 
       {/* Radiant celebratory warm glow behind the page */}
       <div

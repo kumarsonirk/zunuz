@@ -1,4 +1,5 @@
 import Seo from '../../components/Seo';
+import { SEO_PAGES } from '../../seo/pages';
 import PolicyLayout from '../../components/store/PolicyLayout';
 
 const SECTIONS = [
@@ -60,11 +61,7 @@ const SECTIONS = [
 export default function ProductCarePage() {
   return (
     <PolicyLayout eyebrow="Customer care" title="Product Care Guide" accent="text-[#1E8A4C]" sections={SECTIONS}>
-      <Seo
-        title="Product Care Guide"
-        description="Tips for caring for, cleaning, and storing your ZUNUZ fashion jewelry to help keep it looking its best for longer."
-        path="/customer-care/product-care"
-      />
+      <Seo {...SEO_PAGES['/customer-care/product-care']} path="/customer-care/product-care" />
     </PolicyLayout>
   );
 }

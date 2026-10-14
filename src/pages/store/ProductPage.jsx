@@ -10,6 +10,7 @@ import SiteFooter from '../../components/landing/SiteFooter';
 import PincodeCheck from '../../components/store/PincodeCheck';
 import scrollRise from '../../components/landing/scrollRise';
 import Seo from '../../components/Seo';
+import { productJsonLd, productDescription, previewImage } from '../../seo/product';
 import { parseRichContent } from '../../components/RichContent';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../utils/api';
@@ -485,10 +486,11 @@ function ProductView({ product, related }) {
     <div ref={pageRef} className={`relative h-dvh w-full overflow-hidden bg-[#FFF8EE] text-[#111110] ${FONT_CLASS}`}>
       <Seo
         title={product.name}
-        description={short || `${product.name} — ${formatPrice(product.price)} at ZUNUZ.`}
+        description={productDescription(product)}
         path={productPath(product)}
-        image={product.image}
+        image={previewImage(product.image)}
         type="product"
+        jsonLd={productJsonLd(product, { rating, reviewCount })}
       />
 
       {/* Soft static colour glows (same palette family as /jewellery). */}

@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import PolicyLayout from '../../components/store/PolicyLayout';
 import Seo from '../../components/Seo';
+import { SEO_PAGES } from '../../seo/pages';
 import { FAQS } from '../../data/faqs';
 
 // FAQs (/customer-care/faq): the shared FAQ list as an accordion (one open
@@ -12,11 +13,7 @@ export default function FaqPage() {
   const base = `faq-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   return (
     <PolicyLayout eyebrow="Customer care" title="Questions? Answered." intro="Quick answers about orders, delivery, payments and caring for your pieces.">
-      <Seo
-        title="Frequently Asked Questions"
-        description="Answers to common questions about ZUNUZ orders, shipping, returns, and payments."
-        path="/customer-care/faq"
-      />
+      <Seo {...SEO_PAGES['/customer-care/faq']} path="/customer-care/faq" />
       <ul className="m-0 flex list-none flex-col gap-3 p-0">
         {FAQS.map((f, i) => {
           const isOpen = open === i;

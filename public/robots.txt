@@ -2,10 +2,16 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /cart
+Disallow: /checkout
+Disallow: /order/
 Disallow: /login
 Disallow: /signup
 Disallow: /forgot-password
 Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /unsubscribe
 Disallow: /account
+Disallow: /api/
+Disallow: /app.html
 
 Sitemap: https://www.zunuz.in/sitemap.xml

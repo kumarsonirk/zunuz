@@ -1,4 +1,5 @@
 import Seo from '../../components/Seo';
+import { SEO_PAGES } from '../../seo/pages';
 import PolicyLayout from '../../components/store/PolicyLayout';
 
 const SECTIONS = [
@@ -95,11 +96,7 @@ const SECTIONS = [
 export default function ReturnsReplacementsPage() {
   return (
     <PolicyLayout eyebrow="Customer care" title="Returns, Replacements & Refunds" accent="text-[#1A6FE8]" sections={SECTIONS}>
-      <Seo
-        title="Returns & Replacements"
-        description="ZUNUZ's policy on returns, replacements, and refunds for damaged, defective, or incorrect jewelry orders."
-        path="/customer-care/returns-replacements"
-      />
+      <Seo {...SEO_PAGES['/customer-care/returns-replacements']} path="/customer-care/returns-replacements" />
     </PolicyLayout>
   );
 }

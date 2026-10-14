@@ -39,6 +39,10 @@ if (/Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|Line\//i.test(navigator.userAgent ||
 Promise.all([loadSettings(), loadContent()])
   .then(() => import('./App.jsx'))
   .then(({ default: App }) => {
+    // SEO tags written into the HTML for crawlers (src/seo/html.js): each
+    // page's <Seo> sets the same values once it renders, so drop these
+    // first to avoid duplicate canonical / description tags.
+    document.querySelectorAll('head [data-seo]').forEach((el) => el.remove())
     createRoot(document.getElementById('root')).render(
       <StrictMode>
         <HelmetProvider>

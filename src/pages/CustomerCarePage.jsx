@@ -4,6 +4,7 @@ import { gsap } from 'gsap';
 import { Truck, RotateCcw, XCircle, Sparkles, HelpCircle, FileText, Shield, Mail, MessageCircle, Clock, ArrowRight, Package } from 'lucide-react';
 import StoreShell, { cardCls } from '../components/store/StoreShell';
 import Seo from '../components/Seo';
+import { SEO_PAGES } from '../seo/pages';
 import { CONTACT } from '../data/contact';
 import { FAQS } from '../data/faqs';
 
@@ -33,11 +34,7 @@ export default function CustomerCarePage() {
 
   return (
     <StoreShell>
-      <Seo
-        title="Customer Care"
-        description="Get help with ZUNUZ orders — shipping, returns & replacements, cancellations, and product care, all in one place."
-        path="/customer-care"
-      />
+      <Seo {...SEO_PAGES['/customer-care']} path="/customer-care" />
       <main ref={rootRef} className="mx-auto max-w-[1180px] px-5 pt-[clamp(24px,4vw,56px)] pb-[clamp(56px,7vw,96px)]">
         <p className="cc-in m-0 font-['Inter',sans-serif] text-[13px] font-bold tracking-[0.16em] text-[#111110]/50 uppercase">Customer care</p>
         <h1 className="m-0 mt-2 text-[length:clamp(40px,6.4vw,92px)] leading-[0.95] font-extrabold tracking-[-0.03em] text-[#FF3D8B]">

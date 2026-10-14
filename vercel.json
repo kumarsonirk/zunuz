@@ -1,12 +1,73 @@
 {
+  "redirects": [
+    {
+      "source": "/test",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/test2",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/test3",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/jewel",
+      "destination": "/jewellery",
+      "permanent": true
+    },
+    {
+      "source": "/jewel/product",
+      "destination": "/jewellery",
+      "permanent": true
+    },
+    {
+      "source": "/products",
+      "destination": "/jewellery",
+      "permanent": true
+    },
+    {
+      "source": "/lite_products",
+      "destination": "/jewellery",
+      "permanent": true
+    },
+    {
+      "source": "/neckwear",
+      "destination": "/necklaces",
+      "permanent": true
+    },
+    {
+      "source": "/wristwear",
+      "destination": "/bracelets",
+      "permanent": true
+    },
+    {
+      "source": "/earwear",
+      "destination": "/earrings",
+      "permanent": true
+    },
+    {
+      "source": "/navratri-offer",
+      "destination": "/navratri-offers",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",
       "destination": "https://zunuz-production.up.railway.app/sitemap.xml"
     },
     {
+      "source": "/products/:slug",
+      "destination": "/api/product-page?slug=:slug"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/app.html"
     }
   ],
   "headers": [

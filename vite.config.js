@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import fs from 'node:fs'
 import path from 'node:path'
+import { SEO_PAGES, HOME_JSON_LD } from './src/seo/pages.js'
+import { withSeo } from './src/seo/html.js'
 
 // In-app browsers (Instagram, Facebook) on older phones don't know the newer
 // viewport/container units (dvh, svh, lvh, cqw, cqh). A declaration using
@@ -74,6 +76,39 @@ function preloadAppChunks() {
   };
 }
 
+// Search engines and link previews (WhatsApp, Instagram, Bing) often read a
+// page's HTML without running its JavaScript, so a single-page app looks
+// the same — "ZUNUZ", no description — on every URL. After the build this
+// writes the real title / description / canonical / Open Graph tags
+// (src/seo/pages.js) into:
+//   dist/index.html            → home page (+ Organization / WebSite data)
+//   dist/<path>/index.html     → each other fixed page (/shop, /earrings…)
+//   dist/app.html              → untouched shell for every other route
+//                                (vercel.json rewrites unknown paths to it)
+// Tags carry data-seo; main.jsx removes them when the app starts and the
+// page's own <Seo> sets the same values. Product pages are done per
+// request by api/product-page.js. Tag writing: src/seo/html.js.
+function prerenderSeoPages() {
+  let outDir = 'dist'
+  return {
+    name: 'prerender-seo-pages',
+    apply: 'build',
+    configResolved(cfg) { outDir = path.resolve(cfg.root, cfg.build.outDir) },
+    closeBundle() {
+      const indexFile = path.join(outDir, 'index.html')
+      if (!fs.existsSync(indexFile)) return
+      const shell = fs.readFileSync(indexFile, 'utf8')
+      fs.writeFileSync(path.join(outDir, 'app.html'), shell)
+      for (const [pagePath, page] of Object.entries(SEO_PAGES)) {
+        const html = withSeo(shell, { ...page, path: pagePath, jsonLd: pagePath === '/' ? HOME_JSON_LD : [] })
+        const file = pagePath === '/' ? indexFile : path.join(outDir, pagePath.slice(1), 'index.html')
+        fs.mkdirSync(path.dirname(file), { recursive: true })
+        fs.writeFileSync(file, html)
+      }
+    },
+  }
+}
+
 // Older in-app browsers (iOS 14+, Android WebView/Chrome 87+).
 const LEGACY_TARGETS = ['es2020', 'chrome87', 'safari14', 'firefox78', 'edge88'];
 
@@ -84,6 +119,7 @@ export default defineConfig({
     tailwindcss(),
     viewportUnitFallbacks(),
     preloadAppChunks(),
+    prerenderSeoPages(),
   ],
   build: {
     target: LEGACY_TARGETS,

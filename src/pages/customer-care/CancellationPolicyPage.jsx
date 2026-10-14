@@ -1,4 +1,5 @@
 import Seo from '../../components/Seo';
+import { SEO_PAGES } from '../../seo/pages';
 import PolicyLayout from '../../components/store/PolicyLayout';
 
 const SECTIONS = [
@@ -53,11 +54,7 @@ const SECTIONS = [
 export default function CancellationPolicyPage() {
   return (
     <PolicyLayout eyebrow="Customer care" title="Cancellation Policy" accent="text-[#E8304F]" sections={SECTIONS}>
-      <Seo
-        title="Cancellation Policy"
-        description="Find out how and when you can cancel a ZUNUZ order, and how refunds for cancelled orders are processed."
-        path="/customer-care/cancellation-policy"
-      />
+      <Seo {...SEO_PAGES['/customer-care/cancellation-policy']} path="/customer-care/cancellation-policy" />
     </PolicyLayout>
   );
 }

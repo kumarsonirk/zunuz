@@ -227,8 +227,9 @@ function NavratriOffersPage() {
   return (
     <StoreShell glow={FESTIVE_GLOW}>
       <Seo
-        title={`${offerTitle} | Festive Navratri Offer · ZUNUZ`}
+        title={`${offerTitle} – Navratri Jewellery Offer`}
         description={`Pick any ${bundleCount} premium waterproof jewellery items worth up to ₹${maxPrice * bundleCount} for just ₹${bundlePrice} during the ZUNUZ Navratri Special.`}
+        path="/navratri-offers"
       />
 
       <div className="mx-auto max-w-[1240px] px-4 pt-4 pb-28 sm:pb-32 sm:px-6">

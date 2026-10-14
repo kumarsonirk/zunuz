@@ -1,4 +1,5 @@
 import Seo from '../components/Seo';
+import { SEO_PAGES } from '../seo/pages';
 import PolicyLayout from '../components/store/PolicyLayout';
 
 const SECTIONS = [
@@ -151,11 +152,7 @@ export default function TermsPage() {
   return (
     <PolicyLayout eyebrow="Legal" title="Terms & Conditions" accent="text-[#1A6FE8]" sections={SECTIONS}
       closing={{ heading: 'Thank you', body: ['Thank you for choosing ZUNUZ.', "Every order means a lot to us, and we're committed to delivering not just great products, but also an honest, transparent, and enjoyable shopping experience.", 'If you ever need assistance, our support team is always happy to help.'] }}>
-      <Seo
-        title="Terms & Conditions"
-        description="Read ZUNUZ's terms and conditions covering website use, product information, pricing, orders, shipping, and returns."
-        path="/terms"
-      />
+      <Seo {...SEO_PAGES['/terms']} path="/terms" />
     </PolicyLayout>
   );
 }

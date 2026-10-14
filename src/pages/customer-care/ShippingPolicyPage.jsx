@@ -1,4 +1,5 @@
 import Seo from '../../components/Seo';
+import { SEO_PAGES } from '../../seo/pages';
 import { SETTINGS } from '../../store/settings';
 import PolicyLayout from '../../components/store/PolicyLayout';
 
@@ -84,11 +85,7 @@ const SECTIONS = [
 export default function ShippingPolicyPage() {
   return (
     <PolicyLayout eyebrow="Customer care" title="Shipping & Delivery" accent="text-[#FF3D8B]" sections={SECTIONS}>
-      <Seo
-        title="Shipping Policy"
-        description="Learn about ZUNUZ's order processing times, delivery timelines, shipping charges, and how lost or damaged shipments are handled."
-        path="/customer-care/shipping-policy"
-      />
+      <Seo {...SEO_PAGES['/customer-care/shipping-policy']} path="/customer-care/shipping-policy" />
     </PolicyLayout>
   );
 }

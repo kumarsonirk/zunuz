@@ -1,4 +1,5 @@
 import Seo from '../components/Seo';
+import { SEO_PAGES } from '../seo/pages';
 import PolicyLayout from '../components/store/PolicyLayout';
 
 const SECTIONS = [
@@ -130,11 +131,7 @@ const SECTIONS = [
 export default function PrivacyPage() {
   return (
     <PolicyLayout eyebrow="Legal" title="Privacy Policy" accent="text-[#7A4BD6]" sections={SECTIONS}>
-      <Seo
-        title="Privacy Policy"
-        description="ZUNUZ's privacy policy explaining what personal information we collect, how it's used, and how it's protected."
-        path="/privacy"
-      />
+      <Seo {...SEO_PAGES['/privacy']} path="/privacy" />
     </PolicyLayout>
   );
 }

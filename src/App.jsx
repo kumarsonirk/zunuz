@@ -35,6 +35,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
 const UnsubscribePage = lazy(() => import('./pages/store/UnsubscribePage'));
+const NotFoundPage = lazy(() => import('./pages/store/NotFoundPage'));
 
 
 const AccountPage = lazy(() => import('./pages/account/AccountPage'));
@@ -212,7 +213,7 @@ export default function App() {
         <Route path="/account/refer" element={store(<ReferPage />)} />
         <Route path="/account/help-center" element={store(<HelpCenterPage />)} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={store(<NotFoundPage />)} />
       </Routes>
     </Suspense>
   );

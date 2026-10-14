@@ -9,6 +9,8 @@ import { LandingHeader } from '../../components/landing/LandingIntro';
 import useHeroIntro from '../../components/landing/useHeroIntro';
 import BudgetCardPhotos from '../../components/landing/BudgetCardPhotos';
 import { inSwipeStrip } from '../../components/landing/swipeStrip';
+import Seo from '../../components/Seo';
+import { SEO_PAGES } from '../../seo/pages';
 import whileVisible from '../../components/landing/whileVisible';
 import scrollRise from '../../components/landing/scrollRise';
 import PriceEdit from '../../components/landing/PriceEdit';
@@ -434,6 +436,7 @@ function JewelleryPage() {
 
   return (
     <div className={`relative h-dvh w-full overflow-hidden bg-[#E8304F] text-white ${FONT_CLASS}`}>
+      <Seo {...SEO_PAGES['/jewellery']} path="/jewellery" />
 
       {/* Shared, viewport-sized background behind every section after the
           hero (the hero's red covers it at the top). Radial-gradient glows,
