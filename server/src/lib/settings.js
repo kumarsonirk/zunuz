@@ -28,6 +28,11 @@ const DEFAULTS = {
   cancelWindowHours: 6,
   // Checkout extras
   pincodeRestriction: false, // only deliver to pincodes on the admin Pincodes list
+  // Delivery time shown to shoppers (product page, address form, checkout):
+  // pincodes on the Delivery Pincodes list (e.g. Bengaluru) vs everywhere
+  // else. A listed pincode's own "Delivery time" overrides the first.
+  listedPincodeEta: '48 hours',
+  otherPincodeEta: '5–7 working days',
   // Alerts (lib/alerts.js)
   alertEmail: '',
   newOrderAlerts: true,
@@ -92,6 +97,8 @@ const VALIDATE = {
   lowStockThreshold: int(0, 1000),
   cancelWindowHours: int(0, 72),
   pincodeRestriction: bool,
+  listedPincodeEta: str(30, { required: true }),
+  otherPincodeEta: str(30, { required: true }),
   alertEmail: str(200, { re: /^([^\s@,]+@[^\s@,]+\.[^\s@,]+)(\s*,\s*[^\s@,]+@[^\s@,]+\.[^\s@,]+)*$/ }),
   newOrderAlerts: bool,
   lowStockAlerts: bool,
@@ -119,7 +126,7 @@ const LABELS = {
   maintenanceMessage: 'Maintenance message', checkoutPaused: 'Pause checkout', checkoutPausedMessage: 'Checkout paused message', deliveryFee: 'Delivery fee', freeDeliveryThreshold: 'Free delivery threshold',
   supportEmail: 'Support email', supportPhone: 'Support phone', supportWhatsapp: 'WhatsApp number', supportHours: 'Support hours',
   lowStockThreshold: 'Low stock threshold', cancelWindowHours: 'Cancellation window',
-  pincodeRestriction: 'Pincode restriction', alertEmail: 'Alert email', newOrderAlerts: 'New-order alerts', lowStockAlerts: 'Low-stock alerts',
+  pincodeRestriction: 'Pincode restriction', listedPincodeEta: 'Delivery time (listed pincodes)', otherPincodeEta: 'Delivery time (other pincodes)', alertEmail: 'Alert email', newOrderAlerts: 'New-order alerts', lowStockAlerts: 'Low-stock alerts',
   reviewModeration: 'Review moderation', announcementEnabled: 'Announcement bar', announcementText: 'Announcement text', announcementLink: 'Announcement link',
   referralEnabled: 'Referral program', referralReward: 'Referrer reward', referralFriendBonus: 'Friend bonus', referralMinOrder: 'Referral minimum order', referralMonthlyCap: 'Monthly referral cap', creditExpiryDays: 'Credit expiry',
   adminSecurityQuestion: 'Admin security question', adminSecurityAnswerHash: 'Admin security answer',

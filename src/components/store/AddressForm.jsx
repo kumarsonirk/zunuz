@@ -13,7 +13,7 @@ function PincodeHint({ pincode }) {
   if (!info.serviceable) return <span role="status" className="font-['Inter',sans-serif] text-[12px] font-semibold text-[#B4123E]">We don't deliver to this pincode yet.</span>;
   return (
     <span role="status" className="font-['Inter',sans-serif] text-[12px] font-semibold text-[#1E8A4C]">
-      ✓ We deliver here{info.etaDays ? ` · ${info.etaDays}` : ''}{info.codAvailable ? ' · COD available' : ''}
+      ✓ We deliver here{info.etaDays ? ` · within ${info.etaDays}` : ''}{info.codAvailable ? ' · COD available' : ''}
     </span>
   );
 }

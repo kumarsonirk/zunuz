@@ -78,7 +78,7 @@ function PincodeNotice({ pin, pincode }) {
     <p className="m-0 mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[14px] bg-[#E8F7EE] px-3.5 py-2.5 font-['Inter',sans-serif] text-[13px] font-semibold text-[#1E8A4C]">
       <Truck size={16} className="shrink-0" />
       {i.etaDays
-        ? <>Delivers to {i.pincode} in {i.etaDays}{by && <span className="font-normal">· by {by}</span>}</>
+        ? <>Delivers to {i.pincode} within {i.etaDays}{by && <span className="font-normal">· by {by}</span>}</>
         : <>We deliver to {i.pincode} · 2–7 business days</>}
     </p>
   );

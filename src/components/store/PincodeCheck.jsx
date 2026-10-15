@@ -79,7 +79,7 @@ export default function PincodeCheck({ className = '' }) {
               <span>
                 Delivers to {info.city ? `${info.city}, ${info.pincode}` : info.pincode}
                 {info.etaDays
-                  ? <> in {info.etaDays}{by && <span className="font-normal text-[#111110]/60"> · get it by {by}</span>}</>
+                  ? <> within {info.etaDays}{by && <span className="font-normal text-[#111110]/60"> · get it by {by}</span>}</>
                   : <span className="font-normal text-[#111110]/60"> · usually 2–7 business days</span>}
               </span>
             </li>

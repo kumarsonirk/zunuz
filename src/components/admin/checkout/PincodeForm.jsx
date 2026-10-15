@@ -63,7 +63,7 @@ export default function PincodeForm({ initial, onSaved, onClose }) {
           <Field label="Pincode" htmlFor="pc-pin" error={errors.pincode}>
             <input id="pc-pin" inputMode="numeric" value={f.pincode} onChange={set('pincode')} disabled={!!initial} placeholder="560001" className={`${inputCls} font-mono tracking-wider`} />
           </Field>
-          <Field label="Delivery time" htmlFor="pc-eta" error={errors.etaDays} hint='e.g. "2–4 days". Empty = 2–7 business days.'>
+          <Field label="Delivery time" htmlFor="pc-eta" error={errors.etaDays} hint='e.g. "24 hours" or "2–4 days". Empty = the listed-pincode time in Settings (48 hours).'>
             <input id="pc-eta" value={f.etaDays} onChange={set('etaDays')} maxLength={20} placeholder="2–4 days" className={inputCls} />
           </Field>
           <Field label="City" htmlFor="pc-city">

@@ -129,7 +129,9 @@ async function pincodeServiceability(pincode, client = prisma) {
     valid: true,
     serviceable,
     codAvailable: serviceable && !!s.codEnabled && (!listed || row.codAvailable),
-    etaDays: listed ? row.etaDays || null : null,
+    // Listed (e.g. Bengaluru): its own delivery time, else the Settings
+    // default; anywhere else we deliver: the "other pincodes" time.
+    etaDays: listed ? row.etaDays || s.listedPincodeEta || null : serviceable ? s.otherPincodeEta || null : null,
     city: listed ? row.city || null : null,
     state: listed ? row.state || null : null,
     restricted,

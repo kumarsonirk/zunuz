@@ -38,11 +38,22 @@ export default function usePincode(pincode) {
   return { status: state.status, info: state.info };
 }
 
-// "2–4 days" → latest expected date ("Fri, 10 Oct"), or null.
+// Delivery time → latest expected date ("Fri, 10 Oct"), or null.
+// "2–4 days" → +4 days; "5–7 working days" → +7 working days; "48 hours" →
+// +2 working days. Working days skip Sundays (couriers run Mon–Sat).
 export function etaDate(etaDays) {
-  const nums = String(etaDays || '').match(/\d+/g);
+  const text = String(etaDays || '').toLowerCase();
+  const nums = text.match(/\d+/g);
   if (!nums) return null;
-  const max = Math.max(...nums.map(Number));
+  let max = Math.max(...nums.map(Number));
+  const hours = /hour|hr/.test(text);
+  if (hours) max = Math.ceil(max / 24);
   if (!max || max > 60) return null;
-  return new Date(Date.now() + max * 864e5).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  const working = hours || /working|business/.test(text);
+  const d = new Date();
+  for (let left = max; left > 0;) {
+    d.setDate(d.getDate() + 1);
+    if (!working || d.getDay() !== 0) left -= 1;
+  }
+  return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 }

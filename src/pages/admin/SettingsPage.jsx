@@ -174,7 +174,11 @@ export default function SettingsPage() {
               <Field label="Delivery fee (₹)"><input className={inputCls} type="number" min={0} inputMode="numeric" disabled={!form.deliveryFeeEnabled} value={form.deliveryFee} onChange={set('deliveryFee')} /></Field>
               <Field label="Free delivery from (₹)" hint="Items total at or above this ships free."><input className={inputCls} type="number" min={0} inputMode="numeric" disabled={!form.deliveryFeeEnabled} value={form.freeDeliveryThreshold} onChange={set('freeDeliveryThreshold')} /></Field>
             </div>
-            <SwitchRow title="Only deliver to listed pincodes" text="Checkout and the product page only accept pincodes on your Delivery Pincodes list." checked={form.pincodeRestriction} onChange={set('pincodeRestriction')} />
+            <SwitchRow title="Only deliver to listed pincodes" text={form.pincodeRestriction ? 'Checkout and the product page only accept pincodes on your Delivery Pincodes list.' : 'Every valid Indian pincode is accepted; listed ones get the faster delivery time below.'} checked={form.pincodeRestriction} onChange={set('pincodeRestriction')} />
+            <div className="grid grid-cols-2 gap-3 max-[560px]:grid-cols-1">
+              <Field label="Delivery time — listed pincodes" hint='Your Delivery Pincodes list (e.g. Bengaluru). Shown as "within 48 hours".'><input className={inputCls} value={form.listedPincodeEta ?? ''} onChange={set('listedPincodeEta')} maxLength={30} placeholder="48 hours" /></Field>
+              <Field label="Delivery time — other pincodes" hint={form.pincodeRestriction ? 'Used once "Only deliver to listed pincodes" is off.' : 'Every other pincode in India.'}><input className={inputCls} value={form.otherPincodeEta ?? ''} onChange={set('otherPincodeEta')} maxLength={30} placeholder="5–7 working days" /></Field>
+            </div>
             <Link to="/admin/pincodes" className="self-start text-[14px] font-semibold text-[var(--admin-accent)] no-underline hover:underline">Manage delivery pincodes →</Link>
           </Section>
 

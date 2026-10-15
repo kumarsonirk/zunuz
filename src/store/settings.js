@@ -21,6 +21,8 @@ export const SETTINGS = {
   supportWhatsapp: '918310057566',
   supportHours: 'Mon–Sat, 10 AM – 6 PM IST',
   pincodeRestriction: false,
+  listedPincodeEta: '48 hours',
+  otherPincodeEta: '5–7 working days',
   cancelWindowHours: 6,
   reviewModeration: false,
   announcementEnabled: false,
