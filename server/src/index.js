@@ -88,6 +88,8 @@ app.use('/uploads', express.static(uploadsDir, { maxAge: '365d', immutable: true
 // Sitemap is proxied at the root path (not /api) since it must be reachable
 // at https://www.zunuz.in/sitemap.xml — see vercel.json's rewrite for that path.
 app.use('/', require('./routes/sitemap'));
+// Google Merchant Center product feed (/feeds/google.xml) — free Shopping listings.
+app.use('/feeds', require('./routes/feeds'));
 
 // Maintenance mode (admin → Settings) is enforced here too, not just by the
 // storefront swapping pages: while it's on, shoppers can't place orders,

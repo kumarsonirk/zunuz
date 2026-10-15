@@ -62,6 +62,10 @@
       "destination": "https://zunuz-production.up.railway.app/sitemap.xml"
     },
     {
+      "source": "/feeds/google.xml",
+      "destination": "https://zunuz-production.up.railway.app/feeds/google.xml"
+    },
+    {
       "source": "/products/:slug",
       "destination": "/api/product-page?slug=:slug"
     },
