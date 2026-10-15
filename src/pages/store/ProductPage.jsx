@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Heart, Plus, Star, Truck, RotateCcw, Banknote, ShieldCheck, Check, ShoppingBag, ZoomIn, X, Sparkles, Camera, ArrowRight, Flame } from 'lucide-react';
+import { Heart, Plus, Star, Truck, RotateCcw, Banknote, ShieldCheck, Check, ShoppingBag, ZoomIn, X, Sparkles, Camera, ArrowRight } from 'lucide-react';
 import useSmoothScroll from '../../hooks/useSmoothScroll';
 import { LandingHeader } from '../../components/landing/LandingIntro';
 import PriceEdit from '../../components/landing/PriceEdit';
@@ -19,9 +19,9 @@ import { COD_ENABLED } from '../../utils/payments';
 import { SETTINGS } from '../../store/settings';
 import { useCatalog, productsIn, isOwnPageOnly } from '../../store/catalog';
 import { addToCart, useCart } from '../../store/cart';
-import { useCombo, addToCombo, removeFromCombo, swapIntoCombo, isInCombo, isEligibleForCombo, getComboPerUnitPrice, addComboToBag, comboPieceInCategory } from '../../store/combo';
+import { useCombo, addToCombo, removeFromCombo, swapIntoCombo, isInCombo, isEligibleForCombo, comboUnitPrice, addComboToBag, comboPieceInCategory } from '../../store/combo';
 import { toggleWishlist, useWishlist } from '../../store/wishlist';
-import { categoryPath, productPath, formatPrice } from '../../store/catalogConfig';
+import { categoryPath, productPath, formatPrice, JEWELLERY_CATEGORY_SLUGS } from '../../store/catalogConfig';
 import { thumbUrl } from '../../utils/productImage';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -121,6 +121,14 @@ const SHOW_LOW_STOCK_TAG = false;
 
 export default memo(ProductPage);
 
+// "a matching necklace or bracelet" — the other two types, for "Complete the look".
+const TYPE_NOUN = { earrings: 'pair of earrings', necklaces: 'necklace', bracelets: 'bracelet' };
+function pairLabel(product) {
+  const type = JEWELLERY_CATEGORY_SLUGS.includes(product.categorySlug) ? product.categorySlug : product.subcategorySlug;
+  const others = JEWELLERY_CATEGORY_SLUGS.filter((s) => s !== type).map((s) => TYPE_NOUN[s]);
+  return `a matching ${others.join(' or ')}`;
+}
+
 function ProductPage({ slug }) {
   const catalog = useCatalog();
   const product = catalog.products.find((p) => p.slug === slug || p.id === slug) || null;
@@ -131,6 +139,25 @@ function ProductPage({ slug }) {
     const others = catalog.products.filter((p) => p.id !== product.id && p.categorySlug !== product.categorySlug && !isOwnPageOnly(p));
     return [...same, ...others].slice(0, 4);
   }, [catalog, product]);
+  // "Complete the look": pieces of the other types —
+  // earrings → necklaces + bracelets, necklaces → earrings + bracelets…
+  // Festive Glow pieces use their sub-type (e.g. "earrings"). In stock only,
+  // closest in price first, alternating between the two types, and never a
+  // piece that's already under "You may also like".
+  const pairs = useMemo(() => {
+    if (!product) return [];
+    const type = JEWELLERY_CATEGORY_SLUGS.includes(product.categorySlug) ? product.categorySlug : product.subcategorySlug;
+    const shown = new Set(related.map((p) => p.id));
+    const byCloseness = (a, b) => Math.abs(a.price - product.price) - Math.abs(b.price - product.price);
+    const lists = JEWELLERY_CATEGORY_SLUGS.filter((slug) => slug !== type).map((slug) => (
+      productsIn(catalog, slug).filter((p) => p.stock > 0 && p.id !== product.id && !shown.has(p.id)).sort(byCloseness)
+    ));
+    const picked = [];
+    for (let i = 0; picked.length < 4 && lists.some((l) => l[i]); i += 1) {
+      lists.forEach((l) => { if (l[i] && picked.length < 4) picked.push(l[i]); });
+    }
+    return picked;
+  }, [catalog, product, related]);
 
   if (!product) {
     if (catalog.status === 'ready' || catalog.status === 'error') {
@@ -156,10 +183,10 @@ function ProductPage({ slug }) {
       </ProductShell>
     );
   }
-  return <ProductView key={product.id} product={product} related={related} />;
+  return <ProductView key={product.id} product={product} related={related} pairs={pairs} />;
 }
 
-function ProductView({ product, related }) {
+function ProductView({ product, related, pairs }) {
   const navigateTo = useNavigate();
   const scrollRef = useRef(null);
   const scrollContentRef = useRef(null);
@@ -167,6 +194,7 @@ function ProductView({ product, related }) {
   const pageRef = useRef(null);
   const reviewsRef = useRef(null);
   const relatedRef = useRef(null);
+  const pairRef = useRef(null);
   const buyBtnRef = useRef(null);
   const addedTimer = useRef(null);
 
@@ -418,7 +446,8 @@ function ProductView({ product, related }) {
   const inCombo = isInCombo(product.id);
   // The bag already holds a full combo — one at a time, so no picking until it leaves.
   const inFullCombo = combo.inBagComplete;
-  const perUnitPrice = getComboPerUnitPrice();
+  // Combo pieces: regular price struck through, the per-piece combo price as the special price.
+  const specialPrice = isComboEligible ? comboUnitPrice(product) : null;
   const [comboPromptOpen, setComboPromptOpen] = useState(false);
   const [comboToast, setComboToast] = useState(null);
   const comboToastTimer = useRef(null);
@@ -617,6 +646,13 @@ function ProductView({ product, related }) {
 
               {/* ── Buy box ── */}
               <div>
+                {/* Tagline: Cormorant italic with a pink → plum → gold gradient, just
+                    above the name. font-serif-custom beats the page's Grift override. */}
+                {short && (
+                  <p className="pd-in m-0 mb-2 max-w-[520px]">
+                    <span className="font-serif-custom text-[length:clamp(19px,1.6vw,22px)] leading-snug font-semibold tracking-[0.01em] italic bg-[linear-gradient(90deg,#E0306E_0%,#A23E9B_50%,#B07A1E_100%)] bg-clip-text text-transparent [-webkit-text-fill-color:transparent] [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">{short}</span>
+                  </p>
+                )}
                 <h1 className="pd-in m-0 text-[length:clamp(28px,3.4vw,46px)] font-bold leading-[1.05] tracking-[-0.01em]">{product.name}</h1>
 
                 <a href="#reviews" onClick={scrollToReviews} className="pd-in mt-3 inline-flex items-center gap-2 font-['Inter',sans-serif] text-[14px] text-[#111110]/75 no-underline hover:text-[#111110]">
@@ -635,30 +671,18 @@ function ProductView({ product, related }) {
                 </a>
 
                 <div className="pd-in mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-[length:clamp(26px,2.6vw,34px)] font-bold">{formatPrice(product.price)}</span>
-                  {isComboEligible && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1E8A4C]/25 bg-[#E8F7EE] px-3 py-1 font-['Inter',sans-serif] text-[13px] font-bold text-[#1E8A4C] shadow-2xs">
-                      <Sparkles size={14} className="text-[#1E8A4C]" />
-                      Combo: ~{formatPrice(perUnitPrice)} in 3-Pack
-                    </span>
+                  {specialPrice ? (
+                    <>
+                      <span className="text-[length:clamp(26px,2.6vw,34px)] font-bold text-[#E8304F]">{formatPrice(specialPrice)}</span>
+                      <s className="font-['Inter',sans-serif] text-[length:clamp(16px,1.5vw,19px)] font-semibold text-[#111110]/45">{formatPrice(product.price)}</s>
+                      <span className="rounded-full bg-[#E8F7EE] px-2.5 py-0.5 font-['Inter',sans-serif] text-[12px] font-bold text-[#1E8A4C]">Combo price · any {combo.bundleCount} for {formatPrice(combo.bundlePrice)}</span>
+                    </>
+                  ) : (
+                    <span className="text-[length:clamp(26px,2.6vw,34px)] font-bold">{formatPrice(product.price)}</span>
                   )}
                 </div>
                 <p className="pd-in m-0 mt-1 font-['Inter',sans-serif] text-[12px] text-[#111110]/55">Inclusive of all taxes</p>
 
-                {isComboEligible && (
-                  <div className="pd-in mt-2 flex items-center gap-2 font-['Inter',sans-serif] text-[12px] font-bold text-[#E8304F]">
-                    <Flame size={14} className="text-[#E8304F]" />
-                    Part of Navratri Offer · Pick Any {combo.bundleCount} for {formatPrice(combo.bundlePrice)}
-                  </div>
-                )}
-
-                {/* Tagline: Cormorant italic with a pink → plum → gold gradient under
-                    the price. font-serif-custom beats the page's Grift override. */}
-                {short && (
-                  <p className="pd-in mt-5 mb-0 max-w-[520px]">
-                    <span className="font-serif-custom text-[length:clamp(19px,1.6vw,22px)] leading-snug font-semibold tracking-[0.01em] italic bg-[linear-gradient(90deg,#E0306E_0%,#A23E9B_50%,#B07A1E_100%)] bg-clip-text text-transparent [-webkit-text-fill-color:transparent] [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">{short}</span>
-                  </p>
-                )}
 
                 {/* ── Festive 3-for-₹999 Combo Tray Box ── */}
                 {isComboEligible && (
@@ -668,7 +692,7 @@ function ProductView({ product, related }) {
                         <Sparkles size={12} className="text-[#E8304F]" /> Navratri Dhamaka
                       </span>
                       <span className="font-['Inter',sans-serif] text-[12px] font-extrabold text-[#1E8A4C]">
-                        3 for {formatPrice(combo.bundlePrice)} (~{formatPrice(perUnitPrice)}/item)
+                        3 for {formatPrice(combo.bundlePrice)}
                       </span>
                     </div>
 
@@ -782,7 +806,7 @@ function ProductView({ product, related }) {
                           onClick={handleAddProductToCombo}
                           className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border-2 border-[#E8304F] bg-[#E8304F] px-4 py-2 font-['Inter',sans-serif] text-[13px] font-bold text-white shadow-[0_4px_14px_rgba(232,48,79,0.3)] hover:bg-[#D02442] hover:scale-[1.02] active:scale-[0.98] transition-all"
                         >
-                          <Plus size={15} strokeWidth={2.5} /> Add to 3-Pack (~{formatPrice(perUnitPrice)})
+                          <Plus size={15} strokeWidth={2.5} /> Add to 3-Pack
                         </button>
                       )}
 
@@ -878,6 +902,22 @@ function ProductView({ product, related }) {
 
           </main>
 
+          {/* ── Complete the look ── pieces of the other types (see `pairs`). */}
+          {pairs.length > 0 && (
+            <PriceEdit
+              scrollRef={scrollRef}
+              sectionRef={pairRef}
+              title="Complete the look"
+              subtitle={`Add ${pairLabel(product)} — made to be worn together.`}
+              linkText="View all jewellery"
+              linkHref="/jewellery"
+              items={pairs}
+              imageAspect="aspect-[4/5]"
+              titleClassName="text-[length:clamp(28px,3.6vw,48px)] text-[#111110]"
+              sectionClassName="pt-0 pb-[clamp(48px,7vw,96px)]"
+            />
+          )}
+
           {/* ── You may also like ── shared product row */}
           {related.length > 0 && (
             <PriceEdit
@@ -893,7 +933,7 @@ function ProductView({ product, related }) {
             />
           )}
 
-          {/* ── Reviews ── last section, after "You may also like". */}
+          {/* ── Reviews ── last section, after "Complete the look" / "You may also like". */}
           <div className="relative mx-auto max-w-[1180px] px-5 pb-[clamp(56px,8vw,110px)]">
               <section id="reviews" ref={reviewsRef}>
                 <h2 className="pd-fade m-0 text-[length:clamp(28px,3.6vw,48px)] font-bold tracking-[-0.01em]">What people say</h2>
@@ -937,11 +977,14 @@ function ProductView({ product, related }) {
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14px] font-bold">{product.name}</span>
           <div className="flex items-baseline gap-1.5">
-            <span className="font-['Inter',sans-serif] text-[13px] font-bold">{formatPrice(product.price)}</span>
-            {isComboEligible && (
-              <span className="font-['Inter',sans-serif] text-[11px] font-bold text-[#1E8A4C]">
-                ~{formatPrice(perUnitPrice)} in 3-Pack
-              </span>
+            {specialPrice ? (
+              <>
+                <span className="font-['Inter',sans-serif] text-[13px] font-bold text-[#E8304F]">{formatPrice(specialPrice)}</span>
+                <s className="font-['Inter',sans-serif] text-[11px] font-semibold text-[#111110]/45">{formatPrice(product.price)}</s>
+                <span className="font-['Inter',sans-serif] text-[11px] font-bold text-[#1E8A4C]">in {combo.bundleCount}-Pack</span>
+              </>
+            ) : (
+              <span className="font-['Inter',sans-serif] text-[13px] font-bold">{formatPrice(product.price)}</span>
             )}
           </div>
         </span>
@@ -1039,7 +1082,7 @@ function ProductView({ product, related }) {
             </h2>
 
             <p className="m-0 mt-2 font-['Inter',sans-serif] text-[14px] leading-relaxed text-[#111110]/75">
-              You are buying <b className="text-[#111110]">{product.name}</b> for {formatPrice(product.price)}. In our Navratri Offer, you can pick any 3 pieces for just <b className="text-[#E8304F]">{formatPrice(combo.bundlePrice)}</b> (that's only ~{formatPrice(perUnitPrice)} each)!
+              You are buying <b className="text-[#111110]">{product.name}</b> for {formatPrice(product.price)}. In our Navratri Offer, you can pick any 3 pieces for just <b className="text-[#E8304F]">{formatPrice(combo.bundlePrice)}</b>!
             </p>
 
             <div className="mt-6 flex flex-col gap-2.5">

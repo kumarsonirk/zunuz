@@ -628,13 +628,22 @@ function NavratriOffersPage() {
                             <h3 className="truncate font-['Inter',sans-serif] text-[14px] font-bold text-[#111110] sm:text-[15px]">
                               {product.name}
                             </h3>
-                            <div className="mt-1 flex items-baseline gap-2">
-                              <span className="font-['Inter',sans-serif] text-[16px] font-bold text-[#111110]">
-                                {formatPrice(product.price)}
-                              </span>
-                              <span className="font-['Inter',sans-serif] text-[12px] font-semibold text-[#1E8A4C]">
-                                Combo: ~{formatPrice(Math.round(bundlePrice / bundleCount))}
-                              </span>
+                            {/* Special price: the per-piece combo price, regular price struck through. */}
+                            <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                              {Math.round(bundlePrice / bundleCount) < product.price ? (
+                                <>
+                                  <span className="font-['Inter',sans-serif] text-[16px] font-bold text-[#E8304F]">
+                                    {formatPrice(Math.round(bundlePrice / bundleCount))}
+                                  </span>
+                                  <s className="font-['Inter',sans-serif] text-[13px] font-semibold text-[#111110]/45">
+                                    {formatPrice(product.price)}
+                                  </s>
+                                </>
+                              ) : (
+                                <span className="font-['Inter',sans-serif] text-[16px] font-bold text-[#111110]">
+                                  {formatPrice(product.price)}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </Link>

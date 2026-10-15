@@ -102,19 +102,20 @@ function trayView() {
 }
 
 /**
- * Returns the effective per-unit price in the combo (e.g. 999 / 3 = 333).
- */
-export function getComboPerUnitPrice() {
-  const price = SETTINGS.navratriBundlePrice ?? 999;
-  const count = SETTINGS.navratriBundleCount ?? 3;
-  return Math.round(price / count);
-}
-
-/**
  * Adds an item to the combo tray.
  * Returns true if added, false if already in combo or combo is full.
  */
 // The tray's piece from this product's category, if any (one per category).
+// Per-piece price inside the combo (e.g. ₹999 / 3 = ₹333). Shown as a
+// "special price" (regular price struck through) on combo pieces — only when
+// it's actually lower than the piece's own price; otherwise null.
+export function comboUnitPrice(product) {
+  const price = SETTINGS.navratriBundlePrice ?? 999;
+  const count = SETTINGS.navratriBundleCount ?? 3;
+  const unit = Math.round(price / count);
+  return product && unit > 0 && unit < Number(product.price) ? unit : null;
+}
+
 export function comboPieceInCategory(product) {
   const cat = product.categorySlug ?? categoryOfId(product.id);
   if (!cat) return null;
