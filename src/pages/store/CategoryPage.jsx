@@ -6,6 +6,7 @@ import { Grid2x2, SlidersHorizontal, Square } from 'lucide-react';
 import useSmoothScroll from '../../hooks/useSmoothScroll';
 import { LandingHeader } from '../../components/landing/LandingIntro';
 import SiteFooter from '../../components/landing/SiteFooter';
+import CategoryAbout from '../../components/store/CategoryAbout';
 import ProductCard from '../../components/store/ProductCard';
 import FilterSheet from '../../components/store/FilterSheet';
 import SortMenu from '../../components/store/SortMenu';
@@ -298,6 +299,9 @@ function CategoryPage({ categorySlug = null, tier = null }) {
               />
             )}
           </main>
+
+          {/* ── About this page + links to every other shop page (SEO + browsing). */}
+          <CategoryAbout path={basePath} />
 
           <SiteFooter scrollRef={scrollRef} lenisRef={lenisRef} />
         </div>
