@@ -4,14 +4,14 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, Check, Copy, Gift } from 'lucide-react';
 import { SETTINGS } from '../../store/settings';
-import { formatPrice } from '../../store/catalogConfig';
+import { formatPrice, SHOW_FIRST_ORDER_OFFER } from '../../store/catalogConfig';
 import scrollRise from './scrollRise';
 import { inSwipeStrip } from './swipeStrip';
 import whileVisible from './whileVisible';
 
 // "Offers, unlocked." — one bold card per live offer, above "Jewellery, by
 // budget" on the home page: the Navratri collection, the Pick-3 combo, 50%
-// off a first order (WELCOME50) and Refer & Earn. Combo and referral cards
+// off a first order (WELCOME50, only while SHOW_FIRST_ORDER_OFFER) and Refer & Earn. Combo and referral cards
 // follow their on/off + amounts in admin → Settings. Desktop: four across;
 // tablets: 2×2; phones: a swipe strip, two cards in view, that moves on by
 // one card every few seconds (looping back at the end) and pauses for a
@@ -65,19 +65,21 @@ function getOffers() {
       art: <span className="absolute -top-[14%] -right-[6%] text-[length:clamp(150px,15vw,210px)] font-black leading-none text-white/35 select-none">{count}</span>,
     });
   }
-  offers.push({
-    key: 'first-order',
-    to: '/jewellery',
-    tag: 'New here?',
-    title: <>50% off your<br />first order</>,
-    copy: 'On first orders above ₹2,000.',
-    cta: 'Shop now',
-    code: FIRST_ORDER_CODE,
-    cls: 'bg-[linear-gradient(150deg,#FF6FA8_0%,#FF3D8B_55%,#E8246F_100%)] text-white',
-    tagCls: 'bg-white text-[#FF3D8B]',
-    ctaCls: 'bg-white text-[#E8246F]',
-    art: <span className="absolute -top-[10%] -right-[4%] text-[length:clamp(130px,13vw,190px)] font-black leading-none text-white/20 select-none">%</span>,
-  });
+  if (SHOW_FIRST_ORDER_OFFER) {
+    offers.push({
+      key: 'first-order',
+      to: '/jewellery',
+      tag: 'New here?',
+      title: <>50% off your<br />first order</>,
+      copy: 'On first orders above ₹2,000.',
+      cta: 'Shop now',
+      code: FIRST_ORDER_CODE,
+      cls: 'bg-[linear-gradient(150deg,#FF6FA8_0%,#FF3D8B_55%,#E8246F_100%)] text-white',
+      tagCls: 'bg-white text-[#FF3D8B]',
+      ctaCls: 'bg-white text-[#E8246F]',
+      art: <span className="absolute -top-[10%] -right-[4%] text-[length:clamp(130px,13vw,190px)] font-black leading-none text-white/20 select-none">%</span>,
+    });
+  }
   const reward = Number(SETTINGS.referralReward) || 0;
   const bonus = Number(SETTINGS.referralFriendBonus) || 0;
   if (SETTINGS.referralEnabled && (reward || bonus)) {
@@ -117,6 +119,14 @@ function CodeChip({ code }) {
     </button>
   );
 }
+
+// Desktop / tablet columns by how many offers are on (phones: swipe strip).
+const GRID_COLS = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-2',
+  3: 'grid-cols-3 max-[1000px]:grid-cols-3',
+  4: 'grid-cols-4 max-[1000px]:grid-cols-2',
+};
 
 export default function OffersRow({ scrollRef }) {
   const [offers] = useState(getOffers);
@@ -191,7 +201,7 @@ export default function OffersRow({ scrollRef }) {
         </h2>
         <p className="t3o-fade mt-[0.5em] text-[length:clamp(16px,1.6vw,24px)] font-medium text-[#FF3D8B]">Every deal on ZUNUZ right now.</p>
 
-        <div className="mt-[clamp(24px,3vw,40px)] grid grid-cols-4 gap-[clamp(12px,1.6vw,22px)] max-[1000px]:grid-cols-2 max-[560px]:-mx-5 max-[560px]:flex max-[560px]:snap-x max-[560px]:snap-mandatory max-[560px]:scroll-pl-5 max-[560px]:overflow-x-auto max-[560px]:px-5 max-[560px]:gap-3 max-[560px]:pt-2 max-[560px]:pb-3" ref={stripRef}>
+        <div className={`mt-[clamp(24px,3vw,40px)] grid ${GRID_COLS[offers.length] || GRID_COLS[4]} gap-[clamp(12px,1.6vw,22px)] max-[560px]:-mx-5 max-[560px]:flex max-[560px]:snap-x max-[560px]:snap-mandatory max-[560px]:scroll-pl-5 max-[560px]:overflow-x-auto max-[560px]:px-5 max-[560px]:gap-3 max-[560px]:pt-2 max-[560px]:pb-3`} ref={stripRef}>
           {offers.map((o) => (
             <div
               key={o.key}

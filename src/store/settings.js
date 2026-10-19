@@ -28,6 +28,8 @@ export const SETTINGS = {
   announcementEnabled: false,
   announcementText: 'Free delivery on orders above ₹700 🎉',
   announcementLink: '',
+  referralBarEnabled: true,
+  referralBarText: 'Give {bonus}, get {reward} — refer a friend',
   // Refer & Earn + ZUNUZ Credits (amounts in ₹).
   referralEnabled: true,
   referralReward: 50,

@@ -4,7 +4,7 @@ import { useCatalog, productsIn, cheapestDistinct } from '../../store/catalog';
 import { FAQS } from '../../data/faqs';
 import { gsap } from 'gsap';
 import { ArrowRight, Check, Mail } from 'lucide-react';
-import { formatPrice } from '../../store/catalogConfig';
+import { formatPrice, SHOW_FIRST_ORDER_OFFER } from '../../store/catalogConfig';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import useSmoothScroll from '../../hooks/useSmoothScroll';
 import { LandingHeader, LandingLoader } from '../../components/landing/LandingIntro';
@@ -852,7 +852,7 @@ const HERO_IMG_M = '/poster1_mob.webp';
 // (`mobilePos` / `mobileShift` are portrait: classes — written out in full so
 // Tailwind sees them). One <picture> per slide, so a phone only downloads the
 // phone art and a desktop only the desktop art.
-const POSTER_SLIDES = [
+const ALL_POSTER_SLIDES = [
   {
     key: 'navaratri',
     name: 'Navaratri Collection',
@@ -894,6 +894,8 @@ const POSTER_SLIDES = [
     bg: 'bg-[#F59A4E] portrait:bg-[linear-gradient(to_right,#E46424_0%,#ED7232_27%,#F38541_50%,#F8914B_75%,#FB853E_100%)]',
   },
 ];
+// The first-order (50% off) slide only while that promo is on (catalogConfig).
+const POSTER_SLIDES = ALL_POSTER_SLIDES.filter((p) => p.key !== 'first-order' || SHOW_FIRST_ORDER_OFFER);
 
 // "Your top 3. Just ₹999." copy on the top3 poster — left/centre on desktop,
 // top/centre on phones (as in the poster mock-ups). Price follows the combo

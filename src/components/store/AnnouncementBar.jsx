@@ -57,10 +57,15 @@ function getMessages() {
   }
   const reward = Number(SETTINGS.referralReward) || 0;
   const bonus = Number(SETTINGS.referralFriendBonus) || 0;
-  if (SETTINGS.referralEnabled && (reward || bonus)) {
-    const refer = reward && bonus ? `Give ₹${bonus}, get ₹${reward} — refer a friend`
-      : reward ? `Refer a friend, get ₹${reward} in ZUNUZ Credits`
-        : `Refer a friend — they get ₹${bonus} in ZUNUZ Credits`;
+  // Wording from admin → Settings → Announcement bar ("Referral message");
+  // {bonus} / {reward} are filled in with the Refer & Earn amounts.
+  const template = String(SETTINGS.referralBarText || '').trim();
+  if (SETTINGS.referralEnabled && SETTINGS.referralBarEnabled !== false && (reward || bonus)) {
+    const refer = template
+      ? template.replace(/\{bonus\}/gi, `₹${bonus}`).replace(/\{reward\}/gi, `₹${reward}`)
+      : reward && bonus ? `Give ₹${bonus}, get ₹${reward} — refer a friend`
+        : reward ? `Refer a friend, get ₹${reward} in ZUNUZ Credits`
+          : `Refer a friend — they get ₹${bonus} in ZUNUZ Credits`;
     list.push({ text: refer, link: '/account/refer', icon: GiftIcon });
   }
   return list;

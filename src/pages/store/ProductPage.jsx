@@ -37,6 +37,16 @@ const FONT_CLASS = "font-['Bricolage_Grotesque','Inter',sans-serif]";
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const MAX_REVIEW_IMAGE = 2 * 1024 * 1024; // matches the server's multer limit
 
+// Shown under "Materials & care" when a product has no care text of its own
+// (same advice as the Product Care page, /customer-care/product-care).
+const DEFAULT_CARE_TEXT = [
+  'Put it on after perfume, lotion and makeup.',
+  'Take it off before bathing, swimming, workouts or sleeping.',
+  'Keep it away from water, sweat, sanitiser and other chemicals.',
+  'Wipe it with a soft, dry cloth and store it in its ZUNUZ pouch, away from other pieces.',
+  '> More tips in our Product Care guide (Customer Care → Product care).',
+].join('\n');
+
 const SHIPPING_TEXT = `${SETTINGS.deliveryFeeEnabled ? `Free delivery on orders of ${formatPrice(FREE_DELIVERY_THRESHOLD)} and above — below that a small flat fee shows at checkout.` : 'Free delivery on every order.'} Dispatched within 12 hours; most orders arrive in 2–7 business days.${COD_ENABLED ? ' Cash on delivery available.' : ''} Received it damaged or wrong? Tell us within 24 hours of delivery and we'll replace it.`;
 
 function Stars({ value, size = 16 }) {
@@ -227,7 +237,7 @@ function ProductView({ product, related, pairs }) {
     { title: 'Description', body: product.description },
     { title: 'Product details', body: product.productDetails },
     { title: "Why it's worth it", body: product.whyWorthIt },
-    { title: 'Materials & care', body: [product.materials, product.careInstructions].filter(Boolean).join('\n') },
+    { title: 'Materials & care', body: [product.materials, product.careInstructions || DEFAULT_CARE_TEXT].filter(Boolean).join('\n') },
     { title: 'Shipping & replacements', body: `> ${SHIPPING_TEXT}` },
   ].filter((a) => a.body && a.body.trim());
 

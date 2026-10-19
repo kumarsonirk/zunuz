@@ -21,3 +21,7 @@ export const TIERS = [
 export const categoryPath = (slug) => `/${slug}`;
 export const productPath = (p) => `/products/${p.slug || p.id}`;
 export const formatPrice = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+
+// "50% off your first order" (WELCOME50) promo: the home hero slide and the
+// homepage offers card. Paused for now — set to true to show both again.
+export const SHOW_FIRST_ORDER_OFFER = false;

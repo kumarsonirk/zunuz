@@ -90,6 +90,14 @@ function MyAccount({ me }) {
   );
 }
 
+// Admin preview of the bar's referral message (AnnouncementBar fills it the same way).
+function referralPreview(f) {
+  const bonus = Number(f.referralFriendBonus) || 0;
+  const reward = Number(f.referralReward) || 0;
+  const t = String(f.referralBarText || '').trim() || 'Give {bonus}, get {reward} — refer a friend';
+  return t.replace(/\{bonus\}/gi, `₹${bonus}`).replace(/\{reward\}/gi, `₹${reward}`);
+}
+
 export default function SettingsPage() {
   const { me } = useOutletContext() || {};
   const [saved, setSaved] = useState(null);
@@ -204,6 +212,15 @@ export default function SettingsPage() {
             <SwitchRow title="Show announcement bar" text={form.announcementText || 'No text yet'} checked={form.announcementEnabled} onChange={set('announcementEnabled')} />
             <Field label="Text" hint="Keep it short — up to 140 characters."><input className={inputCls} maxLength={140} value={form.announcementText} onChange={set('announcementText')} /></Field>
             <Field label="Link (optional)" hint="Where a tap goes, e.g. /shop?tier=199-plus or a full https:// link."><input className={inputCls} value={form.announcementLink} onChange={set('announcementLink')} placeholder="/shop" /></Field>
+            <SwitchRow
+              title="Show referral message"
+              text={form.referralEnabled ? `Shows: ${referralPreview(form)}` : 'Refer & Earn is off, so this message is hidden.'}
+              checked={form.referralBarEnabled !== false}
+              onChange={set('referralBarEnabled')}
+            />
+            <Field label="Referral message" hint="Takes turns with the text above and opens Refer & Earn. Use {bonus} for the friend bonus and {reward} for the referrer reward — they fill in automatically.">
+              <input className={inputCls} maxLength={140} value={form.referralBarText ?? ''} onChange={set('referralBarText')} placeholder="Give {bonus}, get {reward} — refer a friend" />
+            </Field>
           </Section>
 
           <Section icon={Bell} title="Alerts" hint="Emails to you when something needs attention." tone="var(--tone-blue)" i={6}>

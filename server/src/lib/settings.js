@@ -43,6 +43,10 @@ const DEFAULTS = {
   announcementEnabled: false,
   announcementText: 'Free delivery on orders above ₹700 🎉',
   announcementLink: '',
+  // Refer & Earn line in the announcement bar (takes turns with the text
+  // above). {bonus} / {reward} become the friend bonus / referrer reward.
+  referralBarEnabled: true,
+  referralBarText: 'Give {bonus}, get {reward} — refer a friend',
   // Refer & Earn + ZUNUZ Credits (lib/referrals.js, lib/credits.js)
   referralEnabled: true,
   referralReward: 50, // ₹ credited to the referrer
@@ -106,6 +110,8 @@ const VALIDATE = {
   announcementEnabled: bool,
   announcementText: str(140),
   announcementLink: str(300, { re: /^(\/(?!\/)|https?:\/\/)/ }), // not //other-site.com
+  referralBarEnabled: bool,
+  referralBarText: str(140),
   referralEnabled: bool,
   referralReward: int(0, 5000),
   referralFriendBonus: int(0, 5000),
@@ -127,7 +133,7 @@ const LABELS = {
   supportEmail: 'Support email', supportPhone: 'Support phone', supportWhatsapp: 'WhatsApp number', supportHours: 'Support hours',
   lowStockThreshold: 'Low stock threshold', cancelWindowHours: 'Cancellation window',
   pincodeRestriction: 'Pincode restriction', listedPincodeEta: 'Delivery time (listed pincodes)', otherPincodeEta: 'Delivery time (other pincodes)', alertEmail: 'Alert email', newOrderAlerts: 'New-order alerts', lowStockAlerts: 'Low-stock alerts',
-  reviewModeration: 'Review moderation', announcementEnabled: 'Announcement bar', announcementText: 'Announcement text', announcementLink: 'Announcement link',
+  reviewModeration: 'Review moderation', announcementEnabled: 'Announcement bar', announcementText: 'Announcement text', announcementLink: 'Announcement link', referralBarEnabled: 'Referral message in bar', referralBarText: 'Referral message',
   referralEnabled: 'Referral program', referralReward: 'Referrer reward', referralFriendBonus: 'Friend bonus', referralMinOrder: 'Referral minimum order', referralMonthlyCap: 'Monthly referral cap', creditExpiryDays: 'Credit expiry',
   adminSecurityQuestion: 'Admin security question', adminSecurityAnswerHash: 'Admin security answer',
   navratriOfferEnabled: 'Navratri offer', navratriOfferTitle: 'Offer title',

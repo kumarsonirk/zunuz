@@ -37,7 +37,7 @@
 
 @font-face {
   font-family: 'Grift';
-  src: url('/font/Grift-Light.woff') format('woff');
+  src: url('/font/Grift-Light.woff2') format('woff2'), url('/font/Grift-Light.woff') format('woff');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
