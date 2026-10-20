@@ -20,8 +20,17 @@ router.get('/', auth, async (req, res) => {
   } catch { res.status(500).json({ error: 'Server error' }); }
 });
 
+// "Best paired with" picks → JSON text (up to 3 distinct product ids), or
+// undefined when the field wasn't sent at all (leave it unchanged on edit).
+function pairsJson(value) {
+  if (value === undefined) return undefined;
+  const ids = (Array.isArray(value) ? value : []).map(Number).filter((n) => Number.isInteger(n) && n > 0);
+  const unique = [...new Set(ids)].slice(0, 3);
+  return unique.length ? JSON.stringify(unique) : null;
+}
+
 router.post('/', auth, async (req, res) => {
-  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials, productDetails, whyWorthIt, careInstructions } = req.body;
+  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials, productDetails, whyWorthIt, careInstructions, pairsWith } = req.body;
   try {
     // Auto-generated from the name, not admin-editable — kept stable once
     // set (later name edits don't re-slugify) so shared/bookmarked product
@@ -38,7 +47,8 @@ router.post('/', auth, async (req, res) => {
         materials: materials || null,
         productDetails: productDetails || null,
         whyWorthIt: whyWorthIt || null,
-        careInstructions: careInstructions || null
+        careInstructions: careInstructions || null,
+        pairsWith: pairsJson(pairsWith),
       },
       include: { category: true, subcategory: true }
     });
@@ -47,7 +57,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 router.put('/:id', auth, async (req, res) => {
-  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials, productDetails, whyWorthIt, careInstructions } = req.body;
+  const { name, price, stock, image, images, categoryId, subcategoryId, isActive, tagline, description, materials, productDetails, whyWorthIt, careInstructions, pairsWith } = req.body;
   try {
     const product = await prisma.product.update({
       where: { id: Number(req.params.id) },
@@ -61,7 +71,8 @@ router.put('/:id', auth, async (req, res) => {
         materials: materials || null,
         productDetails: productDetails || null,
         whyWorthIt: whyWorthIt || null,
-        careInstructions: careInstructions || null
+        careInstructions: careInstructions || null,
+        pairsWith: pairsJson(pairsWith),
       },
       include: { category: true, subcategory: true }
     });

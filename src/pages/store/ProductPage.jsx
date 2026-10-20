@@ -8,6 +8,9 @@ import { LandingHeader } from '../../components/landing/LandingIntro';
 import PriceEdit from '../../components/landing/PriceEdit';
 import SiteFooter from '../../components/landing/SiteFooter';
 import PincodeCheck from '../../components/store/PincodeCheck';
+import ProductDeals from '../../components/store/ProductDeals';
+import BestPairedWith from '../../components/store/BestPairedWith';
+import { bestPairs } from '../../store/pairing';
 import scrollRise from '../../components/landing/scrollRise';
 import Seo from '../../components/Seo';
 import { productJsonLd, productDescription, previewImage } from '../../seo/product';
@@ -131,7 +134,7 @@ const SHOW_LOW_STOCK_TAG = false;
 
 export default memo(ProductPage);
 
-// "a matching necklace or bracelet" — the other two types, for "Complete the look".
+// "a matching necklace or bracelet" — the other two types, for "Recommended picks for you".
 const TYPE_NOUN = { earrings: 'pair of earrings', necklaces: 'necklace', bracelets: 'bracelet' };
 function pairLabel(product) {
   const type = JEWELLERY_CATEGORY_SLUGS.includes(product.categorySlug) ? product.categorySlug : product.subcategorySlug;
@@ -149,15 +152,18 @@ function ProductPage({ slug }) {
     const others = catalog.products.filter((p) => p.id !== product.id && p.categorySlug !== product.categorySlug && !isOwnPageOnly(p));
     return [...same, ...others].slice(0, 4);
   }, [catalog, product]);
-  // "Complete the look": pieces of the other types —
+  // "Best paired with" (buy box): matching pieces of the other types —
+  // the admin's picks first, then automatic (src/store/pairing.js).
+  const bestPaired = useMemo(() => bestPairs(product, catalog.products), [catalog, product]);
+  // "Recommended picks for you": more pieces of the other types —
   // earrings → necklaces + bracelets, necklaces → earrings + bracelets…
   // Festive Glow pieces use their sub-type (e.g. "earrings"). In stock only,
   // closest in price first, alternating between the two types, and never a
-  // piece that's already under "You may also like".
+  // piece that's already under "You may also like" or "Best paired with".
   const pairs = useMemo(() => {
     if (!product) return [];
     const type = JEWELLERY_CATEGORY_SLUGS.includes(product.categorySlug) ? product.categorySlug : product.subcategorySlug;
-    const shown = new Set(related.map((p) => p.id));
+    const shown = new Set([...related, ...bestPaired].map((p) => p.id));
     const byCloseness = (a, b) => Math.abs(a.price - product.price) - Math.abs(b.price - product.price);
     const lists = JEWELLERY_CATEGORY_SLUGS.filter((slug) => slug !== type).map((slug) => (
       productsIn(catalog, slug).filter((p) => p.stock > 0 && p.id !== product.id && !shown.has(p.id)).sort(byCloseness)
@@ -167,7 +173,7 @@ function ProductPage({ slug }) {
       lists.forEach((l) => { if (l[i] && picked.length < 4) picked.push(l[i]); });
     }
     return picked;
-  }, [catalog, product, related]);
+  }, [catalog, product, related, bestPaired]);
 
   if (!product) {
     if (catalog.status === 'ready' || catalog.status === 'error') {
@@ -193,10 +199,10 @@ function ProductPage({ slug }) {
       </ProductShell>
     );
   }
-  return <ProductView key={product.id} product={product} related={related} pairs={pairs} />;
+  return <ProductView key={product.id} product={product} related={related} pairs={pairs} bestPaired={bestPaired} />;
 }
 
-function ProductView({ product, related, pairs }) {
+function ProductView({ product, related, pairs, bestPaired }) {
   const navigateTo = useNavigate();
   const scrollRef = useRef(null);
   const scrollContentRef = useRef(null);
@@ -216,7 +222,6 @@ function ProductView({ product, related, pairs }) {
   const qty = 1;
   const [added, setAdded] = useState(false);
   const [openAcc, setOpenAcc] = useState(0);
-  const [showBar, setShowBar] = useState(false);
   const [reviews, setReviews] = useState(null); // null = loading
   // Zoom is opt-in: the magnifier button turns it on (photo eases to 2.1x
   // and pans with the cursor / a finger drag); the close button, Esc, or
@@ -419,16 +424,6 @@ function ProductView({ product, related, pairs }) {
     return () => { ro.disconnect(); clearTimeout(t); };
   }, []);
 
-  // Sticky mobile buy bar: shown once the main Add to bag is out of view.
-  useEffect(() => {
-    const btn = buyBtnRef.current;
-    const scroller = scrollRef.current;
-    if (!btn || !scroller) return undefined;
-    const io = new IntersectionObserver(([e]) => setShowBar(!e.isIntersecting && e.boundingClientRect.top < 0), { root: scroller });
-    io.observe(btn);
-    return () => io.disconnect();
-  }, []);
-
   useEffect(() => () => window.clearTimeout(addedTimer.current), []);
 
   // Already in the bag → the button becomes "Go to bag" (after the brief
@@ -536,7 +531,7 @@ function ProductView({ product, related, pairs }) {
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(55%_45%_at_10%_10%,#FFE0EA_0%,transparent_70%),radial-gradient(45%_40%_at_95%_25%,#FFF0B8_0%,transparent_70%),radial-gradient(50%_45%_at_60%_100%,#E6DCFA_0%,transparent_70%)]" />
 
       <div ref={scrollRef} className="absolute inset-0 overflow-y-auto overflow-x-hidden">
-        <div ref={scrollContentRef}>
+        <div ref={scrollContentRef} className="max-[880px]:pb-[76px]">
           <div className="sticky top-0 z-40"><LandingHeader transparent={false} /></div>
 
           <main className="relative mx-auto max-w-[1180px] px-5 pt-[clamp(28px,4vw,56px)] pb-[clamp(48px,7vw,96px)]">
@@ -843,6 +838,9 @@ function ProductView({ product, related, pairs }) {
                   </div>
                 )}
 
+                {/* Every offer shoppers can use right now (coupons, free delivery, referral). */}
+                <ProductDeals className="mt-6 animate-[jw-rise_0.5s_cubic-bezier(0.16,1,0.3,1)_both] motion-reduce:animate-none" />
+
                 {/* CTAs */}
                 <div className="pd-in mt-6 flex items-stretch gap-3">
                   <button
@@ -882,6 +880,9 @@ function ProductView({ product, related, pairs }) {
                   ))}
                 </ul>
 
+                {/* This piece's best matches, added to the bag together. */}
+                <BestPairedWith pairs={bestPaired} className="pd-in mt-6" />
+
                 {/* Accordions */}
                 <div className="pd-in mt-6 border-t border-[#111110]/10">
                   {accordion.map((a, i) => {
@@ -912,12 +913,12 @@ function ProductView({ product, related, pairs }) {
 
           </main>
 
-          {/* ── Complete the look ── pieces of the other types (see `pairs`). */}
+          {/* ── Recommended picks for you ── pieces of the other types (see `pairs`). */}
           {pairs.length > 0 && (
             <PriceEdit
               scrollRef={scrollRef}
               sectionRef={pairRef}
-              title="Complete the look"
+              title="Recommended picks for you"
               subtitle={`Add ${pairLabel(product)} — made to be worn together.`}
               linkText="View all jewellery"
               linkHref="/jewellery"
@@ -943,7 +944,7 @@ function ProductView({ product, related, pairs }) {
             />
           )}
 
-          {/* ── Reviews ── last section, after "Complete the look" / "You may also like". */}
+          {/* ── Reviews ── last section, after "Recommended picks for you" / "You may also like". */}
           <div className="relative mx-auto max-w-[1180px] px-5 pb-[clamp(56px,8vw,110px)]">
               <section id="reviews" ref={reviewsRef}>
                 <h2 className="pd-fade m-0 text-[length:clamp(28px,3.6vw,48px)] font-bold tracking-[-0.01em]">What people say</h2>
@@ -982,8 +983,9 @@ function ProductView({ product, related, pairs }) {
         </div>
       </div>
 
-      {/* Sticky buy bar — phones/tablets, once the main button is scrolled past. */}
-      <div className={`absolute inset-x-0 bottom-0 z-30 flex items-center gap-2.5 border-t border-[#111110]/10 bg-white/95 px-3.5 py-3 backdrop-blur-md transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] min-[881px]:hidden ${showBar ? 'translate-y-0' : 'translate-y-full'}`}>
+      {/* Sticky buy bar — always at the bottom on phones/tablets (the page
+          content has matching bottom padding so nothing hides behind it). */}
+      <div className="absolute inset-x-0 bottom-0 z-30 flex items-center gap-2.5 border-t border-[#111110]/10 bg-white/95 px-3.5 py-3 backdrop-blur-md min-[881px]:hidden">
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14px] font-bold">{product.name}</span>
           <div className="flex items-baseline gap-1.5">
@@ -1014,7 +1016,7 @@ function ProductView({ product, related, pairs }) {
 
       {/* Floating Combo Tray Dock */}
       {combo.slotsFilled > 0 && (
-        <div className={`fixed ${showBar ? 'bottom-20' : 'bottom-3'} inset-x-3 sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:max-w-xl z-30 transition-all duration-300 pointer-events-auto`}>
+        <div className="fixed bottom-20 inset-x-3 min-[881px]:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:max-w-xl z-30 transition-all duration-300 pointer-events-auto">
           <div className="flex items-center justify-between gap-3 rounded-full border border-[#E8304F]/30 bg-white/95 px-3.5 sm:px-4 py-2 shadow-[0_12px_36px_-8px_rgba(232,48,79,0.35)] backdrop-blur-md">
             <div className="flex items-center gap-2 min-w-0">
               <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#E8304F] text-[11px] font-black text-white">

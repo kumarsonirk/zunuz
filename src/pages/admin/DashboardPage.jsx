@@ -15,11 +15,24 @@ import { SETTINGS } from '../../store/settings';
 const PERIODS = [
   { key: 'all', label: 'All time' },
   { key: 'today', label: 'Today' },
+  { key: 'yesterday', label: 'Yesterday' },
   { key: '7d', label: 'Last 7 days' },
   { key: '30d', label: 'Last 30 days' },
   { key: '90d', label: 'Last 90 days' },
   { key: 'year', label: 'This year' },
+  { key: 'custom', label: 'Custom range' },
 ];
+
+// Custom range: two dates (YYYY-MM-DD, Indian days, both included).
+const istToday = (offsetDays = 0) => new Date(Date.now() + 5.5 * 36e5 + offsetDays * 864e5).toISOString().slice(0, 10);
+const fmtDay = (ymd) => new Date(`${ymd}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+const readCustom = () => {
+  try {
+    const c = JSON.parse(localStorage.getItem('zunuz_admin_custom') || 'null');
+    if (c?.from && c?.to) return c;
+  } catch { /* ignore */ }
+  return { from: istToday(-6), to: istToday() };
+};
 const DISPLAY = "font-['Bricolage_Grotesque','Inter',sans-serif]";
 const inr = (n) => `₹${Math.round(n || 0).toLocaleString('en-IN')}`;
 const STATUS = [
@@ -312,22 +325,31 @@ function FestiveCampaignBanner() {
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState(() => localStorage.getItem('zunuz_admin_period') || 'all');
+  const [custom, setCustom] = useState(readCustom);
   const [data, setData] = useState(null);
-  const [loadedFor, setLoadedFor] = useState(null); // period the shown data is for
+  const [loadedFor, setLoadedFor] = useState(null); // request the shown data is for
   const [error, setError] = useState('');
-  const loading = loadedFor !== period;
+  const customOk = !!custom.from && !!custom.to && custom.from <= custom.to;
+  const query = period === 'custom' ? `period=custom&from=${custom.from}&to=${custom.to}` : `period=${period}`;
+  const loading = loadedFor !== query;
 
   useEffect(() => {
+    if (period === 'custom' && !customOk) return undefined;
     let alive = true;
     localStorage.setItem('zunuz_admin_period', period);
-    api.get(`/admin/stats?period=${period}`, true)
+    if (period === 'custom') localStorage.setItem('zunuz_admin_custom', JSON.stringify(custom));
+    api.get(`/admin/stats?${query}`, true)
       .then((d) => { if (alive) { setData(d); setError(''); } })
       .catch((e) => { if (alive) setError(e.message || 'Could not load statistics.'); })
-      .finally(() => { if (alive) setLoadedFor(period); });
+      .finally(() => { if (alive) setLoadedFor(query); });
     return () => { alive = false; };
-  }, [period]);
+    // `query` already carries period + the custom dates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, customOk]);
 
-  const label = PERIODS.find((p) => p.key === period)?.label;
+  const label = period === 'custom'
+    ? (custom.from === custom.to ? fmtDay(custom.from) : `${fmtDay(custom.from)} – ${fmtDay(custom.to)}`)
+    : PERIODS.find((p) => p.key === period)?.label;
   const d = data;
   const toProcess = d ? d.status.PENDING + d.status.CONFIRMED : null;
   const storeCats = d?.categories.filter((c) => c.storefront) || [];
@@ -339,21 +361,36 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
       <h1 className={`m-0 text-[length:clamp(30px,3vw,40px)] font-bold tracking-[-0.01em] ${DISPLAY}`}>Statistics</h1>
 
-      <label className="block w-[260px] max-[640px]:w-full">
-        <span className="mb-2 block text-[14px] font-semibold text-[var(--admin-text-muted)]">Period</span>
-        <span className="relative block">
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className="h-12 w-full cursor-pointer appearance-none rounded-[12px] border border-[var(--admin-border-4)] bg-[var(--admin-surface)] px-4 text-[16px] text-[var(--admin-text)] outline-none transition-colors hover:border-[var(--admin-border-5)] focus:border-[var(--admin-accent)]"
-          >
-            {PERIODS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
-          </select>
-          <ChevronDown size={18} className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[var(--admin-text-muted)]" />
-        </span>
-      </label>
+      <div className="flex flex-wrap items-end gap-3 max-[640px]:w-full">
+            <label className="block w-[260px] max-[640px]:w-full">
+          <span className="mb-2 block text-[14px] font-semibold text-[var(--admin-text-muted)]">Period</span>
+          <span className="relative block">
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="h-12 w-full cursor-pointer appearance-none rounded-[12px] border border-[var(--admin-border-4)] bg-[var(--admin-surface)] px-4 text-[16px] text-[var(--admin-text)] outline-none transition-colors hover:border-[var(--admin-border-5)] focus:border-[var(--admin-accent)]"
+            >
+              {PERIODS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+            </select>
+            <ChevronDown size={18} className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[var(--admin-text-muted)]" />
+          </span>
+        </label>
+      {period === 'custom' && (
+        <div className="flex items-end gap-2 max-[640px]:w-full">
+          <label className="block w-[170px] max-[640px]:flex-1">
+            <span className="mb-2 block text-[14px] font-semibold text-[var(--admin-text-muted)]">From</span>
+            <input type="date" value={custom.from} max={custom.to || istToday()} onChange={(e) => setCustom((c) => ({ ...c, from: e.target.value }))} className="h-12 w-full rounded-[12px] border border-[var(--admin-border-4)] bg-[var(--admin-surface)] px-3 text-[15px] text-[var(--admin-text)] outline-none [color-scheme:dark] in-data-[theme=light]:[color-scheme:light] transition-colors hover:border-[var(--admin-border-5)] focus:border-[var(--admin-accent)]" />
+          </label>
+          <label className="block w-[170px] max-[640px]:flex-1">
+            <span className="mb-2 block text-[14px] font-semibold text-[var(--admin-text-muted)]">To</span>
+            <input type="date" value={custom.to} min={custom.from} max={istToday()} onChange={(e) => setCustom((c) => ({ ...c, to: e.target.value }))} className="h-12 w-full rounded-[12px] border border-[var(--admin-border-4)] bg-[var(--admin-surface)] px-3 text-[15px] text-[var(--admin-text)] outline-none [color-scheme:dark] in-data-[theme=light]:[color-scheme:light] transition-colors hover:border-[var(--admin-border-5)] focus:border-[var(--admin-accent)]" />
+          </label>
+        </div>
+      )}
+      </div>
       </div>
 
+      {period === 'custom' && !customOk && <p role="alert" className="m-0 mt-6 rounded-[12px] border border-[var(--tone-yellow)]/30 bg-[var(--tone-yellow)]/10 px-4 py-3 text-[14px] text-[var(--tone-yellow)]">Pick a start and an end date (the end can’t be before the start).</p>}
       {error && <p role="alert" className="m-0 mt-6 rounded-[12px] border border-[var(--tone-red)]/30 bg-[var(--tone-red)]/10 px-4 py-3 text-[14px] text-[var(--tone-red)]">{error}</p>}
 
       {d?.expiringCoupons?.length > 0 && <ExpiringCouponsAlert coupons={d.expiringCoupons} />}

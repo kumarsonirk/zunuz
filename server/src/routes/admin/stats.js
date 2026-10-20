@@ -6,7 +6,8 @@ const { requirePermission } = require('../../lib/adminPermissions');
 const prisma = require('../../lib/prisma');
 
 // Admin statistics.
-//   GET /api/admin/stats?period=all|today|7d|30d|90d|year  → dashboard numbers
+//   GET /api/admin/stats?period=all|today|yesterday|7d|30d|90d|year  → dashboard numbers
+//   GET /api/admin/stats?period=custom&from=YYYY-MM-DD&to=YYYY-MM-DD   (both days included)
 //   GET /api/admin/stats/badges                           → sidebar counts
 //g
 // Definitions (kept in one place so every card agrees):
@@ -17,21 +18,56 @@ const prisma = require('../../lib/prisma');
 const PERIODS = {
   all: null,
   today: 'today',
+  yesterday: 'yesterday',
   '7d': 7,
   '30d': 30,
   '90d': 90,
   year: 'year',
+  custom: 'custom',
 };
+
+// Days are Indian days (IST, UTC+5:30), whatever the server's clock is set
+// to (Railway runs on UTC, so "today" used to start at 5:30 AM IST).
+const IST_MS = 5.5 * 60 * 60 * 1000;
+const DAY_MS = 864e5;
+const istParts = (date = new Date()) => { const t = new Date(date.getTime() + IST_MS); return { y: t.getUTCFullYear(), m: t.getUTCMonth(), d: t.getUTCDate() }; };
+// Start (IST midnight) of the day `offset` days from today.
+function istDayStart(offset = 0) {
+  const { y, m, d } = istParts();
+  return new Date(Date.UTC(y, m, d + offset) - IST_MS);
+}
+// "2026-10-05" → that day's IST midnight (null if not a real date).
+function istDateStart(ymd) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || ''));
+  if (!m) return null;
+  const date = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]) - IST_MS);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+// Bucket keys + labels for the revenue chart, in IST.
+const istDayKey = (date) => { const { y, m, d } = istParts(date); return `${y}-${m}-${d}`; };
+const istMonthKey = (date) => { const { y, m } = istParts(date); return `${y}-${m}`; };
 
 function since(period) {
   const p = PERIODS[period];
-  if (p === undefined || p === null) return null;
-  const d = new Date();
-  if (p === 'today') { d.setHours(0, 0, 0, 0); return d; }
-  if (p === 'year') return new Date(d.getFullYear(), 0, 1);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - (p - 1));
-  return d;
+  if (p === undefined || p === null || p === 'custom') return null;
+  if (p === 'today') return istDayStart(0);
+  if (p === 'yesterday') return istDayStart(-1);
+  if (p === 'year') return new Date(Date.UTC(istParts().y, 0, 1) - IST_MS);
+  return istDayStart(-(p - 1));
+}
+
+// { from, to } for a period: `to` is the exclusive end (null = now).
+// Custom ranges include both days. Throws on a bad custom range.
+function range(period, query) {
+  if (period === 'custom') {
+    const from = istDateStart(query.from);
+    const toDay = istDateStart(query.to);
+    if (!from || !toDay) throw new Error('Pick a start and an end date.');
+    if (toDay < from) throw new Error('The end date can’t be before the start date.');
+    return { from, to: new Date(toDay.getTime() + DAY_MS) };
+  }
+  if (period === 'yesterday') return { from: istDayStart(-1), to: istDayStart(0) };
+  return { from: since(period), to: null };
 }
 
 const REAL = { OR: [{ paymentMethod: 'COD' }, { paymentStatus: 'PAID' }] };
@@ -39,11 +75,14 @@ const settings = require('../../lib/settings');
 const lowStockLevel = () => settings.get().lowStockThreshold;
 const STOREFRONT_CATEGORIES = ['necklaces', 'bracelets', 'earrings'];
 
-// Page loads + unique visitors since `from` (null = all time).
-async function traffic(from) {
-  const rows = from
-    ? await prisma.$queryRaw(Prisma.sql`SELECT COUNT(*) AS views, COUNT(DISTINCT visitorId) AS visitors FROM PageView WHERE createdAt >= ${from}`)
-    : await prisma.$queryRaw(Prisma.sql`SELECT COUNT(*) AS views, COUNT(DISTINCT visitorId) AS visitors FROM PageView`);
+// Page loads + unique visitors from `from` (null = all time) until `to`
+// (exclusive; null = now).
+async function traffic(from, to = null) {
+  const rows = from && to
+    ? await prisma.$queryRaw(Prisma.sql`SELECT COUNT(*) AS views, COUNT(DISTINCT visitorId) AS visitors FROM PageView WHERE createdAt >= ${from} AND createdAt < ${to}`)
+    : from
+      ? await prisma.$queryRaw(Prisma.sql`SELECT COUNT(*) AS views, COUNT(DISTINCT visitorId) AS visitors FROM PageView WHERE createdAt >= ${from}`)
+      : await prisma.$queryRaw(Prisma.sql`SELECT COUNT(*) AS views, COUNT(DISTINCT visitorId) AS visitors FROM PageView`);
   return { views: Number(rows[0]?.views || 0), visitors: Number(rows[0]?.visitors || 0) };
 }
 
@@ -77,8 +116,13 @@ async function emailStats(inPeriod) {
 
 router.get('/', auth, requirePermission('stats'), async (req, res) => {
   const period = PERIODS[req.query.period] !== undefined ? req.query.period : 'all';
-  const from = since(period);
-  const inPeriod = from ? { createdAt: { gte: from } } : {};
+  let from;
+  let to;
+  try { ({ from, to } = range(period, req.query)); } catch (e) { return res.status(400).json({ error: e.message }); }
+  const inPeriod = from || to ? { createdAt: { ...(from ? { gte: from } : {}), ...(to ? { lt: to } : {}) } } : {};
+  // Revenue chart: daily for short ranges, monthly for long ones.
+  const customDays = period === 'custom' ? Math.round((to - from) / DAY_MS) : 0;
+  const monthly = period === 'all' || period === 'year' || period === '90d' || customDays > 62;
   const real = { AND: [REAL, inPeriod] };
   try {
     const [
@@ -113,7 +157,7 @@ router.get('/', auth, requirePermission('stats'), async (req, res) => {
       }),
       // Revenue series: daily for short periods, monthly otherwise.
       prisma.order.findMany({
-        where: { AND: [REAL, { status: { not: 'CANCELLED' } }, period === 'all' || period === 'year' || period === '90d' ? inPeriod : { createdAt: { gte: since('30d') } }] },
+        where: { AND: [REAL, { status: { not: 'CANCELLED' } }, monthly || period === 'custom' ? inPeriod : { createdAt: { gte: since('30d') } }] },
         select: { createdAt: true, total: true },
       }),
       prisma.campaignSubmission.count({ where: inPeriod }).catch(() => 0),
@@ -131,7 +175,7 @@ router.get('/', auth, requirePermission('stats'), async (req, res) => {
     const [trafficToday, traffic7d, trafficPeriod, topPagesRaw, firstView, email] = await Promise.all([
       traffic(midnight),
       traffic(since('7d')),
-      traffic(from),
+      traffic(from, to),
       prisma.pageView.groupBy({ by: ['path'], _count: { _all: true }, where: { createdAt: { gte: since('7d') } }, orderBy: { _count: { path: 'desc' } }, take: 5 }),
       prisma.pageView.findFirst({ orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
       emailStats(inPeriod),
@@ -142,35 +186,43 @@ router.get('/', auth, requirePermission('stats'), async (req, res) => {
       : [];
     const top = topItems.map((t) => ({ ...topProducts.find((p) => p.id === t.productId), sold: t._sum.quantity || 0 })).filter((p) => p.id);
 
-    // Build the chart buckets.
-    const monthly = period === 'all' || period === 'year' || period === '90d';
+    // Build the chart buckets (IST days / months).
     const buckets = new Map();
     if (monthly) {
       const start = period === 'all'
         ? (seriesOrders.length ? new Date(Math.min(...seriesOrders.map((o) => o.createdAt.getTime()))) : new Date())
         : from;
-      const d = new Date(start.getFullYear(), start.getMonth(), 1);
-      const end = new Date();
-      // Always show at least 6 months so the chart isn't a single bar.
-      const minStart = new Date(end.getFullYear(), end.getMonth() - 5, 1);
-      const first = d < minStart ? d : minStart;
-      for (let m = new Date(first); m <= end; m.setMonth(m.getMonth() + 1)) {
-        buckets.set(`${m.getFullYear()}-${m.getMonth()}`, { label: m.toLocaleString('en-IN', { month: 'short' }) + (m.getMonth() === 0 ? ` ${String(m.getFullYear()).slice(2)}` : ''), revenue: 0, orders: 0 });
+      const endDate = to ? new Date(to.getTime() - 1) : new Date();
+      const s0 = istParts(start);
+      const e0 = istParts(endDate);
+      let y = s0.y;
+      let mo = s0.m;
+      // All time / this year / 90 days: at least 6 months, so the chart isn't a single bar.
+      if (period !== 'custom' && (e0.y - y) * 12 + (e0.m - mo) < 5) {
+        y = e0.y; mo = e0.m - 5;
+        while (mo < 0) { mo += 12; y -= 1; }
+      }
+      while (y < e0.y || (y === e0.y && mo <= e0.m)) {
+        const label = new Date(Date.UTC(y, mo, 15)).toLocaleString('en-IN', { month: 'short', timeZone: 'UTC' }) + (mo === 0 ? ` ${String(y).slice(2)}` : '');
+        buckets.set(`${y}-${mo}`, { label, revenue: 0, orders: 0 });
+        mo += 1;
+        if (mo > 11) { mo = 0; y += 1; }
       }
       seriesOrders.forEach((o) => {
-        const b = buckets.get(`${o.createdAt.getFullYear()}-${o.createdAt.getMonth()}`);
-        if (b) { b.revenue += o.total; b.orders += 1; }
+        const bk = buckets.get(istMonthKey(o.createdAt));
+        if (bk) { bk.revenue += o.total; bk.orders += 1; }
       });
     } else {
-      const days = 30;
-      const start = since('30d');
+      // Custom (up to 62 days): each day of the range; otherwise the last 30 days.
+      const start = period === 'custom' ? from : since('30d');
+      const days = period === 'custom' ? customDays : 30;
       for (let i = 0; i < days; i += 1) {
-        const d = new Date(start); d.setDate(start.getDate() + i);
-        buckets.set(d.toDateString(), { label: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), revenue: 0, orders: 0 });
+        const d = new Date(start.getTime() + i * DAY_MS);
+        buckets.set(istDayKey(d), { label: d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' }), revenue: 0, orders: 0 });
       }
       seriesOrders.forEach((o) => {
-        const b = buckets.get(new Date(o.createdAt).toDateString());
-        if (b) { b.revenue += o.total; b.orders += 1; }
+        const bk = buckets.get(istDayKey(o.createdAt));
+        if (bk) { bk.revenue += o.total; bk.orders += 1; }
       });
     }
 
@@ -181,6 +233,7 @@ router.get('/', auth, requirePermission('stats'), async (req, res) => {
     res.json({
       period,
       from,
+      to,
       revenue: revenueAgg._sum.total || 0,
       avgOrderValue: Math.round(revenueAgg._avg.total || 0),
       orders,

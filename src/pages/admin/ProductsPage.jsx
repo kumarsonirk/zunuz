@@ -11,9 +11,10 @@ import {
 } from '../../components/admin/AdminUI';
 import { DISPLAY, inputCls, textareaCls, tableWrapCls, tableCls, thCls, tdCls, trCls } from '../../components/admin/adminStyles';
 import ProductImportModal from '../../components/admin/growth/ProductImportModal';
+import PairsPicker from '../../components/admin/PairsPicker';
 import { downloadAdminFile } from '../../components/admin/growth/csv';
 
-const EMPTY_FORM = { name: '', slug: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, tagline: '', description: '', materials: '', productDetails: '', whyWorthIt: '', careInstructions: '' };
+const EMPTY_FORM = { name: '', slug: '', price: '', stock: '', image: '', images: [], categoryId: '', subcategoryId: '', isActive: true, tagline: '', description: '', materials: '', productDetails: '', whyWorthIt: '', careInstructions: '', pairsWith: [] };
 
 const RICH_TEXT_HELP = 'Start a line with "## " for a bold heading, "> " for a plain paragraph, or just type plain text for a bullet point. Wrap *text* in single asterisks for italics.';
 
@@ -219,7 +220,7 @@ export default function ProductsPage() {
   const openEdit = (p) => {
     setEditProduct(p);
     const parsedImages = parseImages(p.images);
-    setForm({ name: p.name, slug: p.slug || '', price: p.price, stock: p.stock, image: p.image || '', images: parsedImages, categoryId: p.categoryId, subcategoryId: p.subcategoryId, isActive: p.isActive, tagline: p.tagline || '', description: p.description || '', materials: p.materials || '', productDetails: p.productDetails || '', whyWorthIt: p.whyWorthIt || '', careInstructions: p.careInstructions || '' });
+    setForm({ name: p.name, slug: p.slug || '', price: p.price, stock: p.stock, image: p.image || '', images: parsedImages, categoryId: p.categoryId, subcategoryId: p.subcategoryId, isActive: p.isActive, tagline: p.tagline || '', description: p.description || '', materials: p.materials || '', productDetails: p.productDetails || '', whyWorthIt: p.whyWorthIt || '', careInstructions: p.careInstructions || '', pairsWith: parseImages(p.pairsWith) });
     setFormError('');
     setModal('edit');
   };
@@ -463,6 +464,11 @@ export default function ProductsPage() {
             onChange={v => setForm(f => ({ ...f, careInstructions: v }))}
             placeholder={'Wipe gently with a soft, dry cloth after each wear.\nAvoid direct contact with perfumes and harsh chemicals.'}
           />
+        </FormSection>
+        <FormSection title="Best paired with" delay={180}>
+          <Field label="Pieces to suggest with this one (up to 3)" hint="Shown first in the product page's “Best paired with” box. Leave empty and they're picked automatically — same finish, colour and style, close in price.">
+            <PairsPicker value={form.pairsWith || []} onChange={(v) => setForm((f) => ({ ...f, pairsWith: v }))} selfId={editProduct?.id} />
+          </Field>
         </FormSection>
       </Modal>
 

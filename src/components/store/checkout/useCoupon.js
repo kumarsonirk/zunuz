@@ -71,3 +71,7 @@ export default function useCoupon(itemsTotal, ready) {
 }
 
 export const forgetCoupon = () => save('');
+// Product page "Deals": pick a code before there's a bag total — the bag
+// applies (and checks) it when it opens. rememberedCoupon() = the saved code.
+export const rememberCoupon = (code) => save(String(code || '').trim().toUpperCase());
+export const rememberedCoupon = saved;

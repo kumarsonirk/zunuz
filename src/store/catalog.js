@@ -74,6 +74,8 @@ export function normalizeProduct(p) {
     subcategoryName: p.subcategory?.name || '',
     tierSlug: tierSlugOf(p.subcategory),
     isActive: p.isActive !== false,
+    // Admin's "Best paired with" picks (product ids), [] when none.
+    pairsWith: parseImages(p.pairsWith).map(String),
     createdAt: p.createdAt,
   };
 }

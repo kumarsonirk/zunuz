@@ -151,6 +151,9 @@ model Product {
   productDetails   String?  @db.Text
   whyWorthIt       String?  @db.Text
   careInstructions String?  @db.Text
+  // Admin's "Best paired with" picks: JSON array of product ids (max 3), shown
+  // first on the product page; empty → picked automatically (src/store/pairing.js).
+  pairsWith        String?  @db.Text
   category      Category    @relation(fields: [categoryId], references: [id])
   categoryId    Int
   subcategory   Subcategory @relation(fields: [subcategoryId], references: [id])
