@@ -25,7 +25,7 @@ const SECTIONS = [
     heading: 'Storage Tips',
     body: ["When you're not wearing your jewelry:"],
     list: [
-      'Store it in the original ZUNUZ box or pouch whenever possible.',
+      'Store it in the original ZUNUZ box whenever possible.',
       'Keep it in a cool, clean, and dry place.',
       'Avoid storing multiple jewelry pieces together, as they may scratch each other.',
     ],
