@@ -13,6 +13,7 @@ import { formatPrice, productPath } from '../../store/catalogConfig';
 import { SETTINGS } from '../../store/settings';
 import useCoupon from '../../components/store/checkout/useCoupon';
 import BagOffers from '../../components/store/checkout/BagOffers';
+import CouponBox from '../../components/store/checkout/CouponBox';
 import { thumbUrl } from '../../utils/productImage';
 
 // The bag (/cart). Prices and stock are always the live catalogue values
@@ -206,7 +207,11 @@ function CartPage() {
                 bundleDiscount={bundleDiscount}
                 bundleLabel={bundleLabel}
               />
-              <BagOffers coupon={coupon} itemsTotal={discountedItemsTotal} lockedNote={comboOn ? 'Navratri combo applied — only one offer per order, so coupons can’t be added.' : ''} />
+              <BagOffers coupon={coupon} itemsTotal={discountedItemsTotal} showError={false} lockedNote={comboOn ? 'Navratri combo applied — only one offer per order, so coupons can’t be added.' : ''} />
+              {/* Any other code — coupons are added here, not at checkout. */}
+              <div className="mt-3">
+                <CouponBox coupon={coupon} mode="entry" lockedNote={comboOn ? 'Navratri combo applied' : ''} />
+              </div>
               <div className="mt-5 max-[900px]:hidden">{checkoutLink}</div>
               {!canCheckout && ready && <p className="m-0 mt-3 font-['Inter',sans-serif] text-[13px] text-[#E8304F]">Nothing in your bag can be bought right now.</p>}
               <ul className="m-0 mt-5 flex list-none flex-col gap-2 p-0 font-['Inter',sans-serif] text-[13px] text-[#111110]/65">

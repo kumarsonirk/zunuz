@@ -11,9 +11,11 @@ import { formatPrice } from '../../../store/catalogConfig';
 // re-checks it there — the server checks again when the order is placed).
 // One offer per order: `lockedNote` (e.g. the Navratri combo is applied)
 // shows the offers greyed out with that note instead of Apply buttons.
+// Any other code is typed in the CouponBox right below it (bag page only);
+// `showError={false}` leaves error messages to that box.
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
-export default function BagOffers({ coupon, itemsTotal, lockedNote = '' }) {
+export default function BagOffers({ coupon, itemsTotal, lockedNote = '', showError = true }) {
   const [offers, setOffers] = useState(null); // null = loading
   const [trying, setTrying] = useState(''); // card showing the spinner while busy
 
@@ -26,14 +28,9 @@ export default function BagOffers({ coupon, itemsTotal, lockedNote = '' }) {
   // While locked, a previously applied coupon is set aside (not used).
   const applied = lockedNote ? null : coupon.applied;
 
-  // No public offers: keep the old hint.
-  if (offers && offers.length === 0 && !applied) {
-    return (
-      <p className="m-0 mt-3 flex items-center gap-2 rounded-[14px] border-2 border-dashed border-[#FF3D8B]/35 bg-[#FFF3F7] px-3.5 py-2.5 font-['Inter',sans-serif] text-[13px] font-medium text-[#111110]/75">
-        <Tag size={15} className="shrink-0 text-[#FF3D8B]" /> Have a coupon? Apply it at checkout.
-      </p>
-    );
-  }
+  // No public offers (and nothing applied / no combo note): nothing to show —
+  // the "Have a coupon code?" box below still takes any code.
+  if (offers && offers.length === 0 && !applied && !lockedNote) return null;
 
   return (
     <section className="mt-4 font-['Inter',sans-serif]" aria-labelledby="bag-offers">
@@ -56,7 +53,7 @@ export default function BagOffers({ coupon, itemsTotal, lockedNote = '' }) {
         </div>
       )}
 
-      {coupon.error && !lockedNote && (
+      {showError && coupon.error && !lockedNote && (
         <p role="alert" className="m-0 mb-2 rounded-[12px] bg-[#FFE0EA] px-3 py-2 text-[13px] text-[#B4123E]">
           {coupon.error}
           {coupon.needsVerification && <> <Link to="/account" className="font-semibold text-[#B4123E] underline">Go to My account</Link></>}
@@ -103,7 +100,6 @@ export default function BagOffers({ coupon, itemsTotal, lockedNote = '' }) {
           })}
         </ul>
       )}
-      <p className="m-0 mt-2 text-[12px] text-[#111110]/50">Have a different code? You can enter it at checkout.</p>
     </section>
   );
 }

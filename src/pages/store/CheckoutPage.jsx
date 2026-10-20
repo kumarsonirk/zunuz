@@ -320,7 +320,7 @@ function CheckoutPage() {
             <p className="m-0 mb-3 rounded-[12px] bg-[#FFF0B8] px-3 py-2 font-['Inter',sans-serif] text-[13px] text-[#8A6A00]">Sold-out items in your bag aren't included.</p>
           )}
           <div className="mb-4 flex flex-col gap-2.5">
-            <CouponBox coupon={coupon} disabled={placing} lockedNote={comboOn ? 'Navratri combo applied — only one offer per order, so coupons can’t be added.' : useCreditsNow ? 'Turn off credits to use a coupon' : ''} />
+            <CouponBox coupon={coupon} mode="summary" disabled={placing} lockedNote={comboOn ? 'Navratri combo applied — only one offer per order, so coupons can’t be added.' : useCreditsNow ? 'Turn off credits to use a coupon' : ''} />
             {credits.balance > 0 && (
               <CreditsToggle
                 balance={credits.balance}

@@ -3,16 +3,31 @@ import { Link } from 'react-router-dom';
 import { Tag, X, ChevronDown } from 'lucide-react';
 import { formatPrice } from '../../../store/catalogConfig';
 
-// "Have a coupon code?" box in the checkout order summary. `coupon` is the
-// object from useCoupon(). `lockedNote` (e.g. ZUNUZ Credits are on — they
-// can't be combined with a coupon) shows the box greyed out with that note.
-export default function CouponBox({ coupon, disabled = false, lockedNote = '' }) {
+// Coupon box. `coupon` is the object from useCoupon(); the applied code is
+// shared by the bag and checkout (kept for the tab).
+// mode:
+//   'entry'   — bag page, under "Offers for you": the "Have a coupon code?"
+//               field only (the applied code shows in Offers for you).
+//               Hidden while `lockedNote` applies (e.g. Navratri combo).
+//   'summary' — checkout: no field (codes are added in the bag); shows the
+//               applied code with a remove button, or why it was removed.
+// `lockedNote` (e.g. ZUNUZ Credits are on — they can't be combined with a
+// coupon) shows an applied code greyed out with that note.
+export default function CouponBox({ coupon, disabled = false, lockedNote = '', mode = 'entry' }) {
   const { applied, error, needsVerification, busy, apply, remove, clearError } = coupon;
   const [open, setOpen] = useState(!!error);
   const [code, setCode] = useState('');
 
+  if (mode === 'summary') {
+    if (!applied) {
+      return error ? <p role="alert" className="m-0 rounded-[14px] bg-[#FFE0EA] px-3.5 py-2.5 font-['Inter',sans-serif] text-[13px] font-semibold text-[#E8304F]">{error}</p> : null;
+    }
+  } else if (lockedNote) {
+    return null;
+  }
+
   // Locked wins: a coupon saved earlier is set aside while another offer applies.
-  if (applied && !lockedNote) {
+  if (mode === 'summary' && applied && !lockedNote) {
     return (
       <div className="flex items-center gap-3 rounded-[16px] border-2 border-dashed border-[#FF3D8B]/50 bg-[#FFF3F7] px-3.5 py-3 animate-[jw-rise_0.4s_cubic-bezier(0.16,1,0.3,1)_both]">
         <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#FF3D8B] text-white"><Tag size={16} /></span>
@@ -30,7 +45,7 @@ export default function CouponBox({ coupon, disabled = false, lockedNote = '' })
     );
   }
 
-  if (lockedNote) {
+  if (mode === 'summary' && lockedNote) {
     return (
       <div className="rounded-[16px] border-2 border-[#111110]/8 bg-white/50 px-4 py-3 font-['Inter',sans-serif]" aria-disabled="true">
         <span className="flex items-center gap-2 text-[14px] font-semibold text-[#111110]/45"><Tag size={16} /> Have a coupon code?</span>
