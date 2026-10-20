@@ -45,6 +45,10 @@ function Usage({ c }) {
   );
 }
 
+// Edit / Delete stay pinned to the right edge, so they're visible even when
+// the table is wider than the screen and scrolls sideways.
+const STICKY_RIGHT = 'sticky right-0 z-[1] bg-[var(--admin-surface)] shadow-[-10px_0_14px_-12px_rgba(0,0,0,0.5)]';
+
 export default function CouponsPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -123,7 +127,7 @@ export default function CouponsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className={tableCls}>
-              <thead><tr>{['Code', 'Discount', 'Valid', 'Used', 'Status', 'Active', ''].map((h) => <th key={h} className={thCls}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Code', 'Discount', 'Valid', 'Used', 'Status', 'Active'].map((h) => <th key={h} className={thCls}>{h}</th>)}<th className={`${thCls} ${STICKY_RIGHT} text-right`}>Actions</th></tr></thead>
               <tbody>
                 {shown.map((c, i) => {
                   const st = COUPON_STATUS[c.status] || COUPON_STATUS.OFF;
@@ -152,7 +156,7 @@ export default function CouponsPage() {
                           <Toggle checked={c.isActive} onChange={(v) => toggle(c, v)} label={<span className="sr-only">{c.isActive ? `Switch off ${c.code}` : `Switch on ${c.code}`}</span>} />
                         </span>
                       </td>
-                      <td className={`${tdCls} text-right`}>
+                      <td className={`${tdCls} ${STICKY_RIGHT} text-right`}>
                         <span className="inline-flex gap-2">
                           <IconButton label={`Edit ${c.code}`} icon={Pencil} onClick={() => setEditing(c)} />
                           <IconButton label={`Delete ${c.code}`} icon={Trash2} tone="danger" onClick={() => setDeleting(c)} />
