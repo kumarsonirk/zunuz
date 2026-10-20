@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="admin@zunuz.com"
+                placeholder="Enter your email"
                 required
                 style={{ width: '100%', background: '#0D0E10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px 16px', color: '#F5F2EB', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
               />
