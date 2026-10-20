@@ -217,7 +217,7 @@ function FestiveGlowPage() {
               </h1>
 
               <p className="fg-in m-0 mt-3 max-w-[620px] font-['Inter',sans-serif] text-[length:clamp(13px,1.3vw,18px)] leading-relaxed text-[#C9B4A4]">
-                Celebration-ready jewellery —<br className="min-[701px]:hidden" /> waterproof & anti-tarnish.
+                Celebration-ready jewellery —<br className="min-[701px]:hidden" /> made to shine all season.
               </p>
               <p className="fg-in m-0 mt-5 inline-flex items-center gap-2 font-['Inter',sans-serif] text-[length:clamp(12px,1vw,14px)] font-semibold tracking-[0.08em] text-[#E0B48A]/90 uppercase">
                 <span aria-hidden="true" className="h-px w-8 bg-[#E0B48A]/60" /> Endless ways to shine

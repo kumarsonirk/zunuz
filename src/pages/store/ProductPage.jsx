@@ -42,7 +42,7 @@ const MAX_REVIEW_IMAGE = 2 * 1024 * 1024; // matches the server's multer limit
 const DEFAULT_CARE_TEXT = [
   'Put it on after perfume, lotion and makeup.',
   'Take it off before bathing, swimming, workouts or sleeping.',
-  'Keep it away from water, sweat, sanitiser and other chemicals.',
+  'Keep it away from water, sanitiser and other chemicals.',
   'Wipe it with a soft, dry cloth and store it in its ZUNUZ pouch, away from other pieces.',
   '> More tips in our Product Care guide (Customer Care → Product care).',
 ].join('\n');

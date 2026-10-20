@@ -228,7 +228,7 @@ function NavratriOffersPage() {
     <StoreShell glow={FESTIVE_GLOW}>
       <Seo
         title={`${offerTitle} – Navratri Jewellery Offer`}
-        description={`Pick any ${bundleCount} premium waterproof jewellery items worth up to ₹${maxPrice * bundleCount} for just ₹${bundlePrice} during the ZUNUZ Navratri Special.`}
+        description={`Pick any ${bundleCount} premium jewellery pieces worth up to ₹${maxPrice * bundleCount} for just ₹${bundlePrice} during the ZUNUZ Navratri Special.`}
         path="/navratri-offers"
       />
 
@@ -278,7 +278,7 @@ function NavratriOffersPage() {
                 <Flame size={14} /> Save up to {formatPrice(maxPrice * bundleCount - bundlePrice)}
               </span>
               <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/40 bg-white/15 px-3.5 py-1.5 max-[700px]:px-2.5 text-white backdrop-blur-sm">
-                <ShieldCheck size={14} /> Anti-tarnish<span className="max-[400px]:hidden"> & waterproof</span>
+                <ShieldCheck size={14} /> Premium finish<span className="max-[400px]:hidden"> · free replacement</span>
               </span>
             </div>
           </div>
@@ -743,7 +743,7 @@ function NavratriOffersPage() {
                 <div className="rounded-[16px] bg-[#E8F7EE] p-4">
                   <h3 className="m-0 text-[16px] font-bold text-[#111110]">3. Free delivery & returns?</h3>
                   <p className="m-0 mt-1.5 font-['Inter',sans-serif] text-[13px] leading-relaxed text-[#111110]/70">
-                    Free shipping automatically unlocks once your order items reach ₹{SETTINGS.freeDeliveryThreshold}. Plus, enjoy 100% anti-tarnish waterproof quality assurance.
+                    Free shipping automatically unlocks once your order items reach ₹{SETTINGS.freeDeliveryThreshold}. Plus, if anything arrives damaged or wrong, we'll replace it free.
                   </p>
                 </div>
               </div>
