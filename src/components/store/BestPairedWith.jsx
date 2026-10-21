@@ -24,7 +24,7 @@ export default function BestPairedWith({ pairs, className = '' }) {
   const bag = useCart();
   const inBag = (p) => bag.some((i) => i.id === String(p.id));
   const rows = pairs.map((p) => ({ p }));
-  const [ticked, setTicked] = useState(() => new Set(pairs.map((p) => p.id)));
+  const [ticked, setTicked] = useState(() => new Set()); // nothing ticked until the shopper picks
   const [added, setAdded] = useState(false);
 
   if (!pairs.length) return null;
@@ -41,7 +41,6 @@ export default function BestPairedWith({ pairs, className = '' }) {
   return (
     <section aria-labelledby="pd-pairs" className={`rounded-[22px] border border-[#111110]/8 bg-white/75 p-4 shadow-[0_12px_30px_-24px_rgba(17,17,16,0.4)] ${className}`}>
       <h2 id="pd-pairs" className="m-0 font-['Bricolage_Grotesque','Inter',sans-serif] text-[19px] leading-tight font-extrabold text-[#111110]">Best paired with</h2>
-      <p className="m-0 mt-0.5 font-['Inter',sans-serif] text-[12px] text-[#111110]/55">Complete the look in one tap.</p>
 
       <ul className="m-0 mt-3 flex list-none flex-col divide-y divide-[#111110]/8 rounded-[16px] border border-[#111110]/8 bg-white p-0">
         {rows.map((r) => {
